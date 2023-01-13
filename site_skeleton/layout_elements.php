@@ -17,3 +17,9 @@ function container_builder($content, $Class='container'){
     return "<div class='".$Class."'>".$content."</div>";
 
 }
+
+function alert_builder($alert, $class='alert-danger'){
+
+    return '<div class="alert '.$class.'">' . $alert . '</div>';
+
+}
