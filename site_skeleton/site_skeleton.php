@@ -14,7 +14,7 @@ function site_body($SiteTitle, $Content, $loggedIn = false, $UserRoles=[]){
 
     // Initialize and Fill Body
     $Return .= '<body>
-                    '.container_builder(nav_bar($loggedIn,$UserRoles)).'
+                    '.nav_bar($loggedIn,$UserRoles).'
                     '.container_builder($Content).'
                     <script src="/js/bootstrap.bundle.js"></script>
                     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>

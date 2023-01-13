@@ -27,6 +27,8 @@ function session_manager($requiredRole='nutzer'){
             // Session is valid an has not timed out - now check if user has necessary privileges
             $Nutzergruppen = load_user_usergroups($mysqli, $_SESSION['user']);
             if(in_array($requiredRole,explode(',', $Nutzergruppen))){
+                // Renew Session TTL and then return Nutzergruppen for NavBar generation purposes
+                session_renew($mysqli, $_SESSION['user'], $_SESSION['secret']);
                 return $Nutzergruppen;
             } else {
 
@@ -70,6 +72,30 @@ function session_valid($mysqli, $User, $Secret){
     } else {
         return false;
     }
+}
+
+function session_renew($mysqli, $User, $Secret){
+
+    // initilize variables
+    $TTLcommand = "+".SESSIONLIFETIME." minutes";
+    $TTL = date('Y-m-d G:i:s', strtotime($TTLcommand, time()));
+
+    // Load Session based on Secret
+    $sql = "UPDATE sessions SET ttl = ? WHERE user = ? AND secret = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("sis", $TTL, $User, $Secret);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
 }
 
 function create_session($User){
