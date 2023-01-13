@@ -3,9 +3,9 @@
 function nav_bar($LoggedIn=False, $UserRoles=[]){
 
     if(!$LoggedIn){
-        $response = '<nav class="navbar" style="background-color: #eeeee4;"><div class="container-fluid"><span class="navbar-brand mb-0 h1">BD-Zeitenerfassung</span></div></nav>';
+        $response = '<nav class="navbar" style="background-color: #eeeee4;"><div class="container-fluid"><span class="navbar-brand mb-0 h1">'.SITENAME.'</span></div></nav>';
     } else {
-        $response = '<nav class="navbar" style="background-color: #eeeee4;"><div class="container-fluid"><a class="navbar-brand" href="dashboard.php">BD-Zeitenerfassung</a></div></nav>';
+        $response = '<nav class="navbar" style="background-color: #eeeee4;"><div class="container-fluid"><a class="navbar-brand" href="dashboard.php">'.SITENAME.'</a></div></nav>';
     }
 
     return $response;

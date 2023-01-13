@@ -7,8 +7,9 @@ include_once "./config/db_config.php";
 // Site configuration Settings
 include_once "./config/settings_config.php";
 
-// Session Management
+// Toolboxes
 include_once "./tools/session_management.php";
+include_once "./tools/user_management.php";
 
 // Website Skeleton Functions
 include_once "./site_skeleton/site_skeleton.php";

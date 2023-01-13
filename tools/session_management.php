@@ -1,12 +1,75 @@
 <?php
 
-function session_manager($requiredRole='User'){
+function session_manager($requiredRole='nutzer'){
 
-    // Initialize the session
+    // Initialize stuff
     session_start();
+    $mysqli = connect_db();
+    $Validated = session_valid($mysqli, $_SESSION['user'], $_SESSION['secret']);
 
-    return false;
+    if(!$Validated){
+        // Session could not be verified
+        session_destroy();
+        header("location: login.php");
+        exit;
+    } else {
 
+        // Check TTL
+        if(strtotime($Validated) < time()){
+
+            // Session has timed out
+            session_destroy();
+            header("location: login.php");
+            exit;
+
+        } else {
+
+            // Session is valid an has not timed out - now check if user has necessary privileges
+            $Nutzergruppen = load_user_usergroups($mysqli, $_SESSION['user']);
+            if(in_array($requiredRole,explode(',', $Nutzergruppen))){
+                return $Nutzergruppen;
+            } else {
+
+                // User is logged in and in a valid session, but lacks permissions -> send them back to dashboard
+                header("location: dashboard.php");
+                exit;
+
+            }
+        }
+
+    }
+}
+
+function session_valid($mysqli, $User, $Secret){
+
+    // initilize variable
+    $TTL = "";
+
+    // Load Session based on Secret
+    $sql = "SELECT id, ttl FROM sessions WHERE user = ? AND secret = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("is", $User, $Secret);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()) {
+
+            // Store result
+            $stmt->store_result();
+
+            // Check if only one session exists
+            if ($stmt->num_rows == 1) {
+                $stmt->bind_result($ID, $TTL);
+                if($stmt->fetch()){
+                    return $TTL;
+                }
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 }
 
 function create_session($User){
