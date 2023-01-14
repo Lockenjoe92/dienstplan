@@ -8,7 +8,6 @@ include_once "./config/dependencies.php";
 $Nutzergruppen = session_manager('ausfaelle');
 
 $HTML = "<h1 class='align-content-center'>Nutzerverwaltung</h1>";
-$HTML .= "<p class='align-content-center'>Tabelle und hinzufueger hier!</p>";
-$HTML .= table_workforce_management();
+$HTML .= table_workforce_management(connect_db());
 
 echo site_body('Nutzerverwaltung', $HTML, true, $Nutzergruppen);

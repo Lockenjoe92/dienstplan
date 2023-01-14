@@ -1,69 +1,55 @@
 <?php
 
-function table_workforce_management(){
+function table_workforce_management($mysqli){
 
-    $key = '"{"key": "value"}"';
+    // deal with stupid "" and '' problems
+    $Mitarbeiters = [];
+    $Mitarbeiters[] = array("nachname" => "Haefeker", "vorname" => "Marc", "mitarbeiternummer" => "123");
+    $Mitarbeiters[] = array("nachname" => "Drexler", "vorname" => "Berthold", "mitarbeiternummer" => "456");
+    $Mitarbeiters[] = array("nachname" => "Fideler", "vorname" => "Frank", "mitarbeiternummer" => "789");
 
-    $HTML = '<table
-  data-toggle="table"
-  data-search="true"
-  data-show-columns="true">
-  <thead>
-    <tr class="tr-class-1">
-      <th data-field="name" rowspan="2" data-valign="middle">Name</th>
-      <th colspan="3">Detail</th>
-    </tr>
-    <tr class="tr-class-2">
-      <th data-field="star">Stars</th>
-      <th data-field="forks">Forks</th>
-      <th data-field="description">Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr id="tr-id-1" class="tr-class-1" data-title="bootstrap table" data-object='.$key.'>
-      <td id="td-id-1" class="td-class-1" data-title="bootstrap table">
-        <a href="https://github.com/wenzhixin/bootstrap-table" target="_blank">bootstrap-table</a>
-      </td>
-      <td data-value="526">8827</td>
-      <td data-text="122">3603</td>
-      <td data-i18n="Description">An extended Bootstrap table with radio, checkbox, sort, pagination, and other added features. (supports twitter bootstrap v2 and v3)
-      </td>
-    </tr>
-    <tr id="tr-id-2" class="tr-class-2">
-      <td id="td-id-2" class="td-class-2">
-        <a href="https://github.com/wenzhixin/multiple-select" target="_blank">multiple-select</a>
-      </td>
-      <td>1615</td>
-      <td>623</td>
-      <td>A jQuery plugin to select multiple elements with checkboxes :)
-      </td>
-    </tr>
-    <tr id="tr-id-3" class="tr-class-3">
-      <td id="td-id-3" class="td-class-3">
-        <a href="https://github.com/wenzhixin/bootstrap-show-password" target="_blank">bootstrap-show-password</a>
-      </td>
-      <td>220</td>
-      <td>85</td>
-      <td>Show/hide password plugin for twitter bootstrap.
-      </td>
-    </tr>
-    <tr id="tr-id-4" class="tr-class-4">
-      <td id="td-id-4" class="td-class-4">
-        <a href="https://github.com/wenzhixin/bootstrap-table-examples" target="_blank">bootstrap-table-examples</a>
-      </td>
-      <td>1734</td>
-      <td>1532</td>
-      <td>Bootstrap Table Examples</td>
-    </tr>
-    <tr id="tr-id-5" class="tr-class-5">
-      <td id="td-id-5" class="td-class-5">
-        <a href="https://github.com/wenzhixin/scutech-redmine" target="_blank">scutech-redmine</a>
-      <td>24</td>
-      <td>18</td>
-      <td>Redmine notification tools for chrome extension.</td>
-    </tr>
-  </tbody>
-</table>';
+    $bla = '"{"key": "value"}"';
+
+    // Initialize Table
+    $HTML = '<table data-toggle="table" data-search="true" data-show-columns="true">';
+
+    // Setup Table Head
+    $HTML .= '<thead>
+                <tr class="tr-class-1">
+                    <th data-field="nachname">Nachname</th>
+                    <th data-field="vorname">Vorname</th>
+                    <th data-field="mitarbeiternummer">Mitarbeiternummer</th>
+                </tr>
+              </thead>';
+
+    // Fill table body
+    $HTML .= '<tbody>';
+    $counter = 1;
+    foreach ($Mitarbeiters as $Mitarbeiter){
+
+        // Build rows
+        if($counter==1){
+            $HTML .= '<tr id="tr-id-1" class="tr-class-1" data-title="bootstrap table" data-object='.$bla.'>';
+        } else {
+            $HTML .= '<tr id="tr-id-'.$counter.'" class="tr-class-'.$counter.'">';
+        }
+
+        if($counter==1){
+            $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Mitarbeiter['nachname'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['vorname'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['mitarbeiternummer'].'</td>';
+        } else {
+            $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Mitarbeiter['nachname'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['vorname'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['mitarbeiternummer'].'</td>';
+        }
+
+        // close row and count up
+        $HTML .= "</tr>";
+        $counter++;
+    }
+    $HTML .= '</tbody>';
+    $HTML .= '</table>';
 
     return $HTML;
 }
