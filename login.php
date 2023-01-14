@@ -30,14 +30,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $password = trim($_POST["password"]);
     }
 
+    // Connect DB
+    $mysqli = connect_db();
+
     // Validate credentials
     if(empty($username_err) && empty($password_err)){
 
         // prevent brute force
         sleep(1);
-
-        // Connect DB
-        $mysqli = connect_db();
 
         // Prepare a select statement
         $sql = "SELECT id, password FROM users WHERE username = ?";

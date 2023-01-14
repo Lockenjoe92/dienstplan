@@ -5,15 +5,60 @@ function nav_bar($LoggedIn=False, $UserRoles=[]){
     if(!$LoggedIn){
         $response = '<nav class="navbar sticky-top navbar-expand-lg bg-light"><div class="container-fluid"><span class="navbar-brand mb-0 h1">'.SITENAME.'</span></div></nav>';
     } else {
+
+        $AbwesenheitenLinks = '<li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Urlaub & Abwesenheit
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="urlaubsplan.php">Urlaubsplanung</a></li>
+            <li><a class="dropdown-item" href="abwesenheiten_management.php">Abwesenheiten</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="abwesenheiten_user.php">Meine Abwesenheiten</a></li>
+          </ul>
+        </li>';
+
+        $DienstplanLinks = '<li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Dienstplan
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="dienstplanung.php">Dienstplanung</a></li>
+            <li><a class="dropdown-item" href="dienstplanung_wuensche.php">Dienstplanwünsche</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="dienstplan_user.php">Mein Dienstplan</a></li>
+          </ul>
+        </li>';
+
+        $PersonalwesenLinks = '<li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Workforce
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="workforce_management.php">Mitarbeitermanagement</a></li>
+          </ul>
+        </li>';
+
+        $UserSettingsLinks = '<li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Einstellungen
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="change_password_user.php">Passwort ändern</a></li>
+            <li><a class="dropdown-item" href="personal_settings_user.php">Persönliche Daten</a></li>
+          </ul>
+        </li>';
+
         $response = '<nav class="navbar sticky-top navbar-expand-lg bg-light">
                 <div class="container-fluid">
                         <a class="navbar-brand" href="dashboard.php">'.SITENAME.'</a>
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                        </button>
                         <ul class="navbar-nav justify-content-end mb-2 mb-lg-0">
+                            '.$DienstplanLinks.'
+                            '.$AbwesenheitenLinks.'
+                            '.$PersonalwesenLinks.'
+                            '.$UserSettingsLinks.'
                             <li class="nav-item">
-                            <a class="nav-link active" href="logout.php">Logout</a>
+                                <a class="nav-link active" href="logout.php">Logout</a>
                             </li>
                         </ul>
                 </div>
@@ -34,4 +79,22 @@ function alert_builder($alert, $class='alert-danger'){
 
     return '<div class="alert '.$class.'">' . $alert . '</div>';
 
+}
+
+function card_builder($CardTitle, $CardSubtitle, $CardContent){
+
+    $HTML = '<div class="card">
+                   <div class="card-body">';
+
+    $HTML .= '<h5 class="card-title">'.$CardTitle.'</h5>';
+
+    if(!empty($CardSubtitle)){
+        $HTML .= '<h6 class="card-subtitle mb-2 text-muted">'.$CardSubtitle.'</h6>';
+    }
+
+    $HTML .= '<p class="card-text">'.$CardContent.'</p>';
+
+    $HTML .= '</div>
+              </div>';
+    return $HTML;
 }
