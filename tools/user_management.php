@@ -2,8 +2,6 @@
 
 function load_user_usergroups($mysqli, $ID){
 
-
-
     // Load Session based on Secret
     $sql = "SELECT id, nutzergruppen FROM users WHERE id = ?";
     if($stmt = $mysqli->prepare($sql)){
@@ -69,4 +67,24 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
 function get_current_user_id(){
     session_start();
     return $_SESSION['user'];
+}
+
+function get_sorted_list_of_all_users($mysqli, $orderBy='nachname', $includeInactive=false){
+
+    $Users = [];
+
+    if(!$includeInactive){
+        $sql = "SELECT * FROM users WHERE inaktiv_durch_user IS NULL ORDER BY ".$orderBy." ASC";
+    } else {
+        $sql = "SELECT * FROM users ORDER BY ".$orderBy." ASC";
+    }
+
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            $Users[] = $row;
+        }
+    }
+
+    return $Users;
+
 }

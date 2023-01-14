@@ -3,15 +3,11 @@
 function table_workforce_management($mysqli){
 
     // deal with stupid "" and '' problems
-    $Mitarbeiters = [];
-    $Mitarbeiters[] = array("nachname" => "Haefeker", "vorname" => "Marc", "mitarbeiternummer" => "123");
-    $Mitarbeiters[] = array("nachname" => "Drexler", "vorname" => "Berthold", "mitarbeiternummer" => "456");
-    $Mitarbeiters[] = array("nachname" => "Fideler", "vorname" => "Frank", "mitarbeiternummer" => "789");
-
     $bla = '"{"key": "value"}"';
+    $Users = get_sorted_list_of_all_users($mysqli);
 
     // Initialize Table
-    $HTML = '<table data-toggle="table" data-search="true" data-show-columns="true">';
+    $HTML = '<table data-toggle="table" data-search="true" data-show-columns="true" data-search-highlight="true">';
 
     // Setup Table Head
     $HTML .= '<thead>
@@ -25,7 +21,7 @@ function table_workforce_management($mysqli){
     // Fill table body
     $HTML .= '<tbody>';
     $counter = 1;
-    foreach ($Mitarbeiters as $Mitarbeiter){
+    foreach ($Users as $Mitarbeiter){
 
         // Build rows
         if($counter==1){

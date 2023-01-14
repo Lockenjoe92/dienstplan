@@ -98,3 +98,9 @@ function card_builder($CardTitle, $CardSubtitle, $CardContent){
               </div>';
     return $HTML;
 }
+
+function grip_gap_builder($HTML, $GapSize=2){
+
+    return '<div class="d-grid gap-'.$GapSize.'">'.$HTML.'</div>';
+
+}
