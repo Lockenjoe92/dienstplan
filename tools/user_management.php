@@ -30,3 +30,43 @@ function load_user_usergroups($mysqli, $ID){
     }
 
 }
+
+function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen){
+
+    // Prepare variables and generate initial password
+    $mysqli = connect_db();
+    $Antwort = [];
+    $CurrentUserID = get_current_user_id();
+    $pass = bin2hex(random_bytes(30)); //creates cryptographically secure random string
+    $pass_hash = password_hash($pass, PASSWORD_DEFAULT); // Creates a password hash
+
+    // Prepare statement & DB Access
+    $mysqli = connect_db();
+    $sql = "INSERT INTO users (username, mail, mitarbeiternummer, password, vorname, nachname, nutzergruppen, abteilungsrollen, created_by) VALUES ()";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("ssisssssi", $Username, $Mail, $Mitarbeiternummer, $pass_hash, $Vorname, $Nachname, $ToolRollen, $AbteilungRollen, $CurrentUserID);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+            $Antwort['pass'] = $pass;
+            $Antwort['newID'] = $mysqli->insert_id;
+        } else{
+            $Antwort['success']=true;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+}
+
+function get_current_user_id(){
+    session_start();
+    return $_SESSION['user'];
+}

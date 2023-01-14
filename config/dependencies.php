@@ -16,3 +16,6 @@ include_once "./site_skeleton/site_skeleton.php";
 include_once "./site_skeleton/form_elements.php";
 include_once "./site_skeleton/table_elements.php";
 include_once "./site_skeleton/layout_elements.php";
+
+// Views
+include_once "./views/workforcemanagement.php";
