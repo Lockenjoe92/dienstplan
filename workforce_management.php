@@ -9,9 +9,19 @@ $Nutzergruppen = session_manager('ausfaelle');
 
 // Build content
 $HTML = "<h1 class='align-content-center'>Nutzerverwaltung</h1>";
-$HTML .= table_workforce_management(connect_db());
+
+// Check on special modes (add_user, edit_user)
+if(isset($_POST['workforcemanagement_go_back'])){
+    $HTML .= table_workforce_management(connect_db());
+} else {
+    if(empty($_GET['mode'])){
+        $HTML .= table_workforce_management(connect_db());
+    } elseif ($_GET['mode']=='add_user'){
+        $HTML .= add_user_workforce_management(connect_db());
+    }
+}
 
 // Space Out stuff
-$HTML = grip_gap_builder($HTML);
+$HTML = grid_gap_generator($HTML);
 
 echo site_body('Nutzerverwaltung', $HTML, true, $Nutzergruppen);
