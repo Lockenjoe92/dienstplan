@@ -13,14 +13,18 @@ function table_workforce_management($mysqli){
             </div>';
 
     // Initialize Table
-    $HTML .= '<table data-toggle="table" data-search="true" data-toolbar="#toolbar" data-show-columns="true" data-search-highlight="true">';
+    $HTML .= '<table data-toggle="table" data-search="true" data-toolbar="#toolbar" data-show-columns="true" data-search-highlight="true" data-show-multi-sort="true">';
 
     // Setup Table Head
     $HTML .= '<thead>
                 <tr class="tr-class-1">
-                    <th data-field="nachname">Nachname</th>
-                    <th data-field="vorname">Vorname</th>
-                    <th data-field="mitarbeiternummer">Mitarbeiternummer</th>
+                    <th data-field="nachname" data-sortable="true">Nachname</th>
+                    <th data-field="vorname" data-sortable="true">Vorname</th>
+                    <th data-field="mitarbeiternummer" data-sortable="true">Mitarbeiternummer</th>
+                    <th data-field="mail" data-sortable="true">Mail</th>
+                    <th data-field="abteilungsrollen" data-sortable="true">Rolle</th>
+                    <th data-field="vertrag" data-sortable="true">Vertragsumfang</th>
+                    <th>Optionen</th>
                 </tr>
               </thead>';
 
@@ -40,10 +44,18 @@ function table_workforce_management($mysqli){
             $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Mitarbeiter['nachname'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['vorname'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['mitarbeiternummer'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['mail'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['abteilungsrollen'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['vertrag'].'%</td>';
+            $HTML .= '<td></td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Mitarbeiter['nachname'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['vorname'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['mitarbeiternummer'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['mail'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['abteilungsrollen'].'</td>';
+            $HTML .= '<td>'.$Mitarbeiter['vertrag'].'%</td>';
+            $HTML .= '<td></td>';
         }
 
         // close row and count up
@@ -64,7 +76,9 @@ function add_user_workforce_management($mysqli){
     $DAUcheck = 0;
 
     $vornamePlaceholder = $nachnamePlaceholder = $mitarbeiternummerPlaceholder = $mailPlaceholder = $edvPlaceholder = $GruppePlaceholder = '';
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = "";
+    $vertragPlaceholder = VERTRAGSUMFANG;
+    $urlaubPlaceholder = DEFAULTURLAUBSTAGE;
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = $urlaubErr = $vertragErr = "";
 
     // Parser
     if(isset($_POST['add_user_action'])){
@@ -75,6 +89,8 @@ function add_user_workforce_management($mysqli){
         $mailPlaceholder = trim($_POST['mail']);
         $edvPlaceholder = trim($_POST['edv']);
         $GruppePlaceholder = trim($_POST['gruppe']);
+        $vertragPlaceholder = trim($_POST['vertrag']);
+        $urlaubPlaceholder = trim($_POST['urlaub']);
 
         //DAUchecks
         //Check Empty Input
@@ -95,6 +111,46 @@ function add_user_workforce_management($mysqli){
 
         if(!is_numeric($mitarbeiternummerPlaceholder)){
             $mitarbeiternummerErr = "Eine Mitarbeiternummer darf nur aus Zahlen bestehen!";
+            $DAUcheck++;
+        }
+
+        if(empty($vertragPlaceholder)){
+            $vertragErr = "Bitte geben Sie den Vertragsumfang des/r neuen Nutzer/in an!";
+            $DAUcheck++;
+        }
+
+        if(!is_numeric($vertragPlaceholder)){
+            $vertragErr = "Der Vertragsumfang darf nur aus Zahlen bestehen!";
+            $DAUcheck++;
+        }
+
+        if($vertragPlaceholder<0){
+            $vertragErr = "Der Vertragsumfang muss mindestens 1% betragen!";
+            $DAUcheck++;
+        }
+
+        if($vertragPlaceholder>100){
+            $vertragErr = "Der Vertragsumfang darf höchstens 100% betragen!";
+            $DAUcheck++;
+        }
+
+        if(empty($urlaubPlaceholder)){
+            $urlaubErr = "Bitte geben Sie die Menge jährlicher Urlaubstage des/r neuen Nutzer/in an!";
+            $DAUcheck++;
+        }
+
+        if(!is_numeric($urlaubPlaceholder)){
+            $urlaubErr = "Die Menge jährlicher Urlaubstage darf nur aus Zahlen bestehen!";
+            $DAUcheck++;
+        }
+
+        if($vertragPlaceholder<0){
+            $vertragErr = "Mitarbeiter/innen benötigen mindestens einen Urlaubstag im Jahr!";
+            $DAUcheck++;
+        }
+
+        if($vertragPlaceholder>100){
+            $vertragErr = "Der Urlaubsumfang darf höchstens 100 Tage betragen!";
             $DAUcheck++;
         }
 
@@ -139,7 +195,7 @@ function add_user_workforce_management($mysqli){
 
         // Add user
         if($DAUcheck==0) {
-            $Result = add_new_user($vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, 'nutzer');
+            $Result = add_new_user($vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, 'nutzer', $vertragPlaceholder, $urlaubPlaceholder);
             if($Result['success']){
                 $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich angelegt!";
             } else {
@@ -161,7 +217,9 @@ function add_user_workforce_management($mysqli){
         $FormHTML .= form_group_input_text('Mitarbeiternummer', 'mitarbeiternummer', $mitarbeiternummerPlaceholder, true, $mitarbeiternummerErr);
         $FormHTML .= form_group_input_text('UKT-Mail', 'mail', $mailPlaceholder, true, $mailErr);
         $FormHTML .= form_group_input_text('EDV-Kürzel', 'edv', $edvPlaceholder, true, $edvErr);
-        $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, true, $gruppeErr, false);
+        $FormHTML .= form_group_input_text('Vertragsumfang in %', 'vertrag', $vertragPlaceholder, true, $vertragErr);
+        $FormHTML .= form_group_input_text('Urlaubstage', 'urlaub', $urlaubPlaceholder, true, $urlaubErr);
+        $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, false, $gruppeErr, false);
 
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_user_action', 'btn-primary', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
 

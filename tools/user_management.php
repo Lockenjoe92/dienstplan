@@ -29,7 +29,7 @@ function load_user_usergroups($mysqli, $ID){
 
 }
 
-function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen){
+function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage){
 
     // Prepare variables and generate initial password
     $mysqli = connect_db();
@@ -39,10 +39,10 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
     $pass_hash = password_hash($pass, PASSWORD_DEFAULT); // Creates a password hash
 
     // Prepare statement & DB Access
-    $sql = "INSERT INTO users (username, mail, mitarbeiternummer, password, vorname, nachname, nutzergruppen, abteilungsrollen, created_by) VALUES (?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO users (username, mail, mitarbeiternummer, password, vorname, nachname, nutzergruppen, abteilungsrollen, vertrag, urlaubstage, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("ssisssssi", $Username, $Mail, $Mitarbeiternummer, $pass_hash, $Vorname, $Nachname, $ToolRollen, $AbteilungRollen, $CurrentUserID);
+        $stmt->bind_param("ssisssssiii", $Username, $Mail, $Mitarbeiternummer, $pass_hash, $Vorname, $Nachname, $ToolRollen, $AbteilungRollen, $Vertrag, $Urlaubstage, $CurrentUserID);
 
         // Attempt to execute the prepared statement
         if($stmt->execute()){
