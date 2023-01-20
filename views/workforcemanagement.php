@@ -63,8 +63,8 @@ function add_user_workforce_management($mysqli){
     $OutputMode = "show_form";
     $DAUcheck = 0;
 
-    $vornamePlaceholder = $nachnamePlaceholder = $mitarbeiternummerPlaceholder = '';
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = "";
+    $vornamePlaceholder = $nachnamePlaceholder = $mitarbeiternummerPlaceholder = $mailPlaceholder = $edvPlaceholder = $GruppePlaceholder = '';
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = "";
 
     // Parser
     if(isset($_POST['add_user_action'])){
@@ -72,6 +72,9 @@ function add_user_workforce_management($mysqli){
         $vornamePlaceholder = trim($_POST['vorname']);
         $nachnamePlaceholder = trim($_POST['nachname']);
         $mitarbeiternummerPlaceholder = trim($_POST['mitarbeiternummer']);
+        $mailPlaceholder = trim($_POST['mail']);
+        $edvPlaceholder = trim($_POST['edv']);
+        $GruppePlaceholder = trim($_POST['gruppe']);
 
         //DAUchecks
         //Check Empty Input
@@ -90,12 +93,63 @@ function add_user_workforce_management($mysqli){
             $DAUcheck++;
         }
 
+        if(!is_numeric($mitarbeiternummerPlaceholder)){
+            $mitarbeiternummerErr = "Eine Mitarbeiternummer darf nur aus Zahlen bestehen!";
+            $DAUcheck++;
+        }
+
+        if(empty($mailPlaceholder)){
+            $mailErr = "Bitte geben Sie eine Mailadresse des/r neuen Nutzer/in an!";
+            $DAUcheck++;
+        }
+
+        if(!filter_var($mailPlaceholder, FILTER_VALIDATE_EMAIL)){
+            $mailErr = "Bitte geben Sie eine gültige Mailadresse des/r neuen Nutzer/in an!";
+            $DAUcheck++;
+        }
+
+        if(empty($edvPlaceholder)){
+            $edvErr = "Bitte geben Sie einen EDV-Login des/r neuen Nutzer/in an!";
+            $DAUcheck++;
+        }
+
+        if(empty($GruppePlaceholder)){
+            $gruppeErr = "Bitte wählen Sie die Mitarbeitergruppe des/r neuen Nutzer/in an!";
+            $DAUcheck++;
+        }
+
+        // check if user with identical unique data exists
+        $AllUsers = get_sorted_list_of_all_users($mysqli, 'id', true);
+        foreach ($AllUsers as $User){
+            if($mitarbeiternummerPlaceholder==$User['mitarbeiternummer']){
+                $mitarbeiternummerErr = "Ein/e Nutzer/in mit dieser Mitarbeiternummer existiert bereits!";
+                $DAUcheck++;
+            }
+
+            if($mailPlaceholder==$User['mail']){
+                $mailErr = "Ein/e Nutzer/in mit dieser Mailadresse existiert bereits!";
+                $DAUcheck++;
+            }
+
+            if($edvPlaceholder==$User['username']){
+                $edvErr = "Ein/e Nutzer/in mit diesem EDV-Login existiert bereits!";
+                $DAUcheck++;
+            }
+        }
+
+        // Add user
+        if($DAUcheck==0) {
+            $Result = add_new_user($vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, 'nutzer');
+            if($Result['success']){
+                $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich angelegt!";
+            } else {
+                $DAUcheck++;
+            }
+        }
 
 
         //Set Output mode
-        if($DAUcheck>0){
-            $OutputMode = "show_form";
-        } else {
+        if($DAUcheck==0){
             $OutputMode = "return_card";
         }
     }
@@ -103,8 +157,11 @@ function add_user_workforce_management($mysqli){
     if($OutputMode=="show_form"){
         //Build Form
         $FormHTML .= form_group_input_text('Vorname', 'vorname', $vornamePlaceholder, true, $vornameErr);
-        $FormHTML .= form_group_input_text('Vorname', 'nachname', $nachnamePlaceholder, true, $nachnameErr);
+        $FormHTML .= form_group_input_text('Nachname', 'nachname', $nachnamePlaceholder, true, $nachnameErr);
         $FormHTML .= form_group_input_text('Mitarbeiternummer', 'mitarbeiternummer', $mitarbeiternummerPlaceholder, true, $mitarbeiternummerErr);
+        $FormHTML .= form_group_input_text('UKT-Mail', 'mail', $mailPlaceholder, true, $mailErr);
+        $FormHTML .= form_group_input_text('EDV-Kürzel', 'edv', $edvPlaceholder, true, $edvErr);
+        $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, true, $gruppeErr, false);
 
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_user_action', 'btn-primary', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
 
@@ -112,10 +169,7 @@ function add_user_workforce_management($mysqli){
         $FormHTML = grid_gap_generator($FormHTML);
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Neue/n Mitarbeiter/in anlegen','', $FORM);
-    }elseif($OutputMode=="return_card"){
-
-        $ReturnMessage = "User erfolgreich angelegt!";
-
+    }else{
         $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Neue/n Mitarbeiter/in anlegen',$ReturnMessage, $FORM);

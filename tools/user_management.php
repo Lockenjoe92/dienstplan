@@ -39,8 +39,7 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
     $pass_hash = password_hash($pass, PASSWORD_DEFAULT); // Creates a password hash
 
     // Prepare statement & DB Access
-    $mysqli = connect_db();
-    $sql = "INSERT INTO users (username, mail, mitarbeiternummer, password, vorname, nachname, nutzergruppen, abteilungsrollen, created_by) VALUES ()";
+    $sql = "INSERT INTO users (username, mail, mitarbeiternummer, password, vorname, nachname, nutzergruppen, abteilungsrollen, created_by) VALUES (?,?,?,?,?,?,?,?,?)";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
         $stmt->bind_param("ssisssssi", $Username, $Mail, $Mitarbeiternummer, $pass_hash, $Vorname, $Nachname, $ToolRollen, $AbteilungRollen, $CurrentUserID);
