@@ -47,7 +47,7 @@ function table_workforce_management($mysqli){
             $HTML .= '<td>'.$Mitarbeiter['mail'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['abteilungsrollen'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['vertrag'].'%</td>';
-            $HTML .= '<td></td>';
+            $HTML .= '<td><a href="workforce_management.php?mode=edit_user&user_id='.$Mitarbeiter['id'].'"><i class="bi bi-pencil-fill"></a></td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Mitarbeiter['nachname'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['vorname'].'</td>';
@@ -55,7 +55,7 @@ function table_workforce_management($mysqli){
             $HTML .= '<td>'.$Mitarbeiter['mail'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['abteilungsrollen'].'</td>';
             $HTML .= '<td>'.$Mitarbeiter['vertrag'].'%</td>';
-            $HTML .= '<td></td>';
+            $HTML .= '<td><a href="workforce_management.php?mode=edit_user&user_id='.$Mitarbeiter['id'].'"><i class="bi bi-pencil-fill"></a></td>';
         }
 
         // close row and count up
