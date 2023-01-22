@@ -140,3 +140,7 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
     $HTML .= '</div>';
     return $HTML;
 }
+
+function form_hidden_input_generator($Name, $Value){
+    return "<input type='hidden' name='".$Name."' value='".$Value."'";
+}

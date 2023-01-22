@@ -15,11 +15,15 @@ if(isset($_POST['workforcemanagement_go_back'])){
     $HTML .= table_workforce_management(connect_db());
 } elseif(isset($_POST['add_user_action'])){
     $HTML .= add_user_workforce_management(connect_db());
+} elseif (isset($_POST['edit_user_action'])){
+    $HTML .= edit_user_workforce_management(connect_db());
 } else {
     if(empty($_GET['mode'])){
         $HTML .= table_workforce_management(connect_db());
     } elseif ($_GET['mode']=='add_user'){
         $HTML .= add_user_workforce_management(connect_db());
+    } elseif ($_GET['mode']=='edit_user'){
+        $HTML .= edit_user_workforce_management(connect_db());
     }
 }
 

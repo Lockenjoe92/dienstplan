@@ -63,6 +63,36 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
     return $Antwort;
 }
 
+function edit_user($SelectedUser, $Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage){
+
+    // Prepare variables and generate initial password
+    $mysqli = connect_db();
+    $Antwort = [];
+    $CurrentUserID = get_current_user_id();
+
+    // Prepare statement & DB Access
+    $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, vertrag = ?, urlaubstage = ? WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("ssisssiii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $Vertrag, $Urlaubstage, $SelectedUser);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+        } else{
+            $Antwort['success']=true;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+}
+
 function get_current_user_id(){
     session_start();
     return $_SESSION['user'];
