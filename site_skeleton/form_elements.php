@@ -141,6 +141,60 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
     return $HTML;
 }
 
+function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<div class="form-group">';
+    $HTML .= '<label class="form-label">'.$Label.'</label>';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Options = explode(',', TOOLGRUPPEN);
+    foreach ($Options as $option){
+
+        if(in_array($option, $Value)){
+            $OptionsHTML .= '<option value="'.$option.'" selected>'.$option.'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$option.'">'.$option.'</option>';
+        }
+
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" multiple name="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled>Planungstoolrollen auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" multiple name="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.'>Planungstoolrollen auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
 function form_hidden_input_generator($Name, $Value){
-    return "<input type='hidden' name='".$Name."' value='".$Value."'";
+    return "<input type='hidden' name='".$Name."' value='".$Value."'</input>";
 }

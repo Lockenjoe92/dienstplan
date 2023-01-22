@@ -71,10 +71,10 @@ function edit_user($SelectedUser, $Vorname, $Nachname, $Username, $Mitarbeiternu
     $CurrentUserID = get_current_user_id();
 
     // Prepare statement & DB Access
-    $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, vertrag = ?, urlaubstage = ? WHERE id = ?";
+    $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, nutzergruppen = ?, vertrag = ?, urlaubstage = ? WHERE id = ?";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("ssisssiii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $Vertrag, $Urlaubstage, $SelectedUser);
+        $stmt->bind_param("ssissssiii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $SelectedUser);
 
         // Attempt to execute the prepared statement
         if($stmt->execute()){

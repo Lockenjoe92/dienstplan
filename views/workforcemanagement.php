@@ -237,16 +237,17 @@ function add_user_workforce_management($mysqli){
 
 }
 
-function edit_user_workforce_management($mysqli){
+function edit_user_workforce_management($mysqli, $admin=false){
 
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
     $OutputMode = "show_form";
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = $urlaubErr = $vertragErr = "";
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = "";
     $DAUcheck = 0;
     $UserCounter = 0;
     $FoundUser = [];
     $DAUerr = "";
+
     if(isset($_POST['edit_user_action'])){
         $SelectedUserID = $_POST['user_id'];
     } else {
@@ -290,6 +291,7 @@ function edit_user_workforce_management($mysqli){
         $GruppePlaceholder = $FoundUser['abteilungsrollen'];
         $vertragPlaceholder = $FoundUser['vertrag'];
         $urlaubPlaceholder = $FoundUser['urlaubstage'];
+        $RollenPlaceholder = explode(',',$FoundUser['nutzergruppen']);
 
         // Parser
         if(isset($_POST['edit_user_action'])){
@@ -302,6 +304,7 @@ function edit_user_workforce_management($mysqli){
             $GruppePlaceholder = trim($_POST['gruppe']);
             $vertragPlaceholder = trim($_POST['vertrag']);
             $urlaubPlaceholder = trim($_POST['urlaub']);
+            $RollenPlaceholder = $_POST['nutzergruppen'];
 
             //DAUchecks
             //Check Empty Input
@@ -385,6 +388,11 @@ function edit_user_workforce_management($mysqli){
                 $DAUcheck++;
             }
 
+            if(sizeof($RollenPlaceholder)==0){
+                $rollenErr = "Bitte wählen Sie mindestens eine Systemrolle des/r neuen Nutzer/in aus!";
+                $DAUcheck++;
+            }
+
             // check if user with identical unique data exists
             foreach ($AllUsers as $User){
 
@@ -410,7 +418,12 @@ function edit_user_workforce_management($mysqli){
 
             // Add user
             if($DAUcheck==0) {
-                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, 'nutzer', $vertragPlaceholder, $urlaubPlaceholder);
+
+                if(is_array($RollenPlaceholder)){
+                    $RollenPlaceholder = implode(',',$RollenPlaceholder);
+                }
+
+                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder);
                 if($Result['success']){
                     $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich bearbeitet!";
                 } else {
@@ -436,6 +449,13 @@ function edit_user_workforce_management($mysqli){
             $FormHTML .= form_group_input_text('Urlaubstage', 'urlaub', $urlaubPlaceholder, true, $urlaubErr);
             $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, false, $gruppeErr, false);
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);
+
+            if($admin) {
+                $FormHTML .= form_group_dropdown_toolrollen('Tool-Rollen', 'nutzergruppen[]', $RollenPlaceholder, false, $rollenErr, false);
+            } else {
+                $RollenPlaceholder = implode(',',$RollenPlaceholder);
+                $FormHTML .= form_hidden_input_generator('nutzergruppen[]', $RollenPlaceholder);
+            }
             $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_user_action', 'btn-primary', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
 
             // Gap it
