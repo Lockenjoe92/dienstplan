@@ -13,7 +13,15 @@ function table_workforce_management($mysqli){
             </div>';
 
     // Initialize Table
-    $HTML .= '<table data-toggle="table" data-search="true" data-toolbar="#toolbar" data-show-columns="true" data-search-highlight="true" data-show-multi-sort="true">';
+    $HTML .= '<table data-toggle="table" 
+data-search="true" 
+data-toolbar="#toolbar" 
+data-show-columns="true" 
+data-search-highlight="true" 
+data-show-multi-sort="true"
+  data-multiple-select-row="true"
+  data-click-to-select="true"
+  data-pagination="true">';
 
     // Setup Table Head
     $HTML .= '<thead>
@@ -74,11 +82,11 @@ function add_user_workforce_management($mysqli){
     $FormHTML = "";
     $OutputMode = "show_form";
     $DAUcheck = 0;
-
+    $FreieTagePlaceholder = [];
     $vornamePlaceholder = $nachnamePlaceholder = $mitarbeiternummerPlaceholder = $mailPlaceholder = $edvPlaceholder = $GruppePlaceholder = '';
     $vertragPlaceholder = VERTRAGSUMFANG;
     $urlaubPlaceholder = DEFAULTURLAUBSTAGE;
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = $urlaubErr = $vertragErr = "";
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $freietageErr = $gruppeErr = $urlaubErr = $vertragErr = "";
 
     // Parser
     if(isset($_POST['add_user_action'])){
@@ -87,8 +95,11 @@ function add_user_workforce_management($mysqli){
         $nachnamePlaceholder = trim($_POST['nachname']);
         $mitarbeiternummerPlaceholder = trim($_POST['mitarbeiternummer']);
         $mailPlaceholder = trim($_POST['mail']);
-        $edvPlaceholder = trim($_POST['edv']);
+        #$edvPlaceholder = trim($_POST['edv']);
         $GruppePlaceholder = trim($_POST['gruppe']);
+        if(isset($_POST['free_days'])){
+            $FreieTagePlaceholder = $_POST['free_days'];
+        }
         $vertragPlaceholder = trim($_POST['vertrag']);
         $urlaubPlaceholder = trim($_POST['urlaub']);
 
@@ -164,10 +175,10 @@ function add_user_workforce_management($mysqli){
             $DAUcheck++;
         }
 
-        if(empty($edvPlaceholder)){
-            $edvErr = "Bitte geben Sie einen EDV-Login des/r neuen Nutzer/in an!";
-            $DAUcheck++;
-        }
+        #if(empty($edvPlaceholder)){
+        #    $edvErr = "Bitte geben Sie einen EDV-Login des/r neuen Nutzer/in an!";
+        #    $DAUcheck++;
+        #}
 
         if(empty($GruppePlaceholder)){
             $gruppeErr = "Bitte wählen Sie die Mitarbeitergruppe des/r neuen Nutzer/in an!";
@@ -182,22 +193,28 @@ function add_user_workforce_management($mysqli){
                 $DAUcheck++;
             }
 
-            if($mailPlaceholder==$User['mail']){
-                $mailErr = "Ein/e Nutzer/in mit dieser Mailadresse existiert bereits!";
-                $DAUcheck++;
-            }
+            #if($mailPlaceholder==$User['mail']){
+             #   $mailErr = "Ein/e Nutzer/in mit dieser Mailadresse existiert bereits!";
+              #  $DAUcheck++;
+            #}
 
-            if($edvPlaceholder==$User['username']){
-                $edvErr = "Ein/e Nutzer/in mit diesem EDV-Login existiert bereits!";
-                $DAUcheck++;
-            }
+            #if($edvPlaceholder==$User['username']){
+             #   $edvErr = "Ein/e Nutzer/in mit diesem EDV-Login existiert bereits!";
+              #  $DAUcheck++;
+            #}
         }
 
         // Add user
         if($DAUcheck==0) {
-            $Result = add_new_user($vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, 'nutzer', $vertragPlaceholder, $urlaubPlaceholder);
+            $edvPlaceholder = "anxyzz1";
+
+            if(is_array($FreieTagePlaceholder)){
+                $FreieTagePlaceholder = implode(',',$FreieTagePlaceholder);
+            }
+
+            $Result = add_new_user($vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, 'nutzer', $vertragPlaceholder, $urlaubPlaceholder, $FreieTagePlaceholder);
             if($Result['success']){
-                $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich angelegt!";
+                $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich angelegt!<br>Das Initalpasswort lautet: <b>".$Result['pass']."</b>";
             } else {
                 $DAUcheck++;
             }
@@ -216,10 +233,13 @@ function add_user_workforce_management($mysqli){
         $FormHTML .= form_group_input_text('Nachname', 'nachname', $nachnamePlaceholder, true, $nachnameErr);
         $FormHTML .= form_group_input_text('Mitarbeiternummer', 'mitarbeiternummer', $mitarbeiternummerPlaceholder, true, $mitarbeiternummerErr);
         $FormHTML .= form_group_input_text('UKT-Mail', 'mail', $mailPlaceholder, true, $mailErr);
-        $FormHTML .= form_group_input_text('EDV-Kürzel', 'edv', $edvPlaceholder, true, $edvErr);
-        $FormHTML .= form_group_input_text('Vertragsumfang in %', 'vertrag', $vertragPlaceholder, true, $vertragErr);
+        #$FormHTML .= form_group_input_text('EDV-Kürzel', 'edv', $edvPlaceholder, true, $edvErr);
         $FormHTML .= form_group_input_text('Urlaubstage', 'urlaub', $urlaubPlaceholder, true, $urlaubErr);
-        $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, false, $gruppeErr, false);
+        $FormHTML .= form_group_input_text('Vertragsumfang in %', 'vertrag', $vertragPlaceholder, true, $vertragErr);
+        $FormHTML .= form_group_dorpdown_arbeitstage('Arbeitsfreie Tage', 'free_days[]', $FreieTagePlaceholder, false, $freietageErr, false);
+        $FormHTML .= form_hidden_input_generator('plchldr1', '1');
+        $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, true, $gruppeErr, false);
+        $FormHTML .= form_hidden_input_generator('plchldr2', '2');
 
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_user_action', 'btn-primary', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
 
@@ -292,6 +312,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
         $vertragPlaceholder = $FoundUser['vertrag'];
         $urlaubPlaceholder = $FoundUser['urlaubstage'];
         $RollenPlaceholder = explode(',',$FoundUser['nutzergruppen']);
+        $freieTagePlaceholder = explode(',', $FoundUser['freie_tage']);
 
         // Parser
         if(isset($_POST['edit_user_action'])){
@@ -300,11 +321,12 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $nachnamePlaceholder = trim($_POST['nachname']);
             $mitarbeiternummerPlaceholder = trim($_POST['mitarbeiternummer']);
             $mailPlaceholder = trim($_POST['mail']);
-            $edvPlaceholder = trim($_POST['edv']);
+            #$edvPlaceholder = trim($_POST['edv']);
             $GruppePlaceholder = trim($_POST['gruppe']);
             $vertragPlaceholder = trim($_POST['vertrag']);
             $urlaubPlaceholder = trim($_POST['urlaub']);
             $RollenPlaceholder = $_POST['nutzergruppen'];
+            $freieTagePlaceholder = $_POST['free_days'];
 
             //DAUchecks
             //Check Empty Input
@@ -369,27 +391,27 @@ function edit_user_workforce_management($mysqli, $admin=false){
             }
 
             if(empty($mailPlaceholder)){
-                $mailErr = "Bitte geben Sie eine Mailadresse des/r neuen Nutzer/in an!";
+                $mailErr = "Bitte geben Sie eine Mailadresse des/r Nutzer/in an!";
                 $DAUcheck++;
             }
 
             if(!filter_var($mailPlaceholder, FILTER_VALIDATE_EMAIL)){
-                $mailErr = "Bitte geben Sie eine gültige Mailadresse des/r neuen Nutzer/in an!";
+                $mailErr = "Bitte geben Sie eine gültige Mailadresse des/r Nutzer/in an!";
                 $DAUcheck++;
             }
 
-            if(empty($edvPlaceholder)){
-                $edvErr = "Bitte geben Sie einen EDV-Login des/r neuen Nutzer/in an!";
-                $DAUcheck++;
-            }
+            #if(empty($edvPlaceholder)){
+             #   $edvErr = "Bitte geben Sie einen EDV-Login des/r Nutzer/in an!";
+              #  $DAUcheck++;
+            #}
 
             if(empty($GruppePlaceholder)){
-                $gruppeErr = "Bitte wählen Sie die Mitarbeitergruppe des/r neuen Nutzer/in an!";
+                $gruppeErr = "Bitte wählen Sie die Mitarbeitergruppe des/r Nutzer/in an!";
                 $DAUcheck++;
             }
 
             if(sizeof($RollenPlaceholder)==0){
-                $rollenErr = "Bitte wählen Sie mindestens eine Systemrolle des/r neuen Nutzer/in aus!";
+                $rollenErr = "Bitte wählen Sie mindestens eine Systemrolle des/r Nutzer/in aus!";
                 $DAUcheck++;
             }
 
@@ -408,10 +430,10 @@ function edit_user_workforce_management($mysqli, $admin=false){
                         $DAUcheck++;
                     }
 
-                    if($edvPlaceholder==$User['username']){
-                        $edvErr = "Ein/e andere/r Nutzer/in mit diesem EDV-Login existiert bereits!";
-                        $DAUcheck++;
-                    }
+                    #if($edvPlaceholder==$User['username']){
+                     #   $edvErr = "Ein/e andere/r Nutzer/in mit diesem EDV-Login existiert bereits!";
+                      #  $DAUcheck++;
+                    #}
                 }
 
             }
@@ -419,11 +441,16 @@ function edit_user_workforce_management($mysqli, $admin=false){
             // Add user
             if($DAUcheck==0) {
 
+                // encode select multiple items
                 if(is_array($RollenPlaceholder)){
                     $RollenPlaceholder = implode(',',$RollenPlaceholder);
                 }
 
-                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder);
+                if(is_array($freieTagePlaceholder)){
+                    $freieTagePlaceholder = implode(',',$freieTagePlaceholder);
+                }
+
+                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder);
                 if($Result['success']){
                     $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich bearbeitet!";
                 } else {
@@ -444,8 +471,10 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $FormHTML .= form_group_input_text('Nachname', 'nachname', $nachnamePlaceholder, true, $nachnameErr);
             $FormHTML .= form_group_input_text('Mitarbeiternummer', 'mitarbeiternummer', $mitarbeiternummerPlaceholder, true, $mitarbeiternummerErr);
             $FormHTML .= form_group_input_text('UKT-Mail', 'mail', $mailPlaceholder, true, $mailErr);
-            $FormHTML .= form_group_input_text('EDV-Kürzel', 'edv', $edvPlaceholder, true, $edvErr);
+            #$FormHTML .= form_group_input_text('EDV-Kürzel', 'edv', $edvPlaceholder, true, $edvErr);
             $FormHTML .= form_group_input_text('Vertragsumfang in %', 'vertrag', $vertragPlaceholder, true, $vertragErr);
+            $FormHTML .= form_group_dorpdown_arbeitstage('Arbeitsfreie Tage', 'free_days[]', $freieTagePlaceholder, false);
+            $FormHTML .= form_hidden_input_generator('plchldr1', '1');
             $FormHTML .= form_group_input_text('Urlaubstage', 'urlaub', $urlaubPlaceholder, true, $urlaubErr);
             $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, false, $gruppeErr, false);
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);

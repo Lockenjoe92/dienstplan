@@ -89,8 +89,8 @@ function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $
 
 function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
 
-    $HTML = '<div class="form-group">';
-    $HTML .= '<label class="form-label">'.$Label.'</label>';
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
 
     if($disbled){
         $disbledHTML = 'disabled';
@@ -124,14 +124,14 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
             $InValid = "";
         }
 
-        $HTML .= '<select class="form-select" name="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Mitarbeitergruppe auswählen</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</<select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
-        $HTML .= '<select class="form-select" name="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Mitarbeitergruppe auswählen</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</<select>';
@@ -143,8 +143,8 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
 
 function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
 
-    $HTML = '<div class="form-group">';
-    $HTML .= '<label class="form-label">'.$Label.'</label>';
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
 
     if($disbled){
         $disbledHTML = 'disabled';
@@ -178,15 +178,69 @@ function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormContro
             $InValid = "";
         }
 
-        $HTML .= '<select class="form-select" multiple name="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<select class="form-select" multiple name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled>Planungstoolrollen auswählen</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</<select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
-        $HTML .= '<select class="form-select" multiple name="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<select class="form-select" multiple name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Planungstoolrollen auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
+function form_group_dorpdown_arbeitstage($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    for($a=1;$a<=7;$a++){
+
+        if(in_array($a, $Value)){
+            $OptionsHTML .= '<option value="'.$a.'" selected>'.getDay($a).'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$a.'">'.getDay($a).'</option>';
+        }
+
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" multiple name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Arbeitsfreie Tage auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" multiple name="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Arbeitsfreie Tage auswählen</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</<select>';
     }
@@ -197,4 +251,9 @@ function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormContro
 
 function form_hidden_input_generator($Name, $Value){
     return "<input type='hidden' name='".$Name."' value='".$Value."'</input>";
+}
+
+function getDay($dow){
+    $dowMap = array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag');
+    return $dowMap[$dow-1];
 }
