@@ -57,7 +57,7 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
             $Antwort['pass'] = $pass;
             $Antwort['newID'] = $mysqli->insert_id;
         } else{
-            $Antwort['success']=true;
+            $Antwort['success']=false;
             $Antwort['err']="Fehler beim Datenbankzugriff";
         }
 

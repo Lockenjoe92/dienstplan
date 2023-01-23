@@ -20,7 +20,7 @@ function form_builder($FormHTML='', $action='self', $method='post'){
 function form_group_input_text($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false) {
 
     $HTML = '<div class="form-group">';
-    $HTML .= '<label>'.$Label.'</label>';
+    $HTML .= '<label class="form-label">'.$Label.'</label><br>';
 
     if($disbled){
         $disbledHTML = 'disabled';
@@ -65,6 +65,33 @@ function form_group_input_password($Label, $name, $Value='', $HasFormControl=tru
         $HTML .= '<span class="invalid-feedback">'.$FieldError.'</span>';
     } else {
         $HTML .= '<input type="password" name="'.$name.'" class="" value="'.$Value.'" '.$disbledHTML.'>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
+function form_group_input_date($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false) {
+
+    $HTML = '<div class="form-group">';
+    $HTML .= '<label>'.$Label.'</label>';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($HasFormControl){
+        if(!empty($FieldError)){
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+        $HTML .= '<input type="date" name="'.$name.'" class="form-control '.$InValid.'" value="'.$Value.'" '.$disbledHTML.'>';
+        $HTML .= '<span class="invalid-feedback">'.$FieldError.'</span>';
+    } else {
+        $HTML .= '<input type="date" name="'.$name.'" class="" value="'.$Value.'" '.$disbledHTML.'>';
     }
 
     $HTML .= '</div>';
@@ -133,6 +160,114 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Mitarbeitergruppe auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
+function form_group_dropdown_abwesenheitentypen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Options = explode(',', ABWESENHEITENTYPEN);
+    foreach ($Options as $option){
+
+        if($Value==$option){
+            $OptionsHTML .= '<option value="'.$option.'" selected>'.$option.'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$option.'">'.$option.'</option>';
+        }
+
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Abwesenheitstyp auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.'>Abwesenheitstyp auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
+function form_group_dropdown_abwesenheiten_dringlichkeiten_typen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Options = explode(',', ABWESENHEITENDRINGLICHKEITEN);
+    foreach ($Options as $option){
+
+        if($Value==$option){
+            $OptionsHTML .= '<option value="'.$option.'" selected>'.$option.'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$option.'">'.$option.'</option>';
+        }
+
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Dringlichkeit angeben</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.'>Dringlichkeit angeben</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</<select>';
     }
@@ -251,6 +386,59 @@ function form_group_dorpdown_arbeitstage($Label, $name, $Value='', $HasFormContr
 
     $HTML .= '</div>';
     return $HTML;
+}
+
+function form_group_dropdown_all_users($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $AllUsers = get_sorted_list_of_all_users(connect_db());
+    foreach($AllUsers as $User){
+
+        if($User['id'] == $Value){
+            $OptionsHTML .= "<option value='".$User['id']."' selected>".$User['nachname'].", ".$User['vorname']."</option>";
+        } else {
+            $OptionsHTML .= "<option value='".$User['id']."'>".$User['nachname'].", ".$User['vorname']."</option>";
+        }
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Mitarbeiter/in auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+        $HTML .= '<select class="form-select" name="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Mitarbeiter/in auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
 }
 
 function form_hidden_input_generator($Name, $Value){

@@ -29,6 +29,8 @@ if(isset($_POST['workforcemanagement_go_back'])){
         $HTML .= add_user_workforce_management(connect_db());
     } elseif ($_GET['mode']=='edit_user'){
         $HTML .= edit_user_workforce_management(connect_db(), $Admin);
+    } else {
+        $HTML .= table_workforce_management(connect_db());
     }
 }
 
