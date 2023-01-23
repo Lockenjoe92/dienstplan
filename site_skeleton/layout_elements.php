@@ -45,7 +45,6 @@ function nav_bar($LoggedIn=False, $UserRoles=[]){
           </a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="change_password_user.php">Passwort ändern</a></li>
-            <li><a class="dropdown-item" href="personal_settings_user.php">Persönliche Daten</a></li>
           </ul>
         </li>';
 

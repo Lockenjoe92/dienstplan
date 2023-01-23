@@ -1,3 +1,3 @@
-$(document).ready(function(){
-    $('[data-bs-toggle="tooltip"]').tooltip();
+$(document).ready(function() {
+    $("body").tooltip({ selector: '[data-toggle=tooltip]' });
 });
