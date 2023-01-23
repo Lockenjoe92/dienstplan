@@ -213,6 +213,10 @@ function form_group_dorpdown_arbeitstage($Label, $name, $Value='', $HasFormContr
         $PrimSelected = "";
     }
 
+    if(!is_array($Value)){
+        $Value = [];
+    }
+
     //Build Options List
     $OptionsHTML = "";
     for($a=1;$a<=7;$a++){

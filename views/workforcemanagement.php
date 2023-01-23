@@ -326,7 +326,9 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $vertragPlaceholder = trim($_POST['vertrag']);
             $urlaubPlaceholder = trim($_POST['urlaub']);
             $RollenPlaceholder = $_POST['nutzergruppen'];
-            $freieTagePlaceholder = $_POST['free_days'];
+            if(isset($_POST['free_days'])){
+                $freieTagePlaceholder = $_POST['free_days'];
+            }
 
             //DAUchecks
             //Check Empty Input

@@ -18,7 +18,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
     // Check if username is empty
     if(empty(trim($_POST["username"]))){
-        $username_err = "Bitte gib ein Nutzernamen an.";
+        $username_err = "Bitte gib deine Mitarbeiternummer an.";
     } else{
         $username = trim($_POST["username"]);
     }
@@ -40,7 +40,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         sleep(1);
 
         // Prepare a select statement
-        $sql = "SELECT id, password FROM users WHERE username = ?";
+        $sql = "SELECT id, password FROM users WHERE mitarbeiternummer = ?";
 
         if($stmt = $mysqli->prepare($sql)){
             // Bind variables to the prepared statement as parameters

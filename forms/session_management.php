@@ -10,7 +10,7 @@ function login_form($username = "", $password = "", $username_err='', $password_
 
     //Build the Form Parts
     $FormHTML = '<div class="d-grid gap-2">';
-    $FormHTML .= form_group_input_text('Nutzername', 'username', $username, true, $username_err);
+    $FormHTML .= form_group_input_text('Mitarbeiternummer', 'username', $username, true, $username_err);
     $FormHTML .= form_group_input_password('Passwort', 'password', $password, true, $password_err);
     $FormHTML .= form_group_continue_return_buttons(true, 'Login', 'login', 'btn-primary', false);
     $FormHTML .= '</div>';
