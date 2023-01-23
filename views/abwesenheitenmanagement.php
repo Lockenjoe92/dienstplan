@@ -57,6 +57,13 @@ data-show-multi-sort="true"
             }
         }
 
+        // Optionally show comments
+        if($Abwesenheit['create_comment']!=''){
+            $Urgency = $Abwesenheit['urgency'].' <a href=# data-bs-toggle="tooltip" data-bs-html="true" data-bs-title="'.$Abwesenheit['create_comment'].'"><i class="bi bi-megaphone-fill"></a>';
+        } else {
+            $Urgency = $Abwesenheit['urgency'];
+        }
+
         if($counter==1){
             $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['status_bearbeitung'].'</td>';
             $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
@@ -64,7 +71,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
-            $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
+            $HTML .= '<td>'.$Urgency.'</td>';
             $HTML .= '<td></td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Abwesenheit['status_bearbeitung'].'</td>';
@@ -73,7 +80,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
-            $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
+            $HTML .= '<td>'.$Urgency.'</td>';
             $HTML .= '<td></td>';
         }
 

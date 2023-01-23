@@ -24,7 +24,7 @@ function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $E
     $sql = "INSERT INTO abwesenheitsantraege (user, begin, end, type, urgency, create_date, create_user, create_comment, bearbeitet_am, status_bearbeitung) VALUES (?,?,?,?,?,?,?,?,?,?)";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("isssssssss", $User, $BeginDate, $EndDate, $Type, $Urgency, $EndDate, $CurrentUserID, $EntryComment, $DatumBearbeitet, $Status);
+        $stmt->bind_param("isssssssss", $User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate, $CurrentUserID, $EntryComment, $DatumBearbeitet, $Status);
 
         // Attempt to execute the prepared statement
         if($stmt->execute()){
