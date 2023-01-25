@@ -8,7 +8,26 @@ include_once "./config/dependencies.php";
 $Nutzergruppen = session_manager('nutzer');
 $mysqli = connect_db();
 
-$HTML = "<h1 class='align-content-center'>Meine Abwesenheitsanträge</h1>";
+
+// Prepare calendar View
+$Month = date('m');
+$Year = date('Y');
+if(isset($_POST['action_change_date'])){
+    if(is_numeric($_POST['month'])){
+        $Month = $_POST['month'];
+    }
+    if(is_numeric($_POST['year'])){
+        $Year = $_POST['year'];
+    }
+}
+
+// Start dem outputs
+$HTML = "<h1 class='align-content-center'>Urlaubsübersicht</h1>";
+$HTML .= urlaubsplan_funktionsbuttons($Month, $Year);
+$HTML .= urlaubsplan_tabelle_user($Month, $Year);
+$HTML = grid_gap_generator($HTML);
+
+$HTML .= "<h1 class='align-content-center'>Meine Abwesenheitsanträge</h1>";
 
 if(isset($_POST['abwesenheitmanagement_go_back'])){
     $HTML .= table_abwesenheiten_user($mysqli,$Nutzergruppen);

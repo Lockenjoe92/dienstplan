@@ -14,6 +14,129 @@ function urlaubsplan_funktionsbuttons($Month,$Year){
 
 }
 
+function urlaubsplan_tabelle_user($month, $year){
+
+    $HTML = '';
+    $mysqli = connect_db();
+    $CurrentUser = get_current_user_id();
+    $AllUsers = get_sorted_list_of_all_users($mysqli);
+    $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $FirstDayOfCalendarString = "01-".$month."-".$year;
+    $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
+
+    //Initialize Array to hold stats
+    $DataDays = [];
+    $Day = [];
+    for($d=0;$d<=31;$d++){
+        $Day['total']=0;
+        $Day['OA']=0;
+        $Day['FA']=0;
+        $Day['AA']=0;
+        $DataDays[] = $Day;
+    }
+
+    // Generate Rows based on Users
+    $TableRows = "";
+    foreach ($AllUsers as $User) {
+
+        // Don't show people from HR
+        if($User['abteilungsrollen']!="Verwaltung"){
+            $TableRowContent = "<tr>";
+
+            // Change first columns color depending on Employee status
+            if($User['abteilungsrollen']=="OA"){
+                $Coloring = "table-danger";
+            } elseif ($User['abteilungsrollen']=="FA"){
+                $Coloring = "table-warning";
+            } elseif ($User['abteilungsrollen']=="AA"){
+                $Coloring = "table-success";
+            } else {
+                $Coloring = "";
+            }
+
+            // Get the User Name
+            $TableRowContent .= "<td class='".$Coloring."'>".$User['nachname'].", ".$User['vorname']."</td>";
+
+            // Populate the days with information
+            for($a=0;$a<31;$a++){
+                $Command = "+".$a." days";
+                $ThisDay = strtotime($Command, $FirstDayOfCalendar);
+                $ThisDayData = $DataDays[$a];
+
+                //Catch Month shift
+                if(date("m", $ThisDay)==$month){
+                    $ReturnValues = populate_day_urlaubsplan_tabelle_management($ThisDay,$User['id'],$AllAbwesenheiten,$User['abteilungsrollen'], $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
+                    $TableRowContent .= $ReturnValues['HTML'];
+                    $NewDayStatData['total']=$ReturnValues['total'];
+                    $NewDayStatData['OA']=$ReturnValues['OA'];
+                    $NewDayStatData['FA']=$ReturnValues['FA'];
+                    $NewDayStatData['AA']=$ReturnValues['AA'];
+                    $DataDays[$a] = $NewDayStatData;
+                }
+
+            }
+
+            $TableRowContent .= "<td>".calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $year)."</td>";
+
+            $TableRowContent .= "</tr>";
+
+            if($User['id']==$CurrentUser){
+                $TableRows .= $TableRowContent;
+            }
+        }
+    }
+
+    // Build Table header -> this means loading date information
+    $TableHeader = "<thead>";
+
+    $TableHeaderRowUsers = "<tr><th></th>";
+    $TableHeaderRowTotal = "<tr><th>Gesamtabwesenheiten in Abteilung</th>";
+    #$TableHeaderRowOA = "<tr><th>OA</th>";
+    #$TableHeaderRowFA = "<tr><th>FA</th>";
+    #$TableHeaderRowAA = "<tr><th>AA</th>";
+
+    //Iterate as long as we are still in the same month
+    for($a=0;$a<31;$a++){
+        $Command = "+".$a." days";
+        $ThisDay = strtotime($Command, $FirstDayOfCalendar);
+        $DataDay = $DataDays[$a];
+
+        //Catch Month shift
+        if(date("m", $ThisDay)==$month){
+            $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
+            $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
+            #$TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
+            #$TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
+            #$TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
+        }
+
+    }
+
+    $TableHeaderRowUsers .= "</tr>";
+    $TableHeaderRowTotal .= "</tr>";
+    #$TableHeaderRowOA .= "</tr>";
+    #$TableHeaderRowFA .= "</tr>";
+    #$TableHeaderRowAA .= "</tr>";
+
+    //Build table head rows as wished
+    $TableHeader .= $TableHeaderRowUsers;
+    $TableHeader .= $TableHeaderRowTotal;
+    #$TableHeader .= $TableHeaderRowOA;
+    #$TableHeader .= $TableHeaderRowFA;
+    #$TableHeader .= $TableHeaderRowAA;
+    $TableHeader .= "</thead>";
+
+    // Build table body
+    $TableBody = '<tbody class="table-group-divider">'.$TableRows.'</tbody>';
+
+    // Build that calendar
+    $Table = "<table class='table table-bordered table-sm table-condensed'>";
+    $Table .= $TableHeader;
+    $Table .= $TableBody;
+    $Table .= "</table>";
+
+    return $Table;
+}
 
 function urlaubsplan_tabelle_management($month, $year){
 

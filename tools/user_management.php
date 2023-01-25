@@ -123,3 +123,18 @@ function get_sorted_list_of_all_users($mysqli, $orderBy='nachname ASC', $include
     return $Users;
 
 }
+
+function get_current_user_infos($mysqli, $ID){
+
+    $Users = [];
+    $sql = "SELECT * FROM users WHERE id = ".$ID."";
+
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            $Users[] = $row;
+        }
+    }
+
+    return $Users;
+
+}

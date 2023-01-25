@@ -106,6 +106,8 @@ function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $
         $HTML .= '<input type="submit" class="btn '.$GoBackClass.'" value="'.$GoBackValue.'" name="'.$GoBackName.'">';
     }
 
+    $HTML .= " ";
+
     if($Continue){
         $HTML .= '<input type="submit" class="btn '.$ContinueClass.'" value="'.$ContinueValue.'" name="'.$ContinueName.'">';
     }
