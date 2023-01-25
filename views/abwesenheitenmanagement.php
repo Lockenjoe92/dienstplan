@@ -16,6 +16,7 @@ function table_abwesenheiten_management($mysqli){
     // Initialize Table
     $HTML .= '<table data-toggle="table" 
 data-search="true" 
+data-locale="de-DE"
 data-toolbar="#toolbar" 
 data-show-columns="true" 
 data-search-highlight="true" 
@@ -110,6 +111,7 @@ function table_abwesenheiten_user($mysqli){
     // Initialize Table
     $HTML .= '<table data-toggle="table" 
 data-search="true" 
+data-locale="de-DE"
 data-toolbar="#toolbar" 
 data-show-columns="true" 
 data-search-highlight="true" 
