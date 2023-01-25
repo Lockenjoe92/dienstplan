@@ -1,7 +1,7 @@
 <?php
 
 // Generates HTML-Body. Takes input-String and wraps it with the Footer & Skript commands
-function site_body($SiteTitle, $Content, $loggedIn = false, $UserRoles=[]){
+function site_body($SiteTitle, $Content, $loggedIn = false, $UserRoles=[], $UseContainer=true){
 
     //Initialize Doctype and Header
     $Return = '<!DOCTYPE html>
@@ -16,9 +16,13 @@ function site_body($SiteTitle, $Content, $loggedIn = false, $UserRoles=[]){
                     </head>';
 
     // Initialize and Fill Body
+    if($UseContainer){
+        $Content = container_builder($Content);
+    }
+
     $Return .= '<body>
                     '.nav_bar($loggedIn,$UserRoles).'
-                    '.container_builder($Content).'
+                    '.$Content.'
                     <script src="/js/bootstrap.bundle.js"></script>
                     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
                     <script src="https://unpkg.com/bootstrap-table@1.21.2/dist/bootstrap-table.min.js"></script>

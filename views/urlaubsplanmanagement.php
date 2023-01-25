@@ -77,7 +77,7 @@ function urlaubsplan_tabelle_management($month, $year){
     $TableBody = '<tbody class="table-group-divider">'.$TableRows.'</tbody>';
 
     // Build that calendar
-    $Table = "<table class='table table-sm table-condensed'>";
+    $Table = "<table class='table table-bordered table-sm table-condensed'>";
     $Table .= $TableHeader;
     $Table .= $TableBody;
     $Table .= "</table>";
@@ -88,6 +88,28 @@ function urlaubsplan_tabelle_management($month, $year){
 
 function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenheiten){
 
-    return "<td></td>";
+    $Answer = "<td></td>";
+
+    //Loop through all Abwesenheiten
+    foreach ($AllAbwesenheiten as $Abwesenheit){
+
+        // Only check Abwesenheiten that count for User
+        if($Abwesenheit['user']==$UserID){
+
+            //Check if Abwesenheit is active on this day
+            if(($Day>=strtotime($Abwesenheit['begin']))&&($Day<=strtotime($Abwesenheit['end']))){
+
+                if($Abwesenheit['status_bearbeitung']=="Beantragt"){
+                    $Answer = "<td class='text-center table-warning'>U*</td>";
+                } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
+                    $Answer = "<td class='text-center table-primary'>U</td>";
+                }
+
+            }
+        }
+    }
+
+
+    return $Answer;
 
 }
