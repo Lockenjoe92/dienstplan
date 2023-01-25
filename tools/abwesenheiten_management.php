@@ -13,6 +13,17 @@ function get_sorted_list_of_all_abwesenheiten($mysqli){
     return $Users;
 }
 
+function get_abwesenheit_data($mysqli, $IDabwesenheit){
+
+    $sql = "SELECT * FROM abwesenheitsantraege WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        $stmt->bind_param("i",$IDabwesenheit);
+        if($res = $stmt->query()){
+            return mysqli_fetch_assoc($res);
+        }
+    }
+}
+
 function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate='', $EntryComment='', $Status = 'Beantragt', $DatumBearbeitet = ''){
 
     // Prepare variables and generate initial password

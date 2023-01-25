@@ -222,6 +222,62 @@ function form_group_dropdown_abwesenheitentypen($Label, $name, $Value='', $HasFo
     return $HTML;
 }
 
+function form_group_dropdown_bearbeitungsstati($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Options = explode(',', ABWESENHEITENBEARBEITUNGSSTATI);
+    foreach ($Options as $option){
+
+        $optionUsable = explode(':', $option);
+
+        if($Value==$option){
+            $OptionsHTML .= '<option value="'.$optionUsable[0].'" selected>'.$optionUsable[0].'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$optionUsable[0].'">'.$optionUsable[0].'</option>';
+        }
+
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Abwesenheitstyp auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.'>Abwesenheitstyp auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</<select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
 function form_group_dropdown_abwesenheiten_dringlichkeiten_typen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';

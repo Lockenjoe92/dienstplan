@@ -19,6 +19,17 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
         $HTML .= table_abwesenheiten_user($mysqli,$Nutzergruppen);
     } elseif ($_GET['mode']=='add_abwesenheit'){
         $HTML .= add_entry_abwesenheiten_user($mysqli);
+    } elseif ($_GET['mode']=='delete_abwesenheit'){
+        if(is_numeric($_GET['abwesenheit_id'])){
+            $AbwesenheitObj = get_abwesenheit_data($mysqli,$_GET['abwesenheit_id']);
+            if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
+                $HTML .= delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj);
+            } else {
+                $HTML .= table_abwesenheiten_user($mysqli,$Nutzergruppen);
+            }
+        } else {
+            $HTML .= table_abwesenheiten_user($mysqli,$Nutzergruppen);
+        }
     }
 }
 

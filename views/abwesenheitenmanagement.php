@@ -59,10 +59,15 @@ data-show-multi-sort="true"
         }
 
         // Build edit/delete Buttons
-        if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
-            $Options = '<i class="bi bi-pencil-fill"> <i class="bi bi-trash3-fill"> ';
-        }else{
-            $Options = '';
+        $NutzerrollenArray = explode(',',$Nutzerrollen);
+        if(in_array('admin', $NutzerrollenArray)){
+            $Options = '<i class="bi bi-check-circle-fill"> <i class="bi bi-pencil-fill"> <i class="bi bi-trash3-fill"> ';
+        } else {
+            if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
+                $Options = '<i class="bi bi-check-circle-fill"> <i class="bi bi-pencil-fill"> <i class="bi bi-trash3-fill"> ';
+            }else{
+                $Options = '';
+            }
         }
 
         // Optionally show comments
@@ -165,7 +170,7 @@ data-show-multi-sort="true"
 
             // Build edit/delete Buttons
             if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
-                $Options = '<i class="bi bi-pencil-fill"> <i class="bi bi-trash3-fill"> ';
+                $Options = '<i class="bi bi-pencil-fill"> <a href="abwesenheiten_user.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></a> ';
             }else{
                 $Options = '';
             }
@@ -213,8 +218,10 @@ function add_entry_abwesenheiten_management($mysqli){
     $FormHTML = "";
     $OutputMode = "show_form";
     $DAUcheck = 0;
+    $statusPlaceholder = "Beantragt";
+    $approvalDatePlaceholder = '';
     $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $entryDatePlaceholder = $commentPlaceholder = "";
-    $startDateErr = $endDateErr = $entryDateErr = "";
+    $startDateErr = $endDateErr = $entryDateErr = $approvalDateErr = "";
 
     // Do stuff
     if(isset($_POST['add_abwesenheit_action'])){
@@ -227,11 +234,13 @@ function add_entry_abwesenheiten_management($mysqli){
         $urgencyPlaceholder = trim($_POST['urgency']);
         $entryDatePlaceholder = trim($_POST['entry-date']);
         $commentPlaceholder = trim($_POST['comment_user']);
+        $statusPlaceholder = trim($_POST['status']);
+        $approvalDatePlaceholder = trim($_POST['approval-date']);
 
         // Do some DAU-Checks here
         if($DAUcheck==0){
 
-            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder);
+            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder, $statusPlaceholder, $approvalDatePlaceholder);
             if($Return['success']){
                 $OutputMode="show_return_card";
                 $ReturnMessage = "Abwesenheit erfolgreich angelegt!";
@@ -254,6 +263,9 @@ function add_entry_abwesenheiten_management($mysqli){
         $FormHTML .= form_hidden_input_generator('plchldr3', '3');
         $FormHTML .= form_group_input_date('Beantragt am', 'entry-date', $entryDatePlaceholder, true, $entryDateErr, false);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
+        $FormHTML .= "<h5>Optional: Bereits stattgefundene Bearbeitung festhalten</h5>";
+        $FormHTML .= form_group_input_date('Bearbeitet am', 'approval-date', $approvalDatePlaceholder, true, $entryDateErr, false);
+        $FormHTML .= form_group_dropdown_bearbeitungsstati('Bearbeitungsstatus', 'status', $statusPlaceholder, true, $approvalDateErr, false);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
 
@@ -327,7 +339,7 @@ function add_entry_abwesenheiten_user($mysqli){
     }
 }
 
-function edit_entry_abwesenheiten_management($mysqli, $IDabwesenheit, $Nutzerrollen){
+function edit_entry_abwesenheiten_management($mysqli, $AbwesenheitObj){
 
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
@@ -385,5 +397,181 @@ function edit_entry_abwesenheiten_management($mysqli, $IDabwesenheit, $Nutzerrol
         $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Neue Abwesenheit anlegen',$ReturnMessage, $FORM);
+    }
+}
+
+function edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $userIDPlaceholder = get_current_user_id();
+    $entryDatePlaceholder = date('Y-m-d');
+    $ReturnMessage = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $commentPlaceholder = "";
+    $startDateErr = $endDateErr = "";
+
+    // Do stuff
+    if(isset($_POST['add_abwesenheit_action'])){
+
+        // Load Form content
+        $startDatePlaceholder = trim($_POST['start']);
+        $endDatePlaceholder = trim($_POST['end']);
+        $typePlaceholder = trim($_POST['type']);
+        $urgencyPlaceholder = trim($_POST['urgency']);
+        $commentPlaceholder = trim($_POST['comment_user']);
+
+        // Do some DAU-Checks here
+        if($DAUcheck==0){
+
+            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Abwesenheitsantrag erfolgreich angelegt!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_hidden_input_generator('plchldr1', '1');
+        $FormHTML .= form_group_input_date('Beginn', 'start', $startDatePlaceholder, true, $startDateErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endDatePlaceholder, true, $endDateErr, false);
+        $FormHTML .= form_group_dropdown_abwesenheitentypen('Abwesenheitstyp', 'type', $typePlaceholder, true, '');
+        $FormHTML .= form_hidden_input_generator('plchldr2', '2');
+        $FormHTML .= form_group_dropdown_abwesenheiten_dringlichkeiten_typen('Dringlichkeit', 'urgency', $urgencyPlaceholder, true, '');
+        $FormHTML .= form_hidden_input_generator('plchldr3', '3');
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Abwesenheitsantrag anlegen','', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Abwesenheitsantrag anlegen',$ReturnMessage, $FORM);
+    }
+}
+
+function delete_entry_abwesenheiten_management($mysqli, $AbwesenheitObj){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $entryDatePlaceholder = $commentPlaceholder = "";
+    $startDateErr = $endDateErr = $entryDateErr = "";
+
+    // Do stuff
+    if(isset($_POST['add_abwesenheit_action'])){
+
+        // Load Form content
+        $userIDPlaceholder = trim($_POST['user']);
+        $startDatePlaceholder = trim($_POST['start']);
+        $endDatePlaceholder = trim($_POST['end']);
+        $typePlaceholder = trim($_POST['type']);
+        $urgencyPlaceholder = trim($_POST['urgency']);
+        $entryDatePlaceholder = trim($_POST['entry-date']);
+        $commentPlaceholder = trim($_POST['comment_user']);
+
+        // Do some DAU-Checks here
+        if($DAUcheck==0){
+
+            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Abwesenheit erfolgreich angelegt!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_group_dropdown_all_users('Mitarbeiter/in', 'user', $userIDPlaceholder, true, '');
+        $FormHTML .= form_hidden_input_generator('plchldr1', '1');
+        $FormHTML .= form_group_input_date('Beginn', 'start', $startDatePlaceholder, true, $startDateErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endDatePlaceholder, true, $endDateErr, false);
+        $FormHTML .= form_group_dropdown_abwesenheitentypen('Abwesenheitstyp', 'type', $typePlaceholder, true, '');
+        $FormHTML .= form_hidden_input_generator('plchldr2', '2');
+        $FormHTML .= form_group_dropdown_abwesenheiten_dringlichkeiten_typen('Dringlichkeit', 'urgency', $urgencyPlaceholder, true, '');
+        $FormHTML .= form_hidden_input_generator('plchldr3', '3');
+        $FormHTML .= form_group_input_date('Beantragt am', 'entry-date', $entryDatePlaceholder, true, $entryDateErr, false);
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Neue Abwesenheit anlegen','', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Neue Abwesenheit anlegen',$ReturnMessage, $FORM);
+    }
+}
+
+function delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $ReturnMessage = "";
+    $startDatePlaceholder = $AbwesenheitObj['begin'];
+    $endDatePlaceholder =  $AbwesenheitObj['end'];
+    $typePlaceholder =  $AbwesenheitObj['type'];
+    $urgencyPlaceholder =  $AbwesenheitObj['urgency'];
+    $commentPlaceholder =  $AbwesenheitObj['create_comment'];
+    $startDateErr = $endDateErr = "";
+
+    // Do stuff
+    if(isset($_POST['delete_abwesenheit_action'])){
+
+        // Do some DAU-Checks here
+        if($DAUcheck==0){
+
+            $DeleteComment = "Von MitarbeiterIn gelöscht";
+            $Return = delete_abwesenheitsantrag($AbwesenheitObj['id'], get_current_user_id(), $DeleteComment);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Abwesenheitsantrag erfolgreich gelöscht!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_hidden_input_generator('plchldr1', '1');
+        $FormHTML .= form_group_input_date('Beginn', 'start', $startDatePlaceholder, true, $startDateErr, true);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endDatePlaceholder, true, $endDateErr, true);
+        $FormHTML .= form_group_dropdown_abwesenheitentypen('Abwesenheitstyp', 'type', $typePlaceholder, true, '', true);
+        $FormHTML .= form_hidden_input_generator('plchldr2', '2');
+        $FormHTML .= form_group_dropdown_abwesenheiten_dringlichkeiten_typen('Dringlichkeit', 'urgency', $urgencyPlaceholder, true, '', true);
+        $FormHTML .= form_hidden_input_generator('plchldr3', '3');
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'delete_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Abwesenheitsantrag löschen','Möchten Sie diesen Abwesenheitsantrag wirklich löschen?', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Abwesenheitsantrag löschen',$ReturnMessage, $FORM);
     }
 }
