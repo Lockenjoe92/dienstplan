@@ -141,6 +141,13 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
     $ReturnVals=[];
     $Answer = "<td></td>";
 
+    //Colorize stuff in case field is empty based on weekend/holidays
+    if((date('w',$Day)==0)OR(date('w',$Day)==6)){
+        $Answer = "<td class='table-secondary'></td>";
+    } elseif (in_array(date('Y-m-d',$Day), explode(',',LISTEFEIERTAGE))){
+        $Answer = "<td class='table-secondary'></td>";
+    }
+
     //Loop through all Abwesenheiten
     foreach ($AllAbwesenheiten as $Abwesenheit){
 

@@ -94,7 +94,6 @@ function getWorkingDays($startDate,$endDate,$User,$holidays){
     return $workingDays;
 }
 
-
 function calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $Year){
 
     $FirstDaySelectedYear = "01-01-".$Year;
@@ -111,8 +110,8 @@ function calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbw
                 // Only this year
                 if(($Abwesenheit['begin']>=$FirstDaySelectedYear) && ($Abwesenheit['end']<=$LastDaySelectedYear)){
                     //Only Urlaub counts
-                    if($Abwesenheit['type']=='Urlaub'){
-                        $TotalCount += floor(getWorkingDays($Abwesenheit['begin'],$Abwesenheit['end'],$User,''));
+                    if($Abwesenheit['type']==='Urlaub'){
+                        $TotalCount += floor(getWorkingDays($Abwesenheit['begin'],$Abwesenheit['end'],$User,LISTEFEIERTAGE));
                     }
                 }
             }
