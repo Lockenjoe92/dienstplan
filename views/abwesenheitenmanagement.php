@@ -219,8 +219,8 @@ function add_entry_abwesenheiten_management($mysqli){
     $OutputMode = "show_form";
     $DAUcheck = 0;
     $statusPlaceholder = "Beantragt";
-    $approvalDatePlaceholder = '';
-    $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $entryDatePlaceholder = $commentPlaceholder = "";
+    $approvalDatePlaceholder = $entryDatePlaceholder = date('Y-m-d');
+    $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $commentPlaceholder = "";
     $startDateErr = $endDateErr = $entryDateErr = $approvalDateErr = "";
 
     // Do stuff
