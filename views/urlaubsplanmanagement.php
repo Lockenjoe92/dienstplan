@@ -24,23 +24,16 @@ function urlaubsplan_tabelle_management($month, $year){
     $FirstDayOfCalendarString = "01-".$month."-".$year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
 
-    // Build Table header -> this means loading date information
-    $TableHeader = "<thead>";
-    $TableHeader .= "<th>MitarbeiterIn</th>";
-
-    //Iterate as long as we are still in the same month
-    for($a=0;$a<31;$a++){
-        $Command = "+".$a." days";
-        $ThisDay = strtotime($Command, $FirstDayOfCalendar);
-
-        //Catch Month shift
-        if(date("m", $ThisDay)==$month){
-            $TableHeader .= "<th>".date("d", $ThisDay)."</th>";
-        }
-
+    //Initialize Array to hold stats
+    $DataDays = [];
+    $Day = [];
+    for($d=0;$d<=31;$d++){
+        $Day['total']=0;
+        $Day['OA']=0;
+        $Day['FA']=0;
+        $Day['AA']=0;
+        $DataDays[] = $Day;
     }
-
-    $TableHeader .= "</thead>";
 
     // Generate Rows based on Users
     $TableRows = "";
@@ -68,10 +61,17 @@ function urlaubsplan_tabelle_management($month, $year){
             for($a=0;$a<31;$a++){
                 $Command = "+".$a." days";
                 $ThisDay = strtotime($Command, $FirstDayOfCalendar);
+                $ThisDayData = $DataDays[$a];
 
                 //Catch Month shift
                 if(date("m", $ThisDay)==$month){
-                    $TableRowContent .= populate_day_urlaubsplan_tabelle_management($ThisDay,$User['id'],$AllAbwesenheiten);
+                    $ReturnValues = populate_day_urlaubsplan_tabelle_management($ThisDay,$User['id'],$AllAbwesenheiten,$User['abteilungsrollen'], $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
+                    $TableRowContent .= $ReturnValues['HTML'];
+                    $NewDayStatData['total']=$ReturnValues['total'];
+                    $NewDayStatData['OA']=$ReturnValues['OA'];
+                    $NewDayStatData['FA']=$ReturnValues['FA'];
+                    $NewDayStatData['AA']=$ReturnValues['AA'];
+                    $DataDays[$a] = $NewDayStatData;
                 }
 
             }
@@ -80,6 +80,46 @@ function urlaubsplan_tabelle_management($month, $year){
             $TableRows .= $TableRowContent;
         }
     }
+
+    // Build Table header -> this means loading date information
+    $TableHeader = "<thead>";
+
+    $TableHeaderRowUsers = "<tr><th></th>";
+    $TableHeaderRowTotal = "<tr><th>Gesamt</th>";
+    $TableHeaderRowOA = "<tr><th>OA</th>";
+    $TableHeaderRowFA = "<tr><th>FA</th>";
+    $TableHeaderRowAA = "<tr><th>AA</th>";
+
+    //Iterate as long as we are still in the same month
+    for($a=0;$a<31;$a++){
+        $Command = "+".$a." days";
+        $ThisDay = strtotime($Command, $FirstDayOfCalendar);
+        $DataDay = $DataDays[$a];
+
+        //Catch Month shift
+        if(date("m", $ThisDay)==$month){
+            $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
+            $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
+            $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
+            $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
+            $TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
+        }
+
+    }
+
+    $TableHeaderRowUsers .= "</tr>";
+    $TableHeaderRowTotal .= "</tr>";
+    $TableHeaderRowOA .= "</tr>";
+    $TableHeaderRowFA .= "</tr>";
+    $TableHeaderRowAA .= "</tr>";
+
+    //Build table head rows as wished
+    $TableHeader .= $TableHeaderRowUsers;
+    $TableHeader .= $TableHeaderRowTotal;
+    $TableHeader .= $TableHeaderRowOA;
+    $TableHeader .= $TableHeaderRowFA;
+    $TableHeader .= $TableHeaderRowAA;
+    $TableHeader .= "</thead>";
 
     // Build table body
     $TableBody = '<tbody class="table-group-divider">'.$TableRows.'</tbody>';
@@ -94,8 +134,9 @@ function urlaubsplan_tabelle_management($month, $year){
 
 }
 
-function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenheiten){
+function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenheiten,$RollenUser,$Total,$OA=0,$FA=0,$AA=0){
 
+    $ReturnVals=[];
     $Answer = "<td></td>";
 
     //Loop through all Abwesenheiten
@@ -113,11 +154,27 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
                     $Answer = "<td class='text-center table-primary'>U</td>";
                 }
 
+                //Sum up statistics
+                $Total++;
+                if($RollenUser=='OA'){
+                    $OA++;
+                }
+                if($RollenUser=='FA'){
+                    $FA++;
+                }
+                if($RollenUser=='AA'){
+                    $AA++;
+                }
             }
         }
     }
 
+    $ReturnVals['HTML']=$Answer;
+    $ReturnVals['total']=$Total;
+    $ReturnVals['OA']=$OA;
+    $ReturnVals['FA']=$FA;
+    $ReturnVals['AA']=$AA;
 
-    return $Answer;
+    return $ReturnVals;
 
 }

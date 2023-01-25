@@ -27,4 +27,4 @@ $HTML .= urlaubsplan_tabelle_management($Month,$Year);
 // Space Out stuff
 $HTML = grid_gap_generator($HTML);
 
-echo site_body('Urlaubsübersicht', $HTML, true, $Nutzergruppen, false);
+echo site_body('Urlaubsübersicht', $HTML, true, $Nutzergruppen, true);
