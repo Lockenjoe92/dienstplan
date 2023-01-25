@@ -505,3 +505,46 @@ function getDay($dow){
     $dowMap = array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag');
     return $dowMap[$dow-1];
 }
+
+function form_dropdown_months($Name, $Value){
+
+    $OptionsHTML = $HTML = "";
+
+    // Render Month Options
+    for($a=1;$a<=12;$a++){
+        $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
+            IntlDateFormatter::NONE, NULL, NULL, "MMM");
+        $monthName = datefmt_format($format, mktime(0, 0, 0, $a));
+        if($Value==$a){
+            $OptionsHTML .= '<option value="'.$a.'" selected>'.$monthName.'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$a.'">'.$monthName.'</option>';
+        }
+    }
+
+    $HTML .= '<select class="form-select" name="'.$Name.'" id="'.$Name.'">';
+    $HTML .= $OptionsHTML;
+    $HTML .= '</select>';
+
+    return $HTML;
+}
+
+function form_dropdown_years($Name, $Value){
+    $initialYear = 2022;
+    $maxYears = date('Y',strtotime('+5 years'));
+    $OptionsHTML = $HTML = "";
+
+    for($a=$initialYear;$a<=$maxYears;$a++){
+        if($Value==$a){
+            $OptionsHTML .= '<option value="'.$a.'" selected>'.$a.'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$a.'">'.$a.'</option>';
+        }
+    }
+
+    $HTML .= '<select class="form-select" name="'.$Name.'" id="'.$Name.'">';
+    $HTML .= $OptionsHTML;
+    $HTML .= '</select>';
+
+    return $HTML;
+}
