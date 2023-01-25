@@ -24,3 +24,4 @@ include_once "./forms/session_management.php";
 // Views
 include_once "./views/workforcemanagement.php";
 include_once "./views/abwesenheitenmanagement.php";
+include_once "./views/urlaubsplanmanagement.php";

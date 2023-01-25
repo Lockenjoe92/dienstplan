@@ -104,12 +104,12 @@ function get_current_user_id(){
     return $_SESSION['user'];
 }
 
-function get_sorted_list_of_all_users($mysqli, $orderBy='nachname', $includeInactive=false){
+function get_sorted_list_of_all_users($mysqli, $orderBy='nachname ASC', $includeInactive=false){
 
     $Users = [];
 
     if(!$includeInactive){
-        $sql = "SELECT * FROM users WHERE inaktiv_durch_user IS NULL ORDER BY ".$orderBy." ASC";
+        $sql = "SELECT * FROM users WHERE inaktiv_durch_user IS NULL ORDER BY ".$orderBy."";
     } else {
         $sql = "SELECT * FROM users ORDER BY ".$orderBy." ASC";
     }

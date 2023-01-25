@@ -61,10 +61,10 @@ data-show-multi-sort="true"
         // Build edit/delete Buttons
         $NutzerrollenArray = explode(',',$Nutzerrollen);
         if(in_array('admin', $NutzerrollenArray)){
-            $Options = '<i class="bi bi-check-circle-fill"> <i class="bi bi-pencil-fill"> <a href="abwesenheiten_management.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
+            $Options = '<i class="bi bi-check-circle-fill"> <i class="bi bi-x-circle-fill"> <i class="bi bi-pencil-fill"> <a href="abwesenheiten_management.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
         } else {
             if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
-                $Options = '<i class="bi bi-check-circle-fill"> <i class="bi bi-pencil-fill"> <a href="abwesenheiten_management.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
+                $Options = '<i class="bi bi-check-circle-fill"> <i class="bi bi-x-circle-fill"> <i class="bi bi-pencil-fill"> <a href="abwesenheiten_management.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
             }else{
                 $Options = '';
             }

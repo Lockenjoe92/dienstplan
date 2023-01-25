@@ -12,6 +12,7 @@ function site_body($SiteTitle, $Content, $loggedIn = false, $UserRoles=[]){
                         <link href="https://unpkg.com/bootstrap-table@1.21.2/dist/bootstrap-table.min.css" rel="stylesheet">
                         <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
                         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+                        <style>.table-condensed{font-size: 10px;}</style>
                     </head>';
 
     // Initialize and Fill Body
