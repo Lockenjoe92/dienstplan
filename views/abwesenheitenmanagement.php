@@ -1,6 +1,6 @@
 <?php
 
-function table_abwesenheiten_management($mysqli){
+function table_abwesenheiten_management($mysqli, $Nutzerrollen){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
@@ -58,6 +58,13 @@ data-show-multi-sort="true"
             }
         }
 
+        // Build edit/delete Buttons
+        if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
+            $Options = '<i class="bi bi-pencil-fill"> <i class="bi bi-trash3-fill"> ';
+        }else{
+            $Options = '';
+        }
+
         // Optionally show comments
         if($Abwesenheit['create_comment']!=''){
             $Comment = '<i class="bi bi-megaphone-fill"> ';
@@ -73,7 +80,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-            $HTML .= '<td><i class="bi bi-check-circle-fill"> <i class="bi bi-pencil-fill"> '.$Comment.'</td>';
+            $HTML .= '<td>'.$Options.$Comment.'</td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Abwesenheit['status_bearbeitung'].'</td>';
             $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
@@ -82,7 +89,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-            $HTML .= '<td><i class="bi bi-check-circle-fill"> <i class="bi bi-pencil-fill"> '.$Comment.'</td>';
+            $HTML .= '<td>'.$Options.$Comment.'</td>';
         }
 
         // close row and count up
