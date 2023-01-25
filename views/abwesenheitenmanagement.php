@@ -170,7 +170,7 @@ data-show-multi-sort="true"
 
             // Build edit/delete Buttons
             if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
-                $Options = '<i class="bi bi-pencil-fill"> <a href="abwesenheiten_user.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></a> ';
+                $Options = '<i class="bi bi-pencil-fill"> <a href="abwesenheiten_user.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
             }else{
                 $Options = '';
             }
@@ -541,7 +541,7 @@ function delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
         if($DAUcheck==0){
 
             $DeleteComment = "Von MitarbeiterIn gelöscht";
-            $Return = delete_abwesenheitsantrag($AbwesenheitObj['id'], get_current_user_id(), $DeleteComment);
+            $Return = delete_abwesenheitsantrag($mysqli, $AbwesenheitObj['id'], get_current_user_id(), $DeleteComment);
             if($Return['success']){
                 $OutputMode="show_return_card";
                 $ReturnMessage = "Abwesenheitsantrag erfolgreich gelöscht!";
@@ -554,7 +554,7 @@ function delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
 
     if($OutputMode=="show_form"){
         //Build Form
-        $FormHTML .= form_hidden_input_generator('plchldr1', '1');
+        $FormHTML .= form_hidden_input_generator('abwesenheit_id', $AbwesenheitObj['id']);
         $FormHTML .= form_group_input_date('Beginn', 'start', $startDatePlaceholder, true, $startDateErr, true);
         $FormHTML .= form_group_input_date('Ende', 'end', $endDatePlaceholder, true, $endDateErr, true);
         $FormHTML .= form_group_dropdown_abwesenheitentypen('Abwesenheitstyp', 'type', $typePlaceholder, true, '', true);
@@ -563,7 +563,7 @@ function delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
         $FormHTML .= form_hidden_input_generator('plchldr3', '3');
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'delete_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);

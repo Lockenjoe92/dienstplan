@@ -1,8 +1,13 @@
 <?php
 
-function get_sorted_list_of_all_abwesenheiten($mysqli){
+function get_sorted_list_of_all_abwesenheiten($mysqli, $ShowDeleted=false){
     $Users = [];
-    $sql = "SELECT * FROM abwesenheitsantraege ORDER BY create_date ASC";
+
+    if($ShowDeleted){
+        $sql = "SELECT * FROM abwesenheitsantraege ORDER BY create_date ASC";
+    }else{
+        $sql = "SELECT * FROM abwesenheitsantraege WHERE deleted_by IS NULL ORDER BY create_date ASC";
+    }
 
     if($stmt = $mysqli->query($sql)){
         while ($row = $stmt->fetch_assoc()) {
@@ -15,13 +20,10 @@ function get_sorted_list_of_all_abwesenheiten($mysqli){
 
 function get_abwesenheit_data($mysqli, $IDabwesenheit){
 
-    $sql = "SELECT * FROM abwesenheitsantraege WHERE id = ?";
-    if($stmt = $mysqli->prepare($sql)){
-        $stmt->bind_param("i",$IDabwesenheit);
-        if($res = $stmt->query()){
-            return mysqli_fetch_assoc($res);
+    $sql = "SELECT * FROM abwesenheitsantraege WHERE id = ".$IDabwesenheit;
+        if($stmt = $mysqli->query($sql)){
+            return $stmt->fetch_assoc();
         }
-    }
 }
 
 function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate='', $EntryComment='', $Status = 'Beantragt', $DatumBearbeitet = ''){
@@ -97,5 +99,33 @@ function user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit){
         }
 
     }
+
+}
+
+function delete_abwesenheitsantrag($mysqli, $AbwesenheitID, $UserID, $DeleteComment){
+
+    $Antwort = [];
+    $time = date('Y-m-d G:i:s');
+    $stmnt = "UPDATE abwesenheitsantraege SET deleted_by = ?, deleted_on = ?, delete_comment = ? WHERE id = ?";
+
+    if($stmt = $mysqli->prepare($stmnt)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("issi", $UserID, $time, $DeleteComment, $AbwesenheitID);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+        } else{
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
 
 }
