@@ -148,22 +148,34 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
             //Check if Abwesenheit is active on this day
             if(($Day>=strtotime($Abwesenheit['begin']))&&($Day<=strtotime($Abwesenheit['end']))){
 
-                if($Abwesenheit['status_bearbeitung']=="Beantragt"){
-                    $Answer = "<td class='text-center table-warning'>U*</td>";
-                } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
-                    $Answer = "<td class='text-center table-primary'>U</td>";
+                $Kuerzel = "U";
+
+                // Fetch type
+                if($Abwesenheit['type']=='Teilzeitfrei'){
+                    $Kuerzel = "TZ";
                 }
 
-                //Sum up statistics
-                $Total++;
-                if($RollenUser=='OA'){
-                    $OA++;
-                }
-                if($RollenUser=='FA'){
-                    $FA++;
-                }
-                if($RollenUser=='AA'){
-                    $AA++;
+                if($Abwesenheit['status_bearbeitung']=="Beantragt"){
+                    $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
+                } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
+
+                    if($Abwesenheit['type']=='Teilzeitfrei'){
+                        $Answer = "<td class='text-center table-info'>".$Kuerzel."</td>";
+                    } else {
+                        $Answer = "<td class='text-center table-primary'>".$Kuerzel."</td>";
+                    }
+
+                    //Sum up statistics
+                    $Total++;
+                    if($RollenUser=='OA'){
+                        $OA++;
+                    }
+                    if($RollenUser=='FA'){
+                        $FA++;
+                    }
+                    if($RollenUser=='AA'){
+                        $AA++;
+                    }
                 }
             }
         }

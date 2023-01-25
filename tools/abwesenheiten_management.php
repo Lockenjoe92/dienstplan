@@ -26,6 +26,33 @@ function get_abwesenheit_data($mysqli, $IDabwesenheit){
         }
 }
 
+function bearbeite_abwesenheitsantrag($mysqli, $AbwesenheitID, $StatusMode, $deleteCommentPlaceholder){
+
+    $Timestamp = date('Y-m-d G:i:s');
+    $CurrentUser = get_current_user_id();
+
+    // Prepare statement & DB Access
+    $sql = "UPDATE abwesenheitsantraege SET status_bearbeitung = ?, bearbeitet_am = ?, bearbeitet_von = ?, delete_comment = ? WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("ssisi", $StatusMode,$Timestamp,$CurrentUser,$deleteCommentPlaceholder, $AbwesenheitID);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            $Antwort['success']=true;
+        } else {
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+
+    $mysqli->close();
+    return $Antwort;
+}
+
 function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate='', $EntryComment='', $Status = 'Beantragt', $DatumBearbeitet = ''){
 
     // Prepare variables and generate initial password

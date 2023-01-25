@@ -21,7 +21,21 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
     } else {
         $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
     }
-}else {
+} elseif (isset($_POST['decline_abwesenheit_action'])) {
+    $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_POST['abwesenheit_id']));
+    if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
+        $HTML .= allow_abwesenheiten_management($mysqli, $AbwesenheitObj, 'decline');
+    } else {
+        $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+    }
+} elseif (isset($_POST['accept_abwesenheit_action'])) {
+    $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_POST['abwesenheit_id']));
+    if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
+        $HTML .= allow_abwesenheiten_management($mysqli, $AbwesenheitObj, 'accept');
+    } else {
+        $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+    }
+} else {
     if(empty($_GET['mode'])){
         $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
     } elseif ($_GET['mode']=='add_abwesenheit'){
@@ -31,6 +45,28 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
             $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_GET['abwesenheit_id']));
             if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
                 $HTML .= delete_entry_abwesenheiten_management($mysqli, $AbwesenheitObj);
+            } else {
+                $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+            }
+        } else {
+            $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+        }
+    }  elseif ($_GET['mode']=='accept_abwesenheit'){
+        if(is_numeric($_GET['abwesenheit_id'])){
+            $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_GET['abwesenheit_id']));
+            if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
+                $HTML .= allow_abwesenheiten_management($mysqli, $AbwesenheitObj, 'accept');
+            } else {
+                $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+            }
+        } else {
+            $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+        }
+    }  elseif ($_GET['mode']=='decline_abwesenheit') {
+        if(is_numeric($_GET['abwesenheit_id'])){
+            $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_GET['abwesenheit_id']));
+            if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
+                $HTML .= allow_abwesenheiten_management($mysqli, $AbwesenheitObj, 'decline');
             } else {
                 $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
             }
