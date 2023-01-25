@@ -1,20 +1,25 @@
 <?php
 
-function nav_bar($LoggedIn=False, $UserRoles=[]){
+function nav_bar($LoggedIn=False, $UserRoles=''){
 
     if(!$LoggedIn){
         $response = '<nav class="navbar sticky-top navbar-expand-lg bg-light"><div class="container-fluid"><span class="navbar-brand mb-0 h1">'.SITENAME.'</span></div></nav>';
     } else {
 
+        $UserRoles = explode(',',$UserRoles);
+
         $AbwesenheitenLinks = '<li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Urlaub & Abwesenheit
           </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="urlaubsplan.php">Urlaubsplanung</a></li>
+          <ul class="dropdown-menu">';
+
+        if(in_array('ausfaelle', $UserRoles)){
+        $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php">Urlaubsplanung</a></li>
             <li><a class="dropdown-item" href="abwesenheiten_management.php">Abwesenheiten</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="abwesenheiten_user.php">Meine Abwesenheiten</a></li>
+            <li><hr class="dropdown-divider"></li>';}
+
+        $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="abwesenheiten_user.php">Meine Abwesenheiten</a></li>
           </ul>
         </li>';
 
@@ -22,15 +27,21 @@ function nav_bar($LoggedIn=False, $UserRoles=[]){
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Dienstplan
           </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="dienstplanung.php">Dienstplanung</a></li>
+          <ul class="dropdown-menu">';
+
+        if(in_array('dienstplan', $UserRoles)){
+            $DienstplanLinks .= '<li><a class="dropdown-item" href="dienstplanung.php">Dienstplanung</a></li>
             <li><a class="dropdown-item" href="dienstplanung_wuensche.php">Dienstplanwünsche</a></li>
             <li><hr class="dropdown-divider"></li>
+            ';}
+
+        $DienstplanLinks .= '
             <li><a class="dropdown-item" href="dienstplan_user.php">Mein Dienstplan</a></li>
           </ul>
         </li>';
 
-        $PersonalwesenLinks = '<li class="nav-item dropdown">
+        if(in_array('mitarbeitermanagement_view', $UserRoles)){
+            $PersonalwesenLinks = '<li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Workforce
           </a>
@@ -38,6 +49,10 @@ function nav_bar($LoggedIn=False, $UserRoles=[]){
             <li><a class="dropdown-item" href="workforce_management.php">Mitarbeitermanagement</a></li>
           </ul>
         </li>';
+        } else {
+            $PersonalwesenLinks = '';
+        }
+
 
         $UserSettingsLinks = '<li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">

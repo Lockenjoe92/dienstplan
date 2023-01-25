@@ -44,3 +44,47 @@ function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $E
     return $Antwort;
 
 }
+
+function user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit){
+
+    $Nutzerrollen = explode(',',$Nutzerrollen);
+
+    // Case 1: User is Admin -> always possible
+    if(in_array('admin', $Nutzerrollen)){
+        return true;
+    } else {
+
+        // Case 2: the user is from the HR department
+        if(in_array('ausfaelle', $Nutzerrollen)){
+
+            // Permission is only granted when status is "Beantragt" i.e. the employee has not recieved an answer to the application
+            if($Abwesenheit['status_bearbeitung']=='Beantragt'){
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        // Case 3: the application is from the active user themselves
+        if(get_current_user_id() == $Abwesenheit['user']){
+            // Permission is only granted when status is "Beantragt" i.e. the employee has not recieved an answer to the application
+            if($Abwesenheit['status_bearbeitung']==='Beantragt'){
+
+                // Only show edit buttons on applications, that haven't started yet
+                if(time()<strtotime($Abwesenheit['begin'])){
+                    return true;
+                } else {
+                    return false;
+                }
+
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+    }
+
+}

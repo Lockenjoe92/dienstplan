@@ -11,12 +11,12 @@ $mysqli = connect_db();
 $HTML = "<h1 class='align-content-center'>Meine Abwesenheitsanträge</h1>";
 
 if(isset($_POST['abwesenheitmanagement_go_back'])){
-    $HTML .= table_abwesenheiten_user($mysqli);
+    $HTML .= table_abwesenheiten_user($mysqli,$Nutzergruppen);
 } elseif(isset($_POST['add_abwesenheit_action'])){
     $HTML .= add_entry_abwesenheiten_user($mysqli);
 }else {
     if(empty($_GET['mode'])){
-        $HTML .= table_abwesenheiten_user($mysqli);
+        $HTML .= table_abwesenheiten_user($mysqli,$Nutzergruppen);
     } elseif ($_GET['mode']=='add_abwesenheit'){
         $HTML .= add_entry_abwesenheiten_user($mysqli);
     }
