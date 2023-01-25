@@ -76,6 +76,8 @@ function urlaubsplan_tabelle_management($month, $year){
 
             }
 
+            $TableRowContent .= "<td>".calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $year)."</td>";
+
             $TableRowContent .= "</tr>";
             $TableRows .= $TableRowContent;
         }
