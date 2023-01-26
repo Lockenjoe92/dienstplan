@@ -156,14 +156,14 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Mitarbeitergruppe auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Mitarbeitergruppe auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';
@@ -210,14 +210,14 @@ function form_group_dropdown_abwesenheitentypen($Label, $name, $Value='', $HasFo
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Abwesenheitstyp auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Abwesenheitstyp auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';
@@ -264,16 +264,16 @@ function form_group_dropdown_bearbeitungsstati($Label, $name, $Value='', $HasFor
         }
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
-        $HTML .= '<option '.$PrimSelected.' disabled value="">Abwesenheitstyp auswählen</option>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Bearbeitungsstatus auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
-        $HTML .= '<option '.$PrimSelected.'>Abwesenheitstyp auswählen</option>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Bearbeitungsstatus auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';
@@ -320,14 +320,14 @@ function form_group_dropdown_abwesenheiten_dringlichkeiten_typen($Label, $name, 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Dringlichkeit angeben</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Dringlichkeit angeben</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';
@@ -374,14 +374,14 @@ function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormContro
         $HTML .= '<select class="form-select" multiple name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled>Planungstoolrollen auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" multiple name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.'>Planungstoolrollen auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';
@@ -432,14 +432,14 @@ function form_group_dorpdown_arbeitstage($Label, $name, $Value='', $HasFormContr
         $HTML .= '<select class="form-select" multiple name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Arbeitsfreie Tage auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" multiple name="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Arbeitsfreie Tage auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';
@@ -485,13 +485,13 @@ function form_group_dropdown_all_users($Label, $name, $Value='', $HasFormControl
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Mitarbeiter/in auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
         $HTML .= '<select class="form-select" name="'.$name.'" '.$disbledHTML.'>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Mitarbeiter/in auswählen</option>';
         $HTML .= $OptionsHTML;
-        $HTML .= '</<select>';
+        $HTML .= '</select>';
     }
 
     $HTML .= '</div>';

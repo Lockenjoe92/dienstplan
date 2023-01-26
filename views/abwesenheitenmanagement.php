@@ -219,12 +219,14 @@ function add_entry_abwesenheiten_management($mysqli){
     $OutputMode = "show_form";
     $DAUcheck = 0;
     $statusPlaceholder = "Beantragt";
-    $approvalDatePlaceholder = $entryDatePlaceholder = date('Y-m-d');
-    $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $commentPlaceholder = "";
+    $entryDatePlaceholder = date('Y-m-d');
+    $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $commentPlaceholder = $approvalDatePlaceholder = "";
     $startDateErr = $endDateErr = $entryDateErr = $approvalDateErr = "";
 
     // Do stuff
     if(isset($_POST['add_abwesenheit_action'])){
+
+        $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
 
         // Load Form content
         $userIDPlaceholder = trim($_POST['user']);
@@ -238,6 +240,31 @@ function add_entry_abwesenheiten_management($mysqli){
         $approvalDatePlaceholder = trim($_POST['approval-date']);
 
         // Do some DAU-Checks here
+        if(empty($userIDPlaceholder)){
+            $DAUcheck++;
+            $startDateErr = "Bitte wählen Sie eine/n zu erfassende/n Mitarbeiter/in aus!";
+        }
+
+        // Check fucked up date entries
+        if($startDatePlaceholder>$endDatePlaceholder){
+            $DAUcheck++;
+            $startDateErr = "Das Anfangsdatum darf nicht nach dem Enddatum liegen!";
+        }
+
+        if($approvalDatePlaceholder!=''){
+            if($statusPlaceholder!='Beantragt'){
+                $DAUcheck++;
+                $approvalDateErr = "Wenn der Antrag als bereits bearbeitet festgehalten werden soll, muss er entweder als genehmigt oder abgelehnt markiert sein!";
+            }
+        }
+
+        //Check overlaps!
+        $Check = check_abwesenheit_date_overlap_user($userIDPlaceholder, $AllAbwesenheiten, $startDatePlaceholder, $endDatePlaceholder);
+        if($Check['bool']){
+            $DAUcheck++;
+            $endDateErr = "Der eingegebene Antrag kollidiert mit anderen bereits erfassten Anträgen!";
+        }
+
         if($DAUcheck==0){
 
             $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder, $statusPlaceholder, $approvalDatePlaceholder);
@@ -264,7 +291,7 @@ function add_entry_abwesenheiten_management($mysqli){
         $FormHTML .= form_group_input_date('Beantragt am', 'entry-date', $entryDatePlaceholder, true, $entryDateErr, false);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<h5>Optional: Bereits stattgefundene Bearbeitung festhalten</h5>";
-        $FormHTML .= form_group_input_date('Bearbeitet am', 'approval-date', $approvalDatePlaceholder, true, $entryDateErr, false);
+        $FormHTML .= form_group_input_date('Bearbeitet am', 'approval-date', $approvalDatePlaceholder, true, $approvalDateErr, false);
         $FormHTML .= form_group_dropdown_bearbeitungsstati('Bearbeitungsstatus', 'status', $statusPlaceholder, false, $approvalDateErr, false);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');

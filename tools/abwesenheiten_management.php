@@ -261,3 +261,35 @@ function delete_abwesenheitsantrag($mysqli, $AbwesenheitID, $UserID, $DeleteComm
     return $Antwort;
 
 }
+
+function check_abwesenheit_date_overlap_user($UserID,$AllItems,$Begin,$End){
+
+    $Catches = [];
+
+    foreach ($AllItems as $Item){
+
+        if($Item['user']==$UserID){
+            $Catch=true;
+            //Check non-overlap cases
+            //Case 1: Begin and End of Item are smaller
+            if((strtotime($Item['begin'])<strtotime($Begin)) && (strtotime($Item['end'])<strtotime($Begin))){
+                $Catch=false;
+            }
+            //Case 2: Begin and End of Item are bigger
+            if((strtotime($Item['begin'])>strtotime($End)) && (strtotime($Item['end'])>strtotime($End))){
+                $Catch=false;
+            }
+            if($Catch){
+                $Catches[]=$Item;
+            }
+        }
+    }
+    if(sizeof($Catches)>0){
+        $Return['bool']=true;
+        $Return['items']=$Catches;
+    } else {
+        $Return['bool']=false;
+    }
+
+    return $Return;
+}
