@@ -35,6 +35,13 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
     } else {
         $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
     }
+}elseif (isset($_POST['edit_abwesenheit_action'])) {
+    $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_POST['abwesenheit_id']));
+    if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
+        $HTML .= edit_entry_abwesenheiten_management($mysqli, $AbwesenheitObj);
+    } else {
+        $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+    }
 } else {
     if(empty($_GET['mode'])){
         $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
@@ -72,6 +79,17 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
             }
         } else {
             $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);
+        }
+    }elseif ($_GET['mode']=='edit_abwesenheit') {
+        if (is_numeric($_GET['abwesenheit_id'])) {
+            $AbwesenheitObj = get_abwesenheit_data($mysqli, intval($_GET['abwesenheit_id']));
+            if (user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)) {
+                $HTML .= edit_entry_abwesenheiten_management($mysqli, $AbwesenheitObj);
+            } else {
+                $HTML .= table_abwesenheiten_management($mysqli, $Nutzergruppen);
+            }
+        } else {
+            $HTML .= table_abwesenheiten_management($mysqli, $Nutzergruppen);
         }
     } else {
         $HTML .= table_abwesenheiten_management($mysqli,$Nutzergruppen);

@@ -158,6 +158,34 @@ function bearbeite_abwesenheitsantrag($mysqli, $AbwesenheitID, $StatusMode, $del
     return $Antwort;
 }
 
+function complete_edit_abwesenheitsantrag($mysqli, $IDantrag, $Begin, $End, $Type, $Urgency, $UserComment, $entryDate, $EditDate, $EditStatus, $EditComment){
+
+    $Timestamp = date('Y-m-d G:i:s');
+    $CurrentUser = get_current_user_id();
+
+    // Prepare statement & DB Access
+    $sql = "UPDATE abwesenheitsantraege SET begin = ?, end = ?, type = ?, urgency = ?, create_comment = ?, create_date = ?, bearbeitet_am = ?, status_bearbeitung = ?, bearbeitet_von = ?, delete_comment = ? WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("ssssssssisi", $Begin, $End, $Type, $Urgency, $UserComment,$entryDate, $EditDate, $EditStatus, $CurrentUser, $EditComment, $IDantrag);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            $Antwort['success']=true;
+        } else {
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+
+    $mysqli->close();
+    return $Antwort;
+
+}
+
 function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate='', $EntryComment='', $Status = 'Beantragt', $DatumBearbeitet = ''){
 
     // Prepare variables and generate initial password
@@ -262,28 +290,49 @@ function delete_abwesenheitsantrag($mysqli, $AbwesenheitID, $UserID, $DeleteComm
 
 }
 
-function check_abwesenheit_date_overlap_user($UserID,$AllItems,$Begin,$End){
+function check_abwesenheit_date_overlap_user($UserID,$AllItems,$Begin,$End,$IgnoreItem=0){
 
     $Catches = [];
 
     foreach ($AllItems as $Item){
 
-        if($Item['user']==$UserID){
-            $Catch=true;
-            //Check non-overlap cases
-            //Case 1: Begin and End of Item are smaller
-            if((strtotime($Item['begin'])<strtotime($Begin)) && (strtotime($Item['end'])<strtotime($Begin))){
-                $Catch=false;
+        if($IgnoreItem>0){
+            if($IgnoreItem!=$Item['id']){
+                if($Item['user']==$UserID){
+                    $Catch=true;
+                    //Check non-overlap cases
+                    //Case 1: Begin and End of Item are smaller
+                    if((strtotime($Item['begin'])<strtotime($Begin)) && (strtotime($Item['end'])<strtotime($Begin))){
+                        $Catch=false;
+                    }
+                    //Case 2: Begin and End of Item are bigger
+                    if((strtotime($Item['begin'])>strtotime($End)) && (strtotime($Item['end'])>strtotime($End))){
+                        $Catch=false;
+                    }
+                    if($Catch){
+                        $Catches[]=$Item;
+                    }
+                }
             }
-            //Case 2: Begin and End of Item are bigger
-            if((strtotime($Item['begin'])>strtotime($End)) && (strtotime($Item['end'])>strtotime($End))){
-                $Catch=false;
-            }
-            if($Catch){
-                $Catches[]=$Item;
+        } else {
+            if($Item['user']==$UserID){
+                $Catch=true;
+                //Check non-overlap cases
+                //Case 1: Begin and End of Item are smaller
+                if((strtotime($Item['begin'])<strtotime($Begin)) && (strtotime($Item['end'])<strtotime($Begin))){
+                    $Catch=false;
+                }
+                //Case 2: Begin and End of Item are bigger
+                if((strtotime($Item['begin'])>strtotime($End)) && (strtotime($Item['end'])>strtotime($End))){
+                    $Catch=false;
+                }
+                if($Catch){
+                    $Catches[]=$Item;
+                }
             }
         }
     }
+
     if(sizeof($Catches)>0){
         $Return['bool']=true;
         $Return['items']=$Catches;

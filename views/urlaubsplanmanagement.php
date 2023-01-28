@@ -262,6 +262,7 @@ function urlaubsplan_tabelle_management($month, $year){
 function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenheiten,$RollenUser,$Total,$OA=0,$FA=0,$AA=0){
 
     $ReturnVals=[];
+    $Abwesenheitstypen = explode(',',ABWESENHEITENTYPEN);
     $Answer = "<td></td>";
 
     //Colorize stuff in case field is empty based on weekend/holidays
@@ -281,21 +282,24 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
             if(($Day>=strtotime($Abwesenheit['begin']))&&($Day<=strtotime($Abwesenheit['end']))){
 
                 $Kuerzel = "U";
+                $Farbe = "table-primary";
 
                 // Fetch type
-                if($Abwesenheit['type']=='Teilzeitfrei'){
-                    $Kuerzel = "TZ";
+                foreach ($Abwesenheitstypen as $Abwesenheitstyp) {
+                    $DetailsAbwesenheitstyp = explode(':', $Abwesenheitstyp);
+                    if($Abwesenheit['type']==$DetailsAbwesenheitstyp[0]){
+                        $Kuerzel = $DetailsAbwesenheitstyp[1];
+                        if($DetailsAbwesenheitstyp[2]!=''){
+                            $Farbe = $DetailsAbwesenheitstyp[2];
+                        }
+                    }
                 }
 
                 if($Abwesenheit['status_bearbeitung']=="Beantragt"){
                     $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
                 } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
 
-                    if($Abwesenheit['type']=='Teilzeitfrei'){
-                        $Answer = "<td class='text-center table-info'>".$Kuerzel."</td>";
-                    } else {
-                        $Answer = "<td class='text-center table-primary'>".$Kuerzel."</td>";
-                    }
+                    $Answer = "<td class='text-center ".$Farbe."'>".$Kuerzel."</td>";
 
                     //Sum up statistics
                     $Total++;

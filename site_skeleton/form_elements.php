@@ -170,7 +170,7 @@ function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasForm
     return $HTML;
 }
 
-function form_group_dropdown_abwesenheitentypen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
+function form_group_dropdown_abwesenheitentypen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false, $mode='user'){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
     $HTML .= '<div class="form-group">';
@@ -192,10 +192,22 @@ function form_group_dropdown_abwesenheitentypen($Label, $name, $Value='', $HasFo
     $Options = explode(',', ABWESENHEITENTYPEN);
     foreach ($Options as $option){
 
-        if($Value==$option){
-            $OptionsHTML .= '<option value="'.$option.'" selected>'.$option.'</option>';
+        $OptionDetails = explode(':',$option);
+
+        if($mode=='user'){
+            if($OptionDetails[3]!='false'){
+                if($Value==$OptionDetails[0]){
+                    $OptionsHTML .= '<option value="'.$OptionDetails[0].'" selected>'.$OptionDetails[0].'</option>';
+                } else {
+                    $OptionsHTML .= '<option value="'.$OptionDetails[0].'">'.$OptionDetails[0].'</option>';
+                }
+            }
         } else {
-            $OptionsHTML .= '<option value="'.$option.'">'.$option.'</option>';
+            if($Value==$OptionDetails[0]){
+                $OptionsHTML .= '<option value="'.$OptionDetails[0].'" selected>'.$OptionDetails[0].'</option>';
+            } else {
+                $OptionsHTML .= '<option value="'.$OptionDetails[0].'">'.$OptionDetails[0].'</option>';
+            }
         }
 
     }
@@ -248,7 +260,7 @@ function form_group_dropdown_bearbeitungsstati($Label, $name, $Value='', $HasFor
 
         $optionUsable = explode(':', $option);
 
-        if($Value==$option){
+        if($Value==$optionUsable[0]){
             $OptionsHTML .= '<option value="'.$optionUsable[0].'" selected>'.$optionUsable[0].'</option>';
         } else {
             $OptionsHTML .= '<option value="'.$optionUsable[0].'">'.$optionUsable[0].'</option>';
