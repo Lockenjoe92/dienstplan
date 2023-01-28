@@ -231,12 +231,12 @@ function user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit){
         if(in_array('ausfaelle', $Nutzerrollen)){
 
             // Permission is only granted when status is "Beantragt" i.e. the employee has not recieved an answer to the application
-            if($Abwesenheit['status_bearbeitung']=='Beantragt'){
-                return true;
-            } else {
-                return false;
-            }
-
+            #if($Abwesenheit['status_bearbeitung']=='Beantragt'){
+             #   return true;
+            #} else {
+             #   return false;
+            #}
+            return true;
         }
 
         // Case 3: the application is from the active user themselves

@@ -170,7 +170,7 @@ data-show-multi-sort="true"
 
             // Build edit/delete Buttons
             if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzerrollen, $Abwesenheit)){
-                $Options = '<i class="bi bi-pencil-fill"> <a href="abwesenheiten_user.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
+                $Options = '<a href="abwesenheiten_user.php?mode=edit_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="abwesenheiten_user.php?mode=delete_abwesenheit&abwesenheit_id='.$Abwesenheit['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
             }else{
                 $Options = '';
             }
@@ -501,13 +501,25 @@ function edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
     $FormHTML = "";
     $OutputMode = "show_form";
     $DAUcheck = 0;
-    $userIDPlaceholder = get_current_user_id();
-    $entryDatePlaceholder = date('Y-m-d');
-    $ReturnMessage = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $commentPlaceholder = "";
-    $startDateErr = $endDateErr = "";
+    $ReturnMessage = "";
+    $ItemIDplaceholder = $AbwesenheitObj['id'];
+    $userIDPlaceholder  = $AbwesenheitObj['user'];
+    $startDatePlaceholder = $AbwesenheitObj['begin'];
+    $endDatePlaceholder =  $AbwesenheitObj['end'];
+    $typePlaceholder =  $AbwesenheitObj['type'];
+    $urgencyPlaceholder =  $AbwesenheitObj['urgency'];
+    $commentPlaceholder =  $AbwesenheitObj['create_comment'];
+    $entryDatePlaceholder = $AbwesenheitObj['create_date'];
+    $statusPlaceholder = $AbwesenheitObj['status_bearbeitung'];
+    $commentApprovePlaceholder = $AbwesenheitObj['delete_comment'];
+    $approvalDatePlaceholder = $AbwesenheitObj['bearbeitet_am'];
+
+    $startDateErr = $endDateErr = $entryDateErr = $approvalDateErr = "";
 
     // Do stuff
-    if(isset($_POST['add_abwesenheit_action'])){
+    if(isset($_POST['edit_abwesenheit_action'])){
+
+        $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
 
         // Load Form content
         $startDatePlaceholder = trim($_POST['start']);
@@ -517,12 +529,30 @@ function edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
         $commentPlaceholder = trim($_POST['comment_user']);
 
         // Do some DAU-Checks here
+        // Check fucked up date entries
+        if($startDatePlaceholder>$endDatePlaceholder){
+            $DAUcheck++;
+            $startDateErr = "Das Anfangsdatum darf nicht nach dem Enddatum liegen!";
+        }
+
+        if($startDatePlaceholder<date('Y-m-d')){
+            $DAUcheck++;
+            $startDateErr = "Der Beantragungszeitraum darf nicht in der Vergangenheit liegen!";
+        }
+
+        //Check overlaps!
+        $Check = check_abwesenheit_date_overlap_user($userIDPlaceholder, $AllAbwesenheiten, $startDatePlaceholder, $endDatePlaceholder, $ItemIDplaceholder);
+        if($Check['bool']){
+            $DAUcheck++;
+            $endDateErr = "Der eingegebene Antrag kollidiert mit anderen bereits erfassten Anträgen!";
+        }
+
         if($DAUcheck==0){
 
-            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder);
+            $Return = complete_edit_abwesenheitsantrag($mysqli, $AbwesenheitObj['id'], $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $commentPlaceholder, $entryDatePlaceholder, $approvalDatePlaceholder, $statusPlaceholder, $commentApprovePlaceholder);
             if($Return['success']){
                 $OutputMode="show_return_card";
-                $ReturnMessage = "Abwesenheitsantrag erfolgreich angelegt!";
+                $ReturnMessage = "Abwesenheit erfolgreich bearbeitet!";
             } else {
                 $OutputMode="show_return_card";
                 $ReturnMessage = $Return['err'];
@@ -532,25 +562,23 @@ function edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
 
     if($OutputMode=="show_form"){
         //Build Form
-        $FormHTML .= form_hidden_input_generator('plchldr1', '1');
         $FormHTML .= form_group_input_date('Beginn', 'start', $startDatePlaceholder, true, $startDateErr, false);
         $FormHTML .= form_group_input_date('Ende', 'end', $endDatePlaceholder, true, $endDateErr, false);
-        $FormHTML .= form_group_dropdown_abwesenheitentypen('Abwesenheitstyp', 'type', $typePlaceholder, true, '');
-        $FormHTML .= form_hidden_input_generator('plchldr2', '2');
+        $FormHTML .= form_group_dropdown_abwesenheitentypen('Abwesenheitstyp', 'type', $typePlaceholder, true, '', false, 'management');
         $FormHTML .= form_group_dropdown_abwesenheiten_dringlichkeiten_typen('Dringlichkeit', 'urgency', $urgencyPlaceholder, true, '');
-        $FormHTML .= form_hidden_input_generator('plchldr3', '3');
+        $FormHTML .= form_hidden_input_generator('abwesenheit_id', $AbwesenheitObj['id']);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
         $FORM = form_builder($FormHTML, 'self', 'POST');
-        return card_builder('Abwesenheitsantrag anlegen','', $FORM);
+        return card_builder('Abwesenheit bearbeiten','', $FORM);
     }else{
         $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
         $FORM = form_builder($FormHTML, 'self', 'POST');
-        return card_builder('Abwesenheitsantrag anlegen',$ReturnMessage, $FORM);
+        return card_builder('Abwesenheit bearbeiten',$ReturnMessage, $FORM);
     }
 }
 
