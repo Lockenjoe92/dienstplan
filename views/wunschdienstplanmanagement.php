@@ -357,6 +357,7 @@ function add_dienstwunsch_user($mysqli){
     if(isset($_POST['add_dienstwunsch_action'])){
 
         $AllWuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+        $allHolidays = get_sorted_list_of_all_abwesenheiten($mysqli);
 
         // Load Form content
         $DatePlaceholder = trim($_POST['date']);
@@ -375,6 +376,12 @@ function add_dienstwunsch_user($mysqli){
         if($Check['bool']){
             $DAUcheck++;
             $DateErr .= "Der eingegebene Antrag kollidiert mit anderen bereits erfassten Dienstplanwünschen!";
+        }
+
+        $CheckHoliday = check_abwesenheit_date_overlap_user($userIDPlaceholder,$allHolidays,$DatePlaceholder,$DatePlaceholder);
+        if($CheckHoliday['bool']){
+            $DAUcheck++;
+            $DateErr .= "Der eingegebene Antrag kollidiert mit einem anderen bereits erfassten Abwesenheits-/Urlaubsantrag!";
         }
 
         //Check if Diensttype fits to planned user org_einheit at chosen date
@@ -424,6 +431,57 @@ function add_dienstwunsch_user($mysqli){
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Dienstwunsch anlegen',$ReturnMessage, $FORM);
     }
+}
+
+function delete_dienstwunsch_user($mysqli, $dienstwunsch){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $ReturnMessage = "";
+    $DatePlaceholder = $dienstwunsch['date'];
+    $typePlaceholder =  $dienstwunsch['type'];
+    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $DateErr = "";
+
+    // Do stuff
+    if(isset($_POST['delete_dienstwunsch_action'])){
+
+        // Do some DAU-Checks here
+        if($DAUcheck==0){
+
+            $DeleteComment = "Von MitarbeiterIn gelöscht";
+            $Return = delete_dienstwunsch_db($mysqli, $dienstwunsch['id'], get_current_user_id(), $DeleteComment);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Dienstwunsch erfolgreich gelöscht!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_hidden_input_generator('dienstwunsch_id', $dienstwunsch['id']);
+        $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_dienstwunsch_action', 'btn-danger', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch löschen','Möchten Sie diesen Dienstwunsch wirklich löschen?', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch löschen',$ReturnMessage, $FORM);
+    }
+
 }
 
 function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$AllWishes,$WishTypes,$RollenUser,$Total,$OA=0,$FA=0,$AA=0){

@@ -147,3 +147,40 @@ function dienstwunsch_anlegen($mysqli, $User, $Date, $type, $entryDate, $comment
 
 
 }
+
+function delete_dienstwunsch_db($mysqli, $idDienstwunsch, $idUser, $DeleteComment){
+
+    $Antwort = [];
+    $time = date('Y-m-d G:i:s');
+    $stmnt = "UPDATE dienstwuensche SET delete_user = ?, delete_time = ?, delete_comment = ? WHERE id = ?";
+
+    if($stmt = $mysqli->prepare($stmnt)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("issi", $idUser, $time, $DeleteComment, $idDienstwunsch);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+        } else{
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+
+}
+
+function get_dienstwunsch_data($mysqli, $ID){
+
+    $sql = "SELECT * FROM dienstwuensche WHERE id = ".$ID;
+    if($stmt = $mysqli->query($sql)){
+        return $stmt->fetch_assoc();
+    }
+
+}
