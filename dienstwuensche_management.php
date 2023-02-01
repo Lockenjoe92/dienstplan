@@ -22,17 +22,14 @@ if(isset($_POST['action_change_date'])){
 }
 
 // Start dem outputs
-$HTML = "<h1 class='align-content-center'>Wunschdienst Kalenderübersicht</h1>";
-$HTML .= wunschdienstplan_funktionsbuttons_management($Month, $Year);
-$HTML .= wunschdienstplan_uebersicht_kalender_management($Month, $Year);
-$HTML = grid_gap_generator($HTML);
 
 // Make Pretty Month Name
 $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
     IntlDateFormatter::NONE, NULL, NULL, "MMM");
 $monthName = datefmt_format($format, mktime(0, 0, 0, $Month));
 
-$HTML .= "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Year."</h1>";
+$HTML = "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Year."</h1>";
+$HTML .= wunschdienstplan_funktionsbuttons_management($Month, $Year);
 
 if(isset($_POST['wunschdienst_go_back'])){
     $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);

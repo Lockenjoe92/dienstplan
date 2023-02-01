@@ -30,7 +30,7 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
           <ul class="dropdown-menu">';
 
         if(in_array('dienstplan', $UserRoles)){
-            $DienstplanLinks .= '
+            $DienstplanLinks .= '<li><a class="dropdown-item" href="wunschdienst_und_absentenuebersicht.php">WuUP-Übersicht</a></li>
             <li><a class="dropdown-item" href="dienstwuensche_management.php">Dienstplanwünsche</a></li>
             <li><hr class="dropdown-divider"></li>
             ';}
