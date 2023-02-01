@@ -16,13 +16,13 @@ function get_wunschtype_details_by_type_id($Wunschtypen, $WunschTypeID){
 
 }
 
-function get_sorted_list_of_all_dienstplanwünsche($mysqli, $ShowDeleted=false){
+function get_sorted_list_of_all_dienstplanwünsche($mysqli, $SpecialSort=false){
 
 
     $Wishes = [];
 
-    if($ShowDeleted){
-        $sql = "SELECT * FROM dienstwuensche ORDER BY create_date ASC";
+    if($SpecialSort){
+        $sql = "SELECT * FROM dienstwuensche WHERE delete_user IS NULL ORDER BY date, user, type ASC";
     }else{
         $sql = "SELECT * FROM dienstwuensche WHERE delete_user IS NULL ORDER BY create_time ASC";
     }
@@ -57,7 +57,7 @@ function get_list_of_all_dienstplanwunsch_types($mysqli, $ShowDeleted=false){
 
 }
 
-function check_dienstwunsch_date_overlap_user($UserID, $AllWuensche, $DatePlaceholder, $IgnoreItem=0){
+function check_dienstwunsch_date_overlap_user($UserID, $AllWuensche, $DatePlaceholder, $typePlaceholder, $IgnoreItem=0){
 
     $Catches = [];
 
@@ -70,7 +70,9 @@ function check_dienstwunsch_date_overlap_user($UserID, $AllWuensche, $DatePlaceh
                     //Check non-overlap cases
                     //Case 1: Begin and End of Item are smaller
                     if($Item['date']==$DatePlaceholder){
-                        $Catch=true;
+                        if($Item['type']==$typePlaceholder){
+                            $Catch=true;
+                        }
                     }
                     if($Catch){
                         $Catches[]=$Item;
@@ -83,7 +85,9 @@ function check_dienstwunsch_date_overlap_user($UserID, $AllWuensche, $DatePlaceh
                 //Check non-overlap cases
                 //Case 1: Begin and End of Item are smaller
                 if($Item['date']==$DatePlaceholder){
-                    $Catch=true;
+                    if($Item['type']==$typePlaceholder){
+                        $Catch=true;
+                    }
                 }
                 if($Catch){
                     $Catches[]=$Item;
@@ -209,6 +213,18 @@ function get_dienstwunsch_data($mysqli, $ID){
     $sql = "SELECT * FROM dienstwuensche WHERE id = ".$ID;
     if($stmt = $mysqli->query($sql)){
         return $stmt->fetch_assoc();
+    }
+
+}
+
+function day_is_a_weekend_or_holiday($Day){
+
+    if((date('w',$Day)==0)OR(date('w',$Day)==6)){
+        return true;
+    } elseif (in_array(date('Y-m-d',$Day), explode(',',LISTEFEIERTAGE))){
+        return true;
+    } else {
+        return false;
     }
 
 }

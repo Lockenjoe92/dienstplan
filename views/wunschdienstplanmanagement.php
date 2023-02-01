@@ -87,7 +87,7 @@ data-show-multi-sort="true"
 
 }
 
-function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year){
+function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year, $UE){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
@@ -97,7 +97,7 @@ function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year)
 
     // Setup Toolbar
     $HTML = '<div id="toolbar">
-                <a id="add_user" class="btn btn-primary" href="dienstwuensche_management.php?mode=add_dienstwunsch">
+                <a id="add_user" class="btn btn-primary" href="dienstwuensche_management.php?org_ue='.$UE.'&mode=add_dienstwunsch">
                 <i class="bi bi-person-fill-add"></i> Hinzufügen</a>
             </div>';
 
@@ -148,7 +148,7 @@ data-show-multi-sort="true"
 
             // Build edit/delete Buttons
             if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch)){
-                $Options = '<a href="dienstwuensche_management.php?mode=edit_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="dienstwuensche_management.php?mode=delete_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
+                $Options = '<a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=edit_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=delete_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
             }else{
                 $Options = '';
             }
@@ -199,10 +199,17 @@ function wunschdienstplan_funktionsbuttons_user($Year){
 
 function wunschdienstplan_funktionsbuttons_management($Month,$Year){
 
+    if(isset($_POST['org_ue'])){
+        $UE = $_POST['org_ue'];
+    } else {
+        $UE = $_GET['org_ue'];
+    }
+
     $FORMhtml = '<div class="row">';
     $FORMhtml .= "<div class='col'>".form_dropdown_months('month',$Month)."</div>";
     $FORMhtml .= "<div class='col'>".form_dropdown_years('year', $Year)."</div>";
     $FORMhtml .= "<div class='col'>".form_group_continue_return_buttons(true, 'Reset', 'reset_calendar', 'btn-primary', true, 'Zeitraum wählen', 'action_change_date', 'btn-primary')."</div>";
+    $FORMhtml .= form_hidden_input_generator('org_ue', $UE);
     $FORMhtml .= "</div>";
 
     $HTML = container_builder(form_builder($FORMhtml, 'self', 'POST'));
@@ -223,7 +230,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
     $mysqli = connect_db();
     $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC');
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
-    $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+    $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli, true);
     $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $FirstDayOfCalendarString = "01-".$Month."-".$Year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
@@ -302,13 +309,25 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
         $ThisDay = strtotime($Command, $FirstDayOfCalendar);
         $DataDay = $DataDays[$a];
 
-        //Catch Month shift
-        if(date("m", $ThisDay)==$Month){
-            $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
-            $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
-            $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
-            $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
-            $TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
+        // Catch weekends or holidays, as this could mean different view rules
+        if(day_is_a_weekend_or_holiday($ThisDay)){
+            //Catch Month shift
+            if(date("m", $ThisDay)==$Month){
+                $TableHeaderRowUsers .= "<th colspan='2'>".date("d", $ThisDay)."</th>";
+                $TableHeaderRowTotal .= "<th colspan='2'>".$DataDay['total']."</th>";
+                $TableHeaderRowOA .= "<th colspan='2'>".$DataDay['OA']."</th>";
+                $TableHeaderRowFA .= "<th colspan='2'>".$DataDay['FA']."</th>";
+                $TableHeaderRowAA .= "<th colspan='2'>".$DataDay['AA']."</th>";
+            }
+        } else {
+            //Catch Month shift
+            if(date("m", $ThisDay)==$Month){
+                $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
+                $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
+                $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
+                $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
+                $TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
+            }
         }
 
     }
@@ -372,7 +391,7 @@ function add_dienstwunsch_user($mysqli){
         }
 
         //Check overlaps!
-        $Check = check_dienstwunsch_date_overlap_user($userIDPlaceholder, $AllWuensche, $DatePlaceholder);
+        $Check = check_dienstwunsch_date_overlap_user($userIDPlaceholder, $AllWuensche, $DatePlaceholder, $typePlaceholder);
         if($Check['bool']){
             $DAUcheck++;
             $DateErr .= "Der eingegebene Antrag kollidiert mit anderen bereits erfassten Dienstplanwünschen!";
@@ -484,7 +503,7 @@ function delete_dienstwunsch_user($mysqli, $dienstwunsch){
 
 }
 
-function delete_dienstwunsch_management($mysqli, $dienstwunsch){
+function delete_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
 
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
@@ -597,7 +616,7 @@ function edit_dienstwunsch_user($mysqli, $dienstwunsch){
 
 }
 
-function edit_dienstwunsch_management($mysqli, $dienstwunsch){
+function edit_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
 
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
@@ -667,13 +686,12 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
 
     $ReturnVals=[];
     $Abwesenheitstypen = explode(',',ABWESENHEITENTYPEN);
+    $HolidayWeekend = day_is_a_weekend_or_holiday($Day);
     $Answer = "<td></td>";
 
     //Colorize stuff in case field is empty based on weekend/holidays
-    if((date('w',$Day)==0)OR(date('w',$Day)==6)){
-        $Answer = "<td class='table-secondary'></td>";
-    } elseif (in_array(date('Y-m-d',$Day), explode(',',LISTEFEIERTAGE))){
-        $Answer = "<td class='table-secondary'></td>";
+    if($HolidayWeekend){
+        $Answer = "<td class='table-secondary'></td><td class='table-secondary'></td>";
     }
 
     //Loop through all Abwesenheiten
@@ -700,10 +718,17 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
                 }
 
                 if($Abwesenheit['status_bearbeitung']=="Beantragt"){
-                    $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
+                    if($HolidayWeekend){
+                        $Answer = "<td class='text-center table-warning' colspan='2'>".$Kuerzel."*</td>";
+                    } else {
+                        $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
+                    }
                 } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
-
-                    $Answer = "<td class='text-center ".$Farbe."'>".$Kuerzel."</td>";
+                    if($HolidayWeekend){
+                        $Answer = "<td class='text-center ".$Farbe."' colspan='2'>".$Kuerzel."</td>";
+                    } else {
+                        $Answer = "<td class='text-center ".$Farbe."'>".$Kuerzel."</td>";
+                    }
 
                     //Sum up statistics
                     $Total++;
@@ -721,7 +746,10 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
         }
     }
 
-    //Loop through all Abwesenheiten
+    //Loop through all Wishes
+    //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
+    $NightShit = "";
+
     foreach($AllWishes as $wish){
 
         // Only check Abwesenheiten that count for User
@@ -729,9 +757,30 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
 
             //Check if Abwesenheit is active on this day
             if(strtotime($wish['date'])==$Day){
+
                 foreach ($WishTypes as $wishType){
+
                     if($wishType['id']==$wish['type']){
-                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>";
+                        if($HolidayWeekend){
+                            if($wishType['type']=='ruf'){
+                                $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$wishType['name_short']."</td>";
+                            } else {
+                                //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
+                                if($wishType['type']=='nacht'){
+                                    $NightShit = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>";
+                                }
+                                if($wishType['type']=='tag'){
+                                    if($NightShit!=""){
+                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>".$NightShit;
+                                        $NightShit = '';
+                                    } else {
+                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td><td class='table-secondary'></td>";
+                                    }
+                                }
+                            }
+                        } else {
+                            $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>";
+                        }
                     }
                 }
             }

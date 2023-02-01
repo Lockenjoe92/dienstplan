@@ -4,22 +4,29 @@
 // Include config file
 include_once "./config/dependencies.php";
 
-// Check if the user is already logged in, if yes then redirect him to welcome page
-$Nutzergruppen = session_manager('dienstplan');
-$mysqli = connect_db();
-
 // Prepare calendar View
 $Year = date('Y');
 $Month = date('m');
 
+// Check if the user is already logged in, if yes then redirect him to welcome page
 if(isset($_POST['action_change_date'])){
+    $Role = "dienstplan_".$_POST['org_ue'];
     if(is_numeric($_POST['year'])){
         $Year = $_POST['year'];
     }
     if(is_numeric($_POST['month'])){
         $Month = $_POST['month'];
     }
+} else {
+    if(intval($_GET['org_ue'])>0){
+        $Role = "dienstplan_".$_GET['org_ue'];
+    } else {
+        $Role = 'dienstplan';
+    }
 }
+
+$Nutzergruppen = session_manager($Role);
+$mysqli = connect_db();
 
 // Make Pretty Month Name
 $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,

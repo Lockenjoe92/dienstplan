@@ -7,6 +7,7 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
     } else {
 
         $UserRoles = explode(',',$UserRoles);
+        $Organisationseinheiten = get_list_of_all_departments(connect_db());
 
         $AbwesenheitenLinks = '<li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -29,11 +30,15 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
           </a>
           <ul class="dropdown-menu">';
 
-        if(in_array('dienstplan', $UserRoles)){
-            $DienstplanLinks .= '<li><a class="dropdown-item" href="wunschdienst_und_absentenuebersicht.php">WuUP-Übersicht</a></li>
-            <li><a class="dropdown-item" href="dienstwuensche_management.php">Dienstplanwünsche</a></li>
+
+        foreach ($Organisationseinheiten as $UE){
+            $srcstring = 'dienstplan_'.$UE['id'];
+            if(in_array($srcstring, $UserRoles)){
+                $DienstplanLinks .= '<li><a class="dropdown-item" href="wunschdienst_und_absentenuebersicht.php?org_ue='.$UE['id'].'">WuUP-Übersicht - '.$UE['name'].'</a></li>
+            <li><a class="dropdown-item" href="dienstwuensche_management.php?org_ue='.$UE['id'].'">Dienstplanwünsche - '.$UE['name'].'</a></li>
             <li><hr class="dropdown-divider"></li>
             ';}
+        }
 
         $DienstplanLinks .= '
             <li><a class="dropdown-item" href="dienstplan_user.php">Mein Dienstplan</a></li>

@@ -5,7 +5,14 @@
 include_once "./config/dependencies.php";
 
 // Check if the user is already logged in, if yes then redirect him to welcome page
-$Nutzergruppen = session_manager('dienstplan');
+if(intval($_GET['org_ue'])>0){
+    $UE = intval($_GET['org_ue']);
+    $Role = "dienstplan_".$_GET['org_ue'];
+} else {
+    $Role = 'dienstplan';
+}
+
+$Nutzergruppen = session_manager($Role);
 $mysqli = connect_db();
 
 // Prepare calendar View
@@ -32,52 +39,52 @@ $HTML = "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Ye
 $HTML .= wunschdienstplan_funktionsbuttons_management($Month, $Year);
 
 if(isset($_POST['wunschdienst_go_back'])){
-    $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+    $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
 } elseif(isset($_POST['add_dienstwunsch_action'])){
-    $HTML .= add_dienstwunsch_user($mysqli);
+    $HTML .= add_dienstwunsch_user($mysqli, $UE);
 } elseif (isset($_POST['delete_dienstwunsch_action'])) {
     $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
     if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
-        $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj);
+        $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj, $UE);
     } else {
-        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen,$Month, $Year);
+        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen,$Month, $Year, $UE);
     }
 } elseif (isset($_POST['edit_dienstwunsch_action'])) {
     $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
     if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
-        $HTML .= edit_dienstwunsch_management($mysqli, $dienstwunschObj);
+        $HTML .= edit_dienstwunsch_management($mysqli, $dienstwunschObj, $UE);
     } else {
-        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
     }
 } else {
     if(empty($_GET['mode'])){
-        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
     } elseif ($_GET['mode']=='add_dienstwunsch'){
-        $HTML .= add_dienstwunsch_user($mysqli);
+        $HTML .= add_dienstwunsch_user($mysqli, $UE);
     } elseif ($_GET['mode']=='delete_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
             $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
             if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
-                $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj);
+                $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj, $UE);
             } else {
-                $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+                $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
             }
         } else {
-            $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+            $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
         }
     } elseif ($_GET['mode']=='edit_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
             $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
             if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
-                $HTML .= edit_dienstwunsch_management($mysqli, $dienstwunschObj);
+                $HTML .= edit_dienstwunsch_management($mysqli, $dienstwunschObj, $UE);
             } else {
-                $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+                $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
             }
         } else {
-            $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+            $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
         }
     } else {
-        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
+        $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year, $UE);
     }
 }
 
