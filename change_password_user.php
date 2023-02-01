@@ -19,6 +19,20 @@ if(isset($_POST['change_pass_go_back'])){
     exit();
 }
 
+if(isset($_GET['alt_user_id'])){
+    $SelectedUser = $_GET['alt_user_id'];
+    if($SelectedUser>0){
+        $ActionLink = 'change_password_user.php?alt_user_id='.$SelectedUser.'';
+        $param_id = $SelectedUser;
+    } else {
+        $ActionLink = 'self';
+        $param_id = get_current_user_id();
+    }
+} else {
+    $ActionLink = 'self';
+    $param_id = get_current_user_id();
+}
+
 if($_SERVER["REQUEST_METHOD"] == "POST"){
 
     // Validate new password
@@ -51,7 +65,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
             // Set parameters
             $param_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $param_id = get_current_user_id();
 
             // Attempt to execute the prepared statement
             if($stmt->execute()){
@@ -60,7 +73,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 header("location: dashboard.php");
                 exit();
             } else{
-                $presentationMode='error_card';
+                $presentationMode='show_card';
                 $Error = 'Ändern des Passwortes fehlgeschlagen - bitte versuche es erneut!';
             }
 
@@ -75,18 +88,18 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
 if($presentationMode=='show_card'){
     $FormHTML = form_group_input_password('Neues Passwort', 'new_password', $new_password, true, $new_password_err);
-    $FormHTML .= form_group_input_password('Neues Passwort', 'confirm_password', $confirm_password, true, $confirm_password_err);
+    $FormHTML .= form_group_input_password('Neues Passwort wiederholen', 'confirm_password', $confirm_password, true, $confirm_password_err);
     $FormHTML .= "<br>";
     $FormHTML .= form_group_continue_return_buttons(true, 'Ändern', 'change_password_action', 'btn-primary', true, 'Zurück', 'change_pass_go_back', 'btn-primary');
 
     // Gap it
     $FormHTML = grid_gap_generator($FormHTML);
-    $FORM = form_builder($FormHTML, 'self', 'POST');
+    $FORM = form_builder($FormHTML, $ActionLink, 'POST');
     $HTML .= card_builder('Passwort ändern','', $FORM);
 } else {
     $FormHTML = $Error."<br>";
     $FormHTML .= form_group_continue_return_buttons(false, '', '', 'btn-primary', true, 'Zurück', 'change_pass_go_back', 'btn-primary');
-    $FORM = form_builder($FormHTML, 'self', 'POST');
+    $FORM = form_builder($FormHTML, $ActionLink, 'POST');
     $HTML .= card_builder('Passwort ändern','', $FORM);
 }
 
