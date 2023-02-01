@@ -60,7 +60,7 @@ if(isset($_POST['wunschdienst_go_back'])){
         }
     } elseif ($_GET['mode']=='edit_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
-            $dienstwunschObj = get_abwesenheit_data($mysqli,intval($_GET['dienstwunsch_id']));
+            $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
             if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
                 $HTML .= edit_dienstwunsch_user($mysqli, $dienstwunschObj);
             } else {
