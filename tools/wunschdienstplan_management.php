@@ -101,6 +101,18 @@ function check_dienstwunsch_date_overlap_user($UserID, $AllWuensche, $DatePlaceh
 
 }
 
+function check_if_dienstwunsch_is_in_selected_month($Wunsch, $Month, $Year){
+
+    $WunschDate = strtotime($Wunsch['date']);
+
+    if((date('m', $WunschDate)==$Month) && (date('Y', $WunschDate)==$Year)){
+        return true;
+    } else {
+        return false;
+    }
+
+}
+
 function dienstwunsch_anlegen($mysqli, $User, $Date, $type, $entryDate, $commentPlaceholder){
 
     // Prepare variables and generate initial password

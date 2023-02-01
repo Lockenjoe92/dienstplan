@@ -28,17 +28,17 @@ if(isset($_POST['wunschdienst_go_back'])){
     $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
 } elseif(isset($_POST['add_dienstwunsch_action'])){
     $HTML .= add_dienstwunsch_user($mysqli);
-} elseif (isset($_POST['delete_abwesenheit_action'])) {
-    $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_POST['abwesenheit_id']));
-    if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
-        $HTML .= delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj);
+} elseif (isset($_POST['delete_dienstwunsch_action'])) {
+    $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
+    if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+        $HTML .= delete_dienstwunsch_user($mysqli, $dienstwunschObj);
     } else {
         $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
     }
-} elseif (isset($_POST['edit_abwesenheit_action'])) {
-    $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_POST['abwesenheit_id']));
-    if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
-        $HTML .= edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj);
+} elseif (isset($_POST['edit_dienstwunsch_action'])) {
+    $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
+    if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+        $HTML .= edit_dienstwunsch_user($mysqli, $dienstwunschObj);
     } else {
         $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
     }
@@ -47,22 +47,22 @@ if(isset($_POST['wunschdienst_go_back'])){
         $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
     } elseif ($_GET['mode']=='add_dienstwunsch'){
         $HTML .= add_dienstwunsch_user($mysqli);
-    } elseif ($_GET['mode']=='delete_abwesenheit'){
-        if(is_numeric($_GET['abwesenheit_id'])){
-            $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_GET['abwesenheit_id']));
-            if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
-                $HTML .= delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj);
+    } elseif ($_GET['mode']=='delete_dienstwunsch'){
+        if(is_numeric($_GET['dienstwunsch_id'])){
+            $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
+            if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+                $HTML .= delete_dienstwunsch_user($mysqli, $dienstwunschObj);
             } else {
                 $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
             }
         } else {
             $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
         }
-    } elseif ($_GET['mode']=='edit_abwesenheit'){
-        if(is_numeric($_GET['abwesenheit_id'])){
-            $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_GET['abwesenheit_id']));
-            if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
-                $HTML .= edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj);
+    } elseif ($_GET['mode']=='edit_dienstwunsch'){
+        if(is_numeric($_GET['dienstwunsch_id'])){
+            $dienstwunschObj = get_abwesenheit_data($mysqli,intval($_GET['dienstwunsch_id']));
+            if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+                $HTML .= edit_dienstwunsch_user($mysqli, $dienstwunschObj);
             } else {
                 $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
             }
