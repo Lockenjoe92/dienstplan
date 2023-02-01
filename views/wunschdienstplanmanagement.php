@@ -414,6 +414,8 @@ function add_dienstwunsch_user($mysqli){
         foreach ($allDepartments as $department){
             if($department['id']==$UserDepartmentAssignmentAtDate){
                 $DepartmentName = $department['name'];
+                $DepartmentMaxWishes = $department['max_wishes_per_month'];
+                $DepartmentLastWishMonths = $department['accept_user_dienst_wishes_until_months'];
             }
         }
 
@@ -424,6 +426,13 @@ function add_dienstwunsch_user($mysqli){
                     $TypeErr .= "Der gewählte Dienstplanwunsch-Typ ist am angegebenen Tag nicht wählbar, da Sie dort in der Organisationseinheit ".$DepartmentName." geplant sind.";
                 }
             }
+        }
+
+        // Max wishes
+        $wishesThisMonth = get_num_wishes_user_in_selected_month($userIDPlaceholder,$DatePlaceholder,$AllWuensche);
+        if($wishesThisMonth>=$DepartmentMaxWishes){
+            $DAUcheck++;
+            $DateErr .= "Die maximale Zahl an Dienstwünschen im ausgewählten Monat ist bereits erschöpft!";
         }
 
         if($DAUcheck==0){
@@ -460,6 +469,13 @@ function add_dienstwunsch_user($mysqli){
 
 function add_dienstwunsch_management($mysqli){
 
+    // Implement multi OrgUE Sites
+    if(isset($_POST['org_ue'])){
+        $UE = $_POST['org_ue'];
+    } else {
+        $UE = $_GET['org_ue'];
+    }
+
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
     $OutputMode = "show_form";
@@ -469,13 +485,6 @@ function add_dienstwunsch_management($mysqli){
     $DatePlaceholder = $ApplicationDatePlaceholder = date('Y-m-d');
     $ReturnMessage = $typePlaceholder = $commentPlaceholder = $userIDPlaceholder =  "";
     $DateErr = $TypeErr = $ApplicationDateErr = "";
-
-    // Implement multi OrgUE Sites
-    if(isset($_POST['org_ue'])){
-        $UE = $_POST['org_ue'];
-    } else {
-        $UE = $_GET['org_ue'];
-    }
 
     // Do stuff
     if(isset($_POST['add_dienstwunsch_action'])){
@@ -531,6 +540,9 @@ function add_dienstwunsch_management($mysqli){
                 }
             }
         }
+
+        //check if max. allowed wishes is already reached
+
 
         if($DAUcheck==0){
 

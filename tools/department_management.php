@@ -9,7 +9,6 @@ function get_department_infos($mysqli, $ID){
 
 }
 
-
 function get_list_of_all_departments($mysqli, $ShowDeleted=false){
 
     $Users = [];
@@ -28,4 +27,27 @@ function get_list_of_all_departments($mysqli, $ShowDeleted=false){
 
     return $Users;
 
+}
+
+function get_num_wishes_user_in_selected_month($UserID,$Date,$AllWuensche){
+
+    $Counter=0;
+
+    foreach ($AllWuensche as $wunsch){
+
+        if($wunsch['user']==$UserID){
+
+            if($wunsch['delete_time']===NULL){
+
+                if(date('Y-m', strtotime($wunsch['date']))==date('Y-m', strtotime($Date))){
+                    $Counter++;
+                }
+
+            }
+
+        }
+
+    }
+
+    return $Counter;
 }
