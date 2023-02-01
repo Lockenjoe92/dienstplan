@@ -1,5 +1,5 @@
 <?php
-// Abwesenheiten Management - a site that shows all vacancies and allows management to manually add them
+// Dienstwünsche Management - a site that shows all shift wishes and allows management to manually add them
 
 // Include config file
 include_once "./config/dependencies.php";
@@ -36,7 +36,7 @@ if(isset($_POST['wunschdienst_go_back'])){
 } elseif(isset($_POST['add_dienstwunsch_action'])){
     $HTML .= add_dienstwunsch_user($mysqli);
 } elseif (isset($_POST['delete_dienstwunsch_action'])) {
-    $dienstwunschObj = get_abwesenheit_data($mysqli,intval($_POST['dienstwunsch_id']));
+    $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
     if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
         $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj);
     } else {
@@ -80,5 +80,7 @@ if(isset($_POST['wunschdienst_go_back'])){
         $HTML .= table_wunschdienstplan_management($mysqli,$Nutzergruppen, $Month, $Year);
     }
 }
+
+$HTML = grid_gap_generator($HTML);
 
 echo site_body('Wunschdienst Übersicht', $HTML, true, $Nutzergruppen);

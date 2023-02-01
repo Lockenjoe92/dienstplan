@@ -484,6 +484,65 @@ function delete_dienstwunsch_user($mysqli, $dienstwunsch){
 
 }
 
+function delete_dienstwunsch_management($mysqli, $dienstwunsch){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $ReturnMessage = $DeleteComment = "";
+    $DatePlaceholder = $dienstwunsch['date'];
+    $typePlaceholder =  $dienstwunsch['type'];
+    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $DateErr = $DeleteCommentErr = "";
+
+    // Do stuff
+    if(isset($_POST['delete_dienstwunsch_action'])){
+
+        $DeleteComment = trim($_POST['delete_comment']);
+
+        if(empty($DeleteComment)){
+            $DAUcheck++;
+            $DeleteCommentErr = "Bitte geben Sie einen Kommentar zur Löschung des Dienstwunsches ab.";
+        }
+
+        // Do some DAU-Checks here
+        if($DAUcheck==0){
+
+            $Return = delete_dienstwunsch_db($mysqli, $dienstwunsch['id'], get_current_user_id(), $DeleteComment);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Dienstwunsch erfolgreich gelöscht!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_hidden_input_generator('dienstwunsch_id', $dienstwunsch['id']);
+        $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang', 'delete_comment', $DeleteComment, true, $DeleteCommentErr, false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_dienstwunsch_action', 'btn-danger', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch löschen','Möchten Sie diesen Dienstwunsch wirklich löschen?', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch löschen',$ReturnMessage, $FORM);
+    }
+
+}
+
 function edit_dienstwunsch_user($mysqli, $dienstwunsch){
 
     // Initialize Placeholder & Error Variables
@@ -523,6 +582,72 @@ function edit_dienstwunsch_user($mysqli, $dienstwunsch){
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch bearbeiten','Möchten Sie diesen Dienstwunsch wirklich bearbeiten?', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch bearbeiten',$ReturnMessage, $FORM);
+    }
+
+}
+
+function edit_dienstwunsch_management($mysqli, $dienstwunsch){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $ReturnMessage = "";
+    $DatePlaceholder = $dienstwunsch['date'];
+    $typePlaceholder =  $dienstwunsch['type'];
+    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $DateErr = $TypeErr = $CommentErr = "";
+
+    // Do stuff
+    if(isset($_POST['edit_dienstwunsch_action'])){
+
+        $typePlaceholder = trim($_POST['type']);
+        $commentPlaceholder = trim($_POST['comment_user']);
+
+        if(strlen($dienstwunsch['create_comment'])>strlen($commentPlaceholder)){
+            $DAUcheck++;
+            $CommentErr = "Bitte ERGÄNZEN Sie nur die Kommentarspalte, damit keine Informationen verloren gehen!";
+        }
+
+        if($typePlaceholder!=$dienstwunsch['type']){
+            if(strlen($dienstwunsch['create_comment'])>=strlen($commentPlaceholder)){
+                $DAUcheck++;
+                $TypeErr = $CommentErr = "Sie haben den Typ des Dienstwunsches verändert. Bitte ERGÄNZEN Sie die Kommentarspalte, warum dies gemacht wurde.!";
+            }
+        }
+
+        // Do some DAU-Checks here
+        if($DAUcheck==0){
+
+            $DeleteComment = "Von MitarbeiterIn gelöscht";
+            $Return = edit_dienstwunsch_db($mysqli, $dienstwunsch['id'], $typePlaceholder, get_current_user_id(), $commentPlaceholder);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Dienstwunsch erfolgreich bearbeitet!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_hidden_input_generator('dienstwunsch_id', $dienstwunsch['id']);
+        $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr, false);
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, true, $CommentErr, false);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
 
