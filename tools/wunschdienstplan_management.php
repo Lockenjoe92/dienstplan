@@ -8,9 +8,11 @@ function user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch){
 
 function get_wunschtype_details_by_type_id($Wunschtypen, $WunschTypeID){
 
-    $Return['name'] = "Kein Dienst";
-
-    return $Return;
+    foreach ($Wunschtypen as $wunschtyp){
+        if($wunschtyp['id']==$WunschTypeID){
+            return $wunschtyp;
+        }
+    }
 
 }
 

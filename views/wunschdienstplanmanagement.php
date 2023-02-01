@@ -346,10 +346,12 @@ function add_dienstwunsch_user($mysqli){
     $FormHTML = "";
     $OutputMode = "show_form";
     $DAUcheck = 0;
+    $allDepartments = get_list_of_all_departments($mysqli);
+    $allWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $userIDPlaceholder = get_current_user_id();
     $entryDatePlaceholder = date('Y-m-d');
     $ReturnMessage = $DatePlaceholder = $typePlaceholder = $commentPlaceholder = "";
-    $DateErr = "";
+    $DateErr = $TypeErr = "";
 
     // Do stuff
     if(isset($_POST['add_dienstwunsch_action'])){
@@ -376,7 +378,21 @@ function add_dienstwunsch_user($mysqli){
         }
 
         //Check if Diensttype fits to planned user org_einheit at chosen date
-        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $user, $Date);
+        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, $DatePlaceholder);
+        foreach ($allDepartments as $department){
+            if($department['id']==$UserDepartmentAssignmentAtDate){
+                $DepartmentName = $department['name'];
+            }
+        }
+
+        foreach ($allWishTypes as $wishType){
+            if($wishType['id']==$typePlaceholder){
+                if($wishType['belongs_to_depmnt']!=$UserDepartmentAssignmentAtDate){
+                    $DAUcheck++;
+                    $TypeErr .= "Der gewählte Dienstplanwunsch-Typ ist am angegebenen Tag nicht wählbar, da Sie dort in der Organisationseinheit ".$DepartmentName." geplant sind.";
+                }
+            }
+        }
 
         if($DAUcheck==0){
 
@@ -394,7 +410,7 @@ function add_dienstwunsch_user($mysqli){
     if($OutputMode=="show_form"){
         //Build Form
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, false);
-        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '');
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
