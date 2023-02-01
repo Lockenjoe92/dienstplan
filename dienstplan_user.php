@@ -24,10 +24,10 @@ $HTML = grid_gap_generator($HTML);
 
 $HTML .= "<h1 class='align-content-center'>Meine Wünsche</h1>";
 
-if(isset($_POST['abwesenheitmanagement_go_back'])){
+if(isset($_POST['wunschdienst_go_back'])){
     $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
-} elseif(isset($_POST['add_abwesenheit_action'])){
-    $HTML .= add_entry_abwesenheiten_user($mysqli);
+} elseif(isset($_POST['add_dienstwunsch_action'])){
+    $HTML .= add_dienstwunsch_user($mysqli);
 } elseif (isset($_POST['delete_abwesenheit_action'])) {
     $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_POST['abwesenheit_id']));
     if(user_can_edit_abwesenheitsantrag($mysqli, $Nutzergruppen, $AbwesenheitObj)){
@@ -45,8 +45,8 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
 } else {
     if(empty($_GET['mode'])){
         $HTML .= table_wunschdienstplan_user($mysqli,$Nutzergruppen);
-    } elseif ($_GET['mode']=='add_abwesenheit'){
-        $HTML .= add_entry_abwesenheiten_user($mysqli);
+    } elseif ($_GET['mode']=='add_dienstwunsch'){
+        $HTML .= add_dienstwunsch_user($mysqli);
     } elseif ($_GET['mode']=='delete_abwesenheit'){
         if(is_numeric($_GET['abwesenheit_id'])){
             $AbwesenheitObj = get_abwesenheit_data($mysqli,intval($_GET['abwesenheit_id']));
@@ -74,4 +74,4 @@ if(isset($_POST['abwesenheitmanagement_go_back'])){
     }
 }
 
-echo site_body('Meine Abwesenheitsanträge', $HTML, true, $Nutzergruppen);
+echo site_body('Meine Dienstplanwünsche', $HTML, true, $Nutzergruppen);

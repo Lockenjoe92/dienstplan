@@ -138,3 +138,63 @@ function get_current_user_infos($mysqli, $ID){
     return $Users;
 
 }
+
+function get_user_depmnt_assignments($mysqli, $ID, $ShowDeleted=false){
+
+    $Assignments = [];
+
+    if($ShowDeleted){
+        $sql = "SELECT * FROM user_department_assignments WHERE user = ".$ID." ORDER BY create_time ASC";
+    }else{
+        $sql = "SELECT * FROM user_department_assignments WHERE user = ".$ID." AND delete_user IS NULL ORDER BY create_time ASC";
+    }
+
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            $Assignments[] = $row;
+        }
+    }
+
+    return $Assignments;
+
+}
+
+function get_user_assigned_department_at_date($mysqli, $user, $Date){
+
+    $UserInfos = get_current_user_infos($mysqli, $user);
+    $UserAssignments = get_user_depmnt_assignments($mysqli, $user);
+    $DefaultDepartment = $UserInfos['default_abteilung'];
+    if(sizeof($UserAssignments)==0){
+        return $DefaultDepartment;
+    } else {
+
+        $Catches = [];
+
+        // Loop through assignments until active assignment at date is found - if none are active, return default
+        foreach ($UserAssignments as $assignment){
+            $Catch=true;
+            //Check non-overlap cases
+            //Case 1: Begin and End of Item are smaller
+            if((strtotime($assignment['begin'])<strtotime($Date)) && (strtotime($assignment['end'])<strtotime($Date))){
+                $Catch=false;
+            }
+            //Case 2: Begin and End of Item are bigger
+            if((strtotime($assignment['begin'])>strtotime($Date)) && (strtotime($assignment['end'])>strtotime($Date))){
+                $Catch=false;
+            }
+            if($Catch){
+                $Catches[]=$assignment;
+            }
+
+        }
+
+        if(sizeof($Catches)==0){
+            return $DefaultDepartment;
+        } elseif(sizeof($Catches)==1){
+            return $Catches['department'];
+        } else {
+            return $DefaultDepartment;
+        }
+    }
+
+}

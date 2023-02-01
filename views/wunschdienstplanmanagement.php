@@ -105,3 +105,73 @@ function wunschdienstplan_uebersicht_kalender_user($Year){
     return "<h3>Hier entsteht eine Jahreskalender-Ansicht der DP-Wünsche der User.</h3>";
 
 }
+
+function add_dienstwunsch_user($mysqli){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $userIDPlaceholder = get_current_user_id();
+    $entryDatePlaceholder = date('Y-m-d');
+    $ReturnMessage = $DatePlaceholder = $typePlaceholder = $commentPlaceholder = "";
+    $DateErr = "";
+
+    // Do stuff
+    if(isset($_POST['add_dienstwunsch_action'])){
+
+        $AllWuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+
+        // Load Form content
+        $DatePlaceholder = trim($_POST['date']);
+        $typePlaceholder = trim($_POST['type']);
+        $commentPlaceholder = trim($_POST['comment_user']);
+
+        // Do some DAU-Checks here
+        // Check fucked up date entries
+        if($DatePlaceholder<date('Y-m-d')){
+            $DAUcheck++;
+            $DateErr .= "Das Anfangsdatum darf nicht in der Vergangenheit liegen!";
+        }
+
+        //Check overlaps!
+        $Check = check_dienstwunsch_date_overlap_user($userIDPlaceholder, $AllWuensche, $DatePlaceholder);
+        if($Check['bool']){
+            $DAUcheck++;
+            $DateErr .= "Der eingegebene Antrag kollidiert mit anderen bereits erfassten Dienstplanwünschen!";
+        }
+
+        //Check if Diensttype fits to planned user org_einheit at chosen date
+        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $user, $Date);
+
+        if($DAUcheck==0){
+
+            $Return = dienstwunsch_anlegen($mysqli, $userIDPlaceholder, $DatePlaceholder, $typePlaceholder, $entryDatePlaceholder, $commentPlaceholder);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Dienstwunsch erfolgreich angelegt!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, false);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '');
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch anlegen','', $FORM);
+    }else{
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch anlegen',$ReturnMessage, $FORM);
+    }
+}

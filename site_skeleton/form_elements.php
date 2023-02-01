@@ -346,6 +346,70 @@ function form_group_dropdown_abwesenheiten_dringlichkeiten_typen($Label, $name, 
     return $HTML;
 }
 
+function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Departments = get_list_of_all_departments($mysqli);
+    $Options = get_list_of_all_dienstplanwunsch_types($mysqli);
+
+    foreach ($Departments as $department){
+
+        $OptionsHTML .= '<option disabled>-- '.$department['name'].' --</option>';
+
+        foreach ($Options as $option){
+
+            if($option['belongs_to_depmnt']==$department['id']){
+                if($Value==$option['id']){
+                    $OptionsHTML .= '<option value="'.$option['id'].'" selected>'.$option['name'].'</option>';
+                } else {
+                    $OptionsHTML .= '<option value="'.$option['id'].'">'.$option['name'].'</option>';
+                }
+            }
+        }
+    }
+
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Dienstwunschtyp auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Dienstwunschtyp auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
 function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
