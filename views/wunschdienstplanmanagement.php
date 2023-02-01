@@ -87,13 +87,19 @@ data-show-multi-sort="true"
 
 }
 
-function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year, $UE){
+function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
     $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
     $Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
     $Users = get_sorted_list_of_all_users($mysqli);
+
+    if(isset($_POST['org_ue'])){
+        $UE = $_POST['org_ue'];
+    } else {
+        $UE = $_GET['org_ue'];
+    }
 
     // Setup Toolbar
     $HTML = '<div id="toolbar">
@@ -452,6 +458,117 @@ function add_dienstwunsch_user($mysqli){
     }
 }
 
+function add_dienstwunsch_management($mysqli){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = 0;
+    $allDepartments = get_list_of_all_departments($mysqli);
+    $allWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+    $DatePlaceholder = $ApplicationDatePlaceholder = date('Y-m-d');
+    $ReturnMessage = $typePlaceholder = $commentPlaceholder = $userIDPlaceholder =  "";
+    $DateErr = $TypeErr = $ApplicationDateErr = "";
+
+    // Implement multi OrgUE Sites
+    if(isset($_POST['org_ue'])){
+        $UE = $_POST['org_ue'];
+    } else {
+        $UE = $_GET['org_ue'];
+    }
+
+    // Do stuff
+    if(isset($_POST['add_dienstwunsch_action'])){
+
+        $AllWuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+        $allHolidays = get_sorted_list_of_all_abwesenheiten($mysqli);
+
+        // Load Form content
+        $userIDPlaceholder = trim($_POST['user']);
+        $DatePlaceholder = trim($_POST['date']);
+        $ApplicationDatePlaceholder = trim($_POST['application_date']);
+        $typePlaceholder = trim($_POST['type']);
+        $commentPlaceholder = trim($_POST['comment_user']);
+
+        // Do some DAU-Checks here
+        // Check fucked up date entries
+        if($DatePlaceholder<date('Y-m-d')){
+            $DAUcheck++;
+            $DateErr .= "Das Anfangsdatum darf nicht in der Vergangenheit liegen!";
+        }
+
+        if($ApplicationDatePlaceholder>$DatePlaceholder){
+            $DAUcheck++;
+            $ApplicationDateErr .= "Das Antragsdatum kann nicht nach dem Anfangsdatum liegen!";
+        }
+
+        //Check overlaps!
+        $Check = check_dienstwunsch_date_overlap_user($userIDPlaceholder, $AllWuensche, $DatePlaceholder, $typePlaceholder);
+        if($Check['bool']){
+            $DAUcheck++;
+            $DateErr .= "Der eingegebene Antrag kollidiert mit anderen bereits erfassten Dienstplanwünschen!";
+        }
+
+        $CheckHoliday = check_abwesenheit_date_overlap_user($userIDPlaceholder,$allHolidays,$DatePlaceholder,$DatePlaceholder);
+        if($CheckHoliday['bool']){
+            $DAUcheck++;
+            $DateErr .= "Der eingegebene Antrag kollidiert mit einem anderen bereits erfassten Abwesenheits-/Urlaubsantrag!";
+        }
+
+        //Check if Diensttype fits to planned user org_einheit at chosen date
+        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, $DatePlaceholder);
+        foreach ($allDepartments as $department){
+            if($department['id']==$UserDepartmentAssignmentAtDate){
+                $DepartmentName = $department['name'];
+            }
+        }
+
+        foreach ($allWishTypes as $wishType){
+            if($wishType['id']==$typePlaceholder){
+                if($wishType['belongs_to_depmnt']!=$UserDepartmentAssignmentAtDate){
+                    $DAUcheck++;
+                    $TypeErr .= "Der gewählte Dienstplanwunsch-Typ ist am angegebenen Tag nicht wählbar, da der/die MitarbeiterIn dort in der Organisationseinheit ".$DepartmentName." geplant ist.";
+                }
+            }
+        }
+
+        if($DAUcheck==0){
+
+            $Return = dienstwunsch_anlegen($mysqli, $userIDPlaceholder, $DatePlaceholder, $typePlaceholder, $ApplicationDatePlaceholder, $commentPlaceholder);
+            if($Return['success']){
+                $OutputMode="show_return_card";
+                $ReturnMessage = "Dienstwunsch erfolgreich angelegt!";
+            } else {
+                $OutputMode="show_return_card";
+                $ReturnMessage = $Return['err'];
+            }
+        }
+    }
+
+    if($OutputMode=="show_form"){
+        //Build Form
+        $FormHTML .= form_hidden_input_generator('org_ue', $UE);
+        $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, false);
+        $FormHTML .= form_group_dropdown_all_users('MitarbeiterIn', 'user', $userIDPlaceholder, true, '', false);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr);
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_input_date('Antragsdatum', 'application_date', $ApplicationDatePlaceholder, true, $ApplicationDateErr, false);
+        $FormHTML .= "<br>";
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch anlegen','', $FORM);
+    }else{
+        $FormHTML = form_hidden_input_generator('org_ue', $UE);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch anlegen',$ReturnMessage, $FORM);
+    }
+}
+
 function delete_dienstwunsch_user($mysqli, $dienstwunsch){
 
     // Initialize Placeholder & Error Variables
@@ -503,17 +620,25 @@ function delete_dienstwunsch_user($mysqli, $dienstwunsch){
 
 }
 
-function delete_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
+function delete_dienstwunsch_management($mysqli, $dienstwunsch){
 
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
     $OutputMode = "show_form";
     $DAUcheck = 0;
     $ReturnMessage = $DeleteComment = "";
+    $UserPlaceholder = $dienstwunsch['user'];
     $DatePlaceholder = $dienstwunsch['date'];
     $typePlaceholder =  $dienstwunsch['type'];
     $commentPlaceholder =  $dienstwunsch['create_comment'];
     $DateErr = $DeleteCommentErr = "";
+
+    // Implement multi OrgUE Sites
+    if(isset($_POST['org_ue'])){
+        $UE = $_POST['org_ue'];
+    } else {
+        $UE = $_GET['org_ue'];
+    }
 
     // Do stuff
     if(isset($_POST['delete_dienstwunsch_action'])){
@@ -542,7 +667,9 @@ function delete_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
     if($OutputMode=="show_form"){
         //Build Form
         $FormHTML .= form_hidden_input_generator('dienstwunsch_id', $dienstwunsch['id']);
+        $FormHTML .= form_hidden_input_generator('org_ue', $UE);
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
+        $FormHTML .= form_group_dropdown_all_users('MitarbeiterIn', 'user', $UserPlaceholder, true, '', true);
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
         $FormHTML .= "<br>";
@@ -555,7 +682,8 @@ function delete_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Dienstwunsch löschen','Möchten Sie diesen Dienstwunsch wirklich löschen?', $FORM);
     }else{
-        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML = form_hidden_input_generator('org_ue', $UE);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Dienstwunsch löschen',$ReturnMessage, $FORM);
     }
@@ -616,7 +744,7 @@ function edit_dienstwunsch_user($mysqli, $dienstwunsch){
 
 }
 
-function edit_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
+function edit_dienstwunsch_management($mysqli, $dienstwunsch){
 
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
@@ -624,9 +752,17 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
     $DAUcheck = 0;
     $ReturnMessage = "";
     $DatePlaceholder = $dienstwunsch['date'];
+    $userIDPlaceholder = $dienstwunsch['user'];
     $typePlaceholder =  $dienstwunsch['type'];
     $commentPlaceholder =  $dienstwunsch['create_comment'];
     $DateErr = $TypeErr = $CommentErr = "";
+
+    // Implement multi OrgUE Sites
+    if(isset($_POST['org_ue'])){
+        $UE = $_POST['org_ue'];
+    } else {
+        $UE = $_GET['org_ue'];
+    }
 
     // Do stuff
     if(isset($_POST['edit_dienstwunsch_action'])){
@@ -664,7 +800,9 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
     if($OutputMode=="show_form"){
         //Build Form
         $FormHTML .= form_hidden_input_generator('dienstwunsch_id', $dienstwunsch['id']);
+        $FormHTML .= form_hidden_input_generator('org_ue', $UE);
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
+        $FormHTML .= form_group_dropdown_all_users('MitarbeiterIn', 'user', $userIDPlaceholder, true, '', true);
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr, false);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, true, $CommentErr, false);
         $FormHTML .= "<br>";
@@ -675,7 +813,8 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch, $UE){
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Dienstwunsch bearbeiten','Möchten Sie diesen Dienstwunsch wirklich bearbeiten?', $FORM);
     }else{
-        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML = form_hidden_input_generator('org_ue', $UE);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
         $FORM = form_builder($FormHTML, 'self', 'POST');
         return card_builder('Dienstwunsch bearbeiten',$ReturnMessage, $FORM);
     }
