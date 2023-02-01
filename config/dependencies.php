@@ -11,6 +11,7 @@ include_once "./config/settings_config.php";
 include_once "./tools/session_management.php";
 include_once "./tools/user_management.php";
 include_once "./tools/abwesenheiten_management.php";
+include_once "./tools/wunschdienstplan_management.php";
 
 // Website Skeleton Functions
 include_once "./site_skeleton/site_skeleton.php";
@@ -25,3 +26,4 @@ include_once "./forms/session_management.php";
 include_once "./views/workforcemanagement.php";
 include_once "./views/abwesenheitenmanagement.php";
 include_once "./views/urlaubsplanmanagement.php";
+include_once "./views/wunschdienstplanmanagement.php";
