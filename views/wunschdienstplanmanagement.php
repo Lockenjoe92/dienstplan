@@ -435,6 +435,18 @@ function add_dienstwunsch_user($mysqli){
             $DateErr .= "Die maximale Zahl an Dienstwünschen im ausgewählten Monat ist bereits erschöpft!";
         }
 
+        // Don't permit users to submit wishes x Months in advance
+        $DateLastPossibleEntry = get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths);
+        if($DateLastPossibleEntry>$DatePlaceholder){
+            $DAUcheck++;
+            // Make Pretty Month Name
+            $GetTime = strtotime($DatePlaceholder);
+            $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
+                IntlDateFormatter::NONE, NULL, NULL, "MMM");
+            $monthName = datefmt_format($format, mktime(0, 0, 0, date("m", $GetTime)));
+            $DateErr .= "Die Dienst- und Urlaubswunscheingabe für den ".$monthName." ".date("Y", $GetTime)." ist bereits geschlossen!";
+        }
+
         if($DAUcheck==0){
 
             $Return = dienstwunsch_anlegen($mysqli, $userIDPlaceholder, $DatePlaceholder, $typePlaceholder, $entryDatePlaceholder, $commentPlaceholder);

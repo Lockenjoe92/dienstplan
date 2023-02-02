@@ -51,3 +51,13 @@ function get_num_wishes_user_in_selected_month($UserID,$Date,$AllWuensche){
 
     return $Counter;
 }
+
+function get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths){
+
+    $FirstDayThisMonth = date('Y-m-01');
+    $CommandMonths = $DepartmentLastWishMonths+1;
+    $Command = "+".$CommandMonths." months";
+    $WarpUpxMonths = date('Y-m-d', strtotime($Command, strtotime($FirstDayThisMonth)));
+    $LastDayOfMonthBefore = date('Y-m-d', strtotime('-1 day', strtotime($WarpUpxMonths)));
+    return $LastDayOfMonthBefore;
+}
