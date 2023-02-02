@@ -51,8 +51,11 @@ data-show-multi-sort="true"
                 $HTML .= '<tr id="tr-id-'.$counter.'" class="tr-class-'.$counter.'">';
             }
 
+            // Check user assignment at time of antrag
+            $UE = get_user_assigned_department_at_date($mysqli, $CurrentUser, $Wunsch['date']);
+
             // Build edit/delete Buttons
-            if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch)){
+            if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE)){
                 $Options = '<a href="dienstplan_user.php?mode=edit_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="dienstplan_user.php?mode=delete_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
             }else{
                 $Options = '';
@@ -374,8 +377,12 @@ function add_dienstwunsch_user($mysqli){
     $allDepartments = get_list_of_all_departments($mysqli);
     $allWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $userIDPlaceholder = get_current_user_id();
-    $entryDatePlaceholder = date('Y-m-d');
-    $ReturnMessage = $DatePlaceholder = $typePlaceholder = $commentPlaceholder = "";
+
+    //Initialize date input at earliest possible date according to current assignment
+    $UE = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, date('Y-m-d'));
+    $Department = get_department_infos($mysqli, $UE);
+    $DatePlaceholder = date('Y-m-d', strtotime('+1 day', strtotime(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months']))));
+    $ReturnMessage = $entryDatePlaceholder = $typePlaceholder = $commentPlaceholder = "";
     $DateErr = $TypeErr = "";
 
     // Do stuff

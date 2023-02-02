@@ -1,8 +1,43 @@
 <?php
 
-function user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch){
+function user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE){
 
-    return true;
+    $Nutzerrollen = explode(',',$Nutzerrollen);
+
+    // Case 1: User is Admin -> always possible
+    if(in_array('admin', $Nutzerrollen)){
+        return true;
+    } else {
+
+        // Case 2: the user is from the HR department
+        if(in_array('dienstplan_'.$UE, $Nutzerrollen)){
+
+            // Permission is only granted when status is "Beantragt" i.e. the employee has not recieved an answer to the application
+            #if($Abwesenheit['status_bearbeitung']=='Beantragt'){
+            #   return true;
+            #} else {
+            #   return false;
+            #}
+            return true;
+        }
+
+        // Case 3: the application is from the active user themselves
+        if(get_current_user_id() == $Wunsch['user']){
+
+                // Only show edit buttons on applications, that haven't started yet
+                $DienstwunschType = get_dienstwunsch_type_data($mysqli,$Wunsch['type']);
+                $Department = get_department_infos($mysqli,$DienstwunschType['belongs_to_depmnt']);
+                if(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months'])<$Wunsch['date']){
+                    return true;
+                } else {
+                    return false;
+                }
+
+        } else {
+            return false;
+        }
+
+    }
 
 }
 
@@ -211,6 +246,15 @@ function edit_dienstwunsch_db($mysqli, $idDienstwunsch, $typeDienstwunsch, $idUs
 function get_dienstwunsch_data($mysqli, $ID){
 
     $sql = "SELECT * FROM dienstwuensche WHERE id = ".$ID;
+    if($stmt = $mysqli->query($sql)){
+        return $stmt->fetch_assoc();
+    }
+
+}
+
+function get_dienstwunsch_type_data($mysqli, $ID){
+
+    $sql = "SELECT * FROM dienstwunsch_typen WHERE id = ".$ID;
     if($stmt = $mysqli->query($sql)){
         return $stmt->fetch_assoc();
     }

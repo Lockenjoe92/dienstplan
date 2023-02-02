@@ -21,9 +21,11 @@ if(isset($_POST['action_change_date'])){
 
 if((isset($_POST['wunschdienst_go_back'])) OR (isset($_POST['add_dienstwunsch_action'])) OR (isset($_POST['delete_dienstwunsch_action'])) OR (isset($_POST['edit_dienstwunsch_action']))){
     $Role = "dienstplan_".$_POST['org_ue'];
+    $UE = $_POST['org_ue'];
 } else {
     if(intval($_GET['org_ue'])>0){
         $Role = "dienstplan_".$_GET['org_ue'];
+        $UE = $_GET['org_ue'];
     } else {
         $Role = 'dienstplan';
     }
@@ -57,7 +59,7 @@ if(isset($_POST['wunschdienst_go_back'])){
     $HTML .= add_dienstwunsch_management($mysqli);
 } elseif (isset($_POST['delete_dienstwunsch_action'])) {
     $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
-    if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+    if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj, $UE)){
         $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj);
     } else {
         $HTML .= "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Year."</h1>";
@@ -66,7 +68,7 @@ if(isset($_POST['wunschdienst_go_back'])){
     }
 } elseif (isset($_POST['edit_dienstwunsch_action'])) {
     $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
-    if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+    if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj, $UE)){
         $HTML .= edit_dienstwunsch_management($mysqli, $dienstwunschObj);
     } else {
         $HTML .= "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Year."</h1>";
@@ -83,7 +85,7 @@ if(isset($_POST['wunschdienst_go_back'])){
     } elseif ($_GET['mode']=='delete_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
             $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
-            if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+            if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj, $UE)){
                 $HTML .= delete_dienstwunsch_management($mysqli, $dienstwunschObj);
             } else {
                 $HTML .= "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Year."</h1>";
@@ -98,7 +100,7 @@ if(isset($_POST['wunschdienst_go_back'])){
     } elseif ($_GET['mode']=='edit_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
             $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
-            if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj)){
+            if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj, $UE)){
                 $HTML .= edit_dienstwunsch_management($mysqli, $dienstwunschObj);
             } else {
                 $HTML .= "<h1 class='align-content-center'>Dienstwünsche im ".$monthName." ".$Year."</h1>";
