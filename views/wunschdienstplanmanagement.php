@@ -931,25 +931,33 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
                 foreach ($WishTypes as $wishType){
 
                     if($wishType['id']==$wish['type']){
+
+                        // Generate Tooltip if Wish has a comment
+                        if($wish['create_comment']!=''){
+                            $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$wish['create_comment'].'">'.$wishType['name_short'].'</a>';
+                        } else {
+                            $Content = $wishType['name_short'];
+                        }
+
                         if($HolidayWeekend){
                             if($wishType['type']=='ruf'){
-                                $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$wishType['name_short']."</td>";
+                                $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$Content."</td>";
                             } else {
                                 //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
                                 if($wishType['type']=='nacht'){
-                                    $NightShit = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>";
+                                    $NightShit = "<td class='text-center ".$wishType['colors']."'>".$Content."</td>";
                                 }
                                 if($wishType['type']=='tag'){
                                     if($NightShit!=""){
-                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>".$NightShit;
+                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$Content."</td>".$NightShit;
                                         $NightShit = '';
                                     } else {
-                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td><td class='table-secondary'></td>";
+                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$Content."</td><td class='table-secondary'></td>";
                                     }
                                 }
                             }
                         } else {
-                            $Answer = "<td class='text-center ".$wishType['colors']."'>".$wishType['name_short']."</td>";
+                            $Answer = "<td class='text-center ".$wishType['colors']."'>".$Content."</td>";
                         }
                     }
                 }

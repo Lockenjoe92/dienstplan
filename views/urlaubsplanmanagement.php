@@ -295,11 +295,18 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
                     }
                 }
 
+                // Generate Tooltip if Antrag has a comment
+                if($Abwesenheit['create_comment']!=''){
+                    $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'">'.$Kuerzel.'</a>';
+                } else {
+                    $Content = $Kuerzel;
+                }
+
                 if($Abwesenheit['status_bearbeitung']=="Beantragt"){
-                    $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
+                    $Answer = "<td class='text-center table-warning'>".$Content."*</td>";
                 } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
 
-                    $Answer = "<td class='text-center ".$Farbe."'>".$Kuerzel."</td>";
+                    $Answer = "<td class='text-center ".$Farbe."'>".$Content."</td>";
 
                     //Sum up statistics
                     $Total++;
