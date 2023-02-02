@@ -156,7 +156,7 @@ data-show-multi-sort="true"
             }
 
             // Build edit/delete Buttons
-            if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch)){
+            if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE)){
                 $Options = '<a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=edit_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=delete_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
             }else{
                 $Options = '';
@@ -215,10 +215,10 @@ function wunschdienstplan_funktionsbuttons_management($Month,$Year){
     }
 
     $FORMhtml = '<div class="row">';
+    $FORMhtml .= form_hidden_input_generator('org_ue', $UE);
     $FORMhtml .= "<div class='col'>".form_dropdown_months('month',$Month)."</div>";
     $FORMhtml .= "<div class='col'>".form_dropdown_years('year', $Year)."</div>";
     $FORMhtml .= "<div class='col'>".form_group_continue_return_buttons(true, 'Reset', 'reset_calendar', 'btn-primary', true, 'Zeitraum wählen', 'action_change_date', 'btn-primary')."</div>";
-    $FORMhtml .= form_hidden_input_generator('org_ue', $UE);
     $FORMhtml .= "</div>";
 
     $HTML = container_builder(form_builder($FORMhtml, 'self', 'POST'));
@@ -229,7 +229,7 @@ function wunschdienstplan_funktionsbuttons_management($Month,$Year){
 
 function wunschdienstplan_uebersicht_kalender_user($Year){
 
-    return "<h3>Hier entsteht eine Jahreskalender-Ansicht der DP-Wünsche der User.</h3>";
+    return "";
 
 }
 
@@ -381,8 +381,9 @@ function add_dienstwunsch_user($mysqli){
     //Initialize date input at earliest possible date according to current assignment
     $UE = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, date('Y-m-d'));
     $Department = get_department_infos($mysqli, $UE);
+    $entryDatePlaceholder = date('Y-m-d');
     $DatePlaceholder = date('Y-m-d', strtotime('+1 day', strtotime(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months']))));
-    $ReturnMessage = $entryDatePlaceholder = $typePlaceholder = $commentPlaceholder = "";
+    $ReturnMessage = $typePlaceholder = $commentPlaceholder = "";
     $DateErr = $TypeErr = "";
 
     // Do stuff

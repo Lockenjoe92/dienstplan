@@ -18,10 +18,17 @@ if(isset($_POST['action_change_date'])){
         $Month = $_POST['month'];
     }
 } else {
-    if(intval($_GET['org_ue'])>0){
-        $Role = "dienstplan_".$_GET['org_ue'];
+    if(isset($_GET['org_ue'])){
+        if(intval($_GET['org_ue'])>0){
+            $Role = "dienstplan_".$_GET['org_ue'];
+            $UE = $_GET['org_ue'];
+        }
     } else {
-        $Role = 'dienstplan';
+        if(isset($_POST['org_ue'])) {
+            $Role = "dienstplan_" . $_POST['org_ue'];
+        } else {
+            $Role = 'dienstplan';
+        }
     }
 }
 

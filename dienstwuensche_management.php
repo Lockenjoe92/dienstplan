@@ -11,6 +11,7 @@ $Month = date('m');
 
 // Kalender parser
 if(isset($_POST['action_change_date'])){
+    $Role = "dienstplan_".$_POST['org_ue'];
     if(is_numeric($_POST['year'])){
         $Year = $_POST['year'];
     }
@@ -19,29 +20,26 @@ if(isset($_POST['action_change_date'])){
     }
 }
 
-if((isset($_POST['wunschdienst_go_back'])) OR (isset($_POST['add_dienstwunsch_action'])) OR (isset($_POST['delete_dienstwunsch_action'])) OR (isset($_POST['edit_dienstwunsch_action']))){
+if((isset($_POST['wunschdienst_go_back'])) OR (isset($_POST['reset_calendar'])) OR (isset($_POST['add_dienstwunsch_action'])) OR (isset($_POST['delete_dienstwunsch_action'])) OR (isset($_POST['edit_dienstwunsch_action']))){
     $Role = "dienstplan_".$_POST['org_ue'];
     $UE = $_POST['org_ue'];
 } else {
-    if(intval($_GET['org_ue'])>0){
-        $Role = "dienstplan_".$_GET['org_ue'];
-        $UE = $_GET['org_ue'];
+    if(isset($_GET['org_ue'])){
+        if(intval($_GET['org_ue'])>0){
+            $Role = "dienstplan_".$_GET['org_ue'];
+            $UE = $_GET['org_ue'];
+        }
     } else {
-        $Role = 'dienstplan';
+        if(isset($_POST['org_ue'])) {
+            $Role = "dienstplan_" . $_POST['org_ue'];
+        } else {
+            $Role = 'dienstplan';
+        }
     }
 }
 
 $Nutzergruppen = session_manager($Role);
 $mysqli = connect_db();
-
-if(isset($_POST['action_change_date'])){
-    if(is_numeric($_POST['year'])){
-        $Year = $_POST['year'];
-    }
-    if(is_numeric($_POST['month'])){
-        $Month = $_POST['month'];
-    }
-}
 
 // Start dem outputs
 $HTML = '';
