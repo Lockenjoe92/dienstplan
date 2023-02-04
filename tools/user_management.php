@@ -69,7 +69,7 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
     return $Antwort;
 }
 
-function edit_user($SelectedUser, $Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage='', $IstNotarzt=false){
+function edit_user($SelectedUser, $Vorname, $Nachname, $UEdefault, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage='', $IstNotarzt=false){
 
     // Prepare variables and generate initial password
     $mysqli = connect_db();
@@ -77,10 +77,10 @@ function edit_user($SelectedUser, $Vorname, $Nachname, $Username, $Mitarbeiternu
     $CurrentUserID = get_current_user_id();
 
     // Prepare statement & DB Access
-    $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, nutzergruppen = ?, vertrag = ?, urlaubstage = ?, freie_tage = ? WHERE id = ?";
+    $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, nutzergruppen = ?, vertrag = ?, urlaubstage = ?, freie_tage = ?, default_abteilung = ? WHERE id = ?";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("ssissssiisi", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $SelectedUser);
+        $stmt->bind_param("ssissssiisii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $SelectedUser);
 
         // Attempt to execute the prepared statement
         if($stmt->execute()){

@@ -297,7 +297,6 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
             }
 
             $TableRowContent .= "<td>".calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $Year)."</td>";
-
             $TableRowContent .= "</tr>";
             $TableRows .= $TableRowContent;
         }

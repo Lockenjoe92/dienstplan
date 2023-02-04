@@ -410,6 +410,62 @@ function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value=''
 
 }
 
+function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Departments = get_list_of_all_departments(connect_db());
+
+    foreach ($Departments as $department){
+
+        if($Value==$department['id']){
+            $OptionsHTML .= '<option value="'.$department['id'].'" selected>'.$department['name'].'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$department['id'].'">'.$department['name'].'</option>';
+        }
+    }
+
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Primäre Unterabteilung auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">Primäre Unterabteilung auswählen</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
 function form_group_dropdown_toolrollen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';

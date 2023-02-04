@@ -263,7 +263,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
     $OutputMode = "show_form";
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = "";
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $ueErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = "";
     $DAUcheck = 0;
     $UserCounter = 0;
     $FoundUser = [];
@@ -312,6 +312,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
         $GruppePlaceholder = $FoundUser['abteilungsrollen'];
         $vertragPlaceholder = $FoundUser['vertrag'];
         $urlaubPlaceholder = $FoundUser['urlaubstage'];
+        $uePlaceholder = $FoundUser['default_abteilung'];
         $RollenPlaceholder = explode(',',$FoundUser['nutzergruppen']);
         $freieTagePlaceholder = explode(',', $FoundUser['freie_tage']);
 
@@ -323,6 +324,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $mitarbeiternummerPlaceholder = trim($_POST['mitarbeiternummer']);
             $mailPlaceholder = trim($_POST['mail']);
             #$edvPlaceholder = trim($_POST['edv']);
+            $uePlaceholder = trim($_POST['ue']);
             $GruppePlaceholder = trim($_POST['gruppe']);
             $vertragPlaceholder = trim($_POST['vertrag']);
             $urlaubPlaceholder = trim($_POST['urlaub']);
@@ -413,6 +415,11 @@ function edit_user_workforce_management($mysqli, $admin=false){
                 $DAUcheck++;
             }
 
+            if(empty($uePlaceholder)){
+                $ueErr = "Bitte weisen Sie die/den Nutzer/in einer primären Untereinheit zu!";
+                $DAUcheck++;
+            }
+
             if(sizeof($RollenPlaceholder)==0){
                 $rollenErr = "Bitte wählen Sie mindestens eine Systemrolle des/r Nutzer/in aus!";
                 $DAUcheck++;
@@ -453,7 +460,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
                     $freieTagePlaceholder = implode(',',$freieTagePlaceholder);
                 }
 
-                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $edvPlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder);
+                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $uePlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder);
                 if($Result['success']){
                     $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich bearbeitet!";
                 } else {
@@ -480,6 +487,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $FormHTML .= form_hidden_input_generator('plchldr1', '1');
             $FormHTML .= form_group_input_text('Urlaubstage', 'urlaub', $urlaubPlaceholder, true, $urlaubErr);
             $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, false, $gruppeErr, false);
+            $FormHTML .= form_group_dropdown_unterabteilungen('Gehört primär zu Unterabteilung', 'ue', $uePlaceholder, true, $ueErr, false);
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);
 
             if($admin) {
