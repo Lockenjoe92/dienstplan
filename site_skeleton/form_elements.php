@@ -392,7 +392,7 @@ function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value=''
             $InValid = "";
         }
 
-        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<select class="form-select '.$InValid.'" name="'.$name.'" id="'.$name.'" '.$disbledHTML.' required>';
         $HTML .= '<option '.$PrimSelected.' disabled value="">Dienstwunschtyp auswählen</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</select>';

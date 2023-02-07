@@ -7,6 +7,7 @@ function table_wunschdienstplan_user($mysqli,$Nutzerrollen){
     $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
     $Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
     $CurrentUser = get_current_user_id();
+    $CurrentUserInfos = get_current_user_infos($mysqli,$CurrentUser);
 
     // Setup Toolbar
     $HTML = '<div id="toolbar">
@@ -52,7 +53,7 @@ data-show-multi-sort="true"
             }
 
             // Check user assignment at time of antrag
-            $UE = get_user_assigned_department_at_date($mysqli, $CurrentUser, $Wunsch['date']);
+            $UE = get_user_assigned_department_at_date($mysqli, $CurrentUserInfos, $Wunsch['date']);
 
             // Build edit/delete Buttons
             if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE)){
@@ -386,9 +387,10 @@ function add_dienstwunsch_user($mysqli){
     $allDepartments = get_list_of_all_departments($mysqli);
     $allWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $userIDPlaceholder = get_current_user_id();
+    $UserInfos = get_current_user_infos($mysqli, $userIDPlaceholder);
 
     //Initialize date input at earliest possible date according to current assignment
-    $UE = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, date('Y-m-d'));
+    $UE = get_user_assigned_department_at_date($mysqli, $UserInfos, date('Y-m-d'));
     $Department = get_department_infos($mysqli, $UE);
     $entryDatePlaceholder = date('Y-m-d');
     $DatePlaceholder = date('Y-m-d', strtotime('+1 day', strtotime(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months']))));
@@ -427,7 +429,7 @@ function add_dienstwunsch_user($mysqli){
         }
 
         //Check if Diensttype fits to planned user org_einheit at chosen date
-        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, $DatePlaceholder);
+        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $UserInfos, $DatePlaceholder);
         foreach ($allDepartments as $department){
             if($department['id']==$UserDepartmentAssignmentAtDate){
                 $DepartmentName = $department['name'];
@@ -523,6 +525,7 @@ function add_dienstwunsch_management($mysqli){
 
         // Load Form content
         $userIDPlaceholder = trim($_POST['user']);
+        $CurrentUserInfos = get_current_user_infos($mysqli, $userIDPlaceholder);
         $DatePlaceholder = trim($_POST['date']);
         $ApplicationDatePlaceholder = trim($_POST['application_date']);
         $typePlaceholder = trim($_POST['type']);
@@ -554,7 +557,7 @@ function add_dienstwunsch_management($mysqli){
         }
 
         //Check if Diensttype fits to planned user org_einheit at chosen date
-        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $userIDPlaceholder, $DatePlaceholder);
+        $UserDepartmentAssignmentAtDate = get_user_assigned_department_at_date($mysqli, $CurrentUserInfos, $DatePlaceholder);
         foreach ($allDepartments as $department){
             if($department['id']==$UserDepartmentAssignmentAtDate){
                 $DepartmentName = $department['name'];
@@ -570,9 +573,6 @@ function add_dienstwunsch_management($mysqli){
             }
         }
 
-        //check if max. allowed wishes is already reached
-
-
         if($DAUcheck==0){
 
             $Return = dienstwunsch_anlegen($mysqli, $userIDPlaceholder, $DatePlaceholder, $typePlaceholder, $ApplicationDatePlaceholder, $commentPlaceholder);
@@ -587,6 +587,7 @@ function add_dienstwunsch_management($mysqli){
     }
 
     if($OutputMode=="show_form"){
+
         //Build Form
         $FormHTML .= form_hidden_input_generator('org_ue', $UE);
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, false);

@@ -160,7 +160,7 @@ function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignm
     if($mysqli==NULL){
         $UserAssignments = get_all_user_depmnt_assignments(NULL, FALSE, $AllAssignments, $user);
     } else {
-        $UserAssignments = get_user_depmnt_assignments($mysqli, $user);
+        $UserAssignments = get_user_depmnt_assignments($mysqli, $user['id']);
     }
 
     $DefaultDepartment = $UserInfos['default_abteilung'];
