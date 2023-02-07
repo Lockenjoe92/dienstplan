@@ -26,6 +26,7 @@ if(isset($_POST['action_change_date'])){
     } else {
         if(isset($_POST['org_ue'])) {
             $Role = "dienstplan_" . $_POST['org_ue'];
+            $UE = $_POST['org_ue'];
         } else {
             $Role = 'dienstplan';
         }
@@ -43,7 +44,7 @@ $monthName = datefmt_format($format, mktime(0, 0, 0, $Month));
 // Start dem outputs
 $HTML = "<h1 class='align-content-center'>Wunschdienst- und Abwesenheitenübersicht im ".$monthName." ".$Year."</h1>";
 $HTML .= wunschdienstplan_funktionsbuttons_management($Month, $Year);
-$HTML .= wunschdienstplan_uebersicht_kalender_management($Month, $Year);
+$HTML .= wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE);
 $HTML = grid_gap_generator($HTML);
 
 echo site_body('Wunschdienst- und Abwesenheitenübersicht', $HTML, true, $Nutzergruppen);

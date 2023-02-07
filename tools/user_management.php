@@ -153,10 +153,16 @@ function get_user_depmnt_assignments($mysqli, $ID, $ShowDeleted=false){
 
 }
 
-function get_user_assigned_department_at_date($mysqli, $user, $Date){
+function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignments=[]){
 
-    $UserInfos = get_current_user_infos($mysqli, $user);
-    $UserAssignments = get_user_depmnt_assignments($mysqli, $user);
+    $UserInfos = $user;
+
+    if($mysqli==NULL){
+        $UserAssignments = get_all_user_depmnt_assignments(NULL, FALSE, $AllAssignments, $user);
+    } else {
+        $UserAssignments = get_user_depmnt_assignments($mysqli, $user);
+    }
+
     $DefaultDepartment = $UserInfos['default_abteilung'];
     if(sizeof($UserAssignments)==0){
         return $DefaultDepartment;

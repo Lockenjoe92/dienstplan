@@ -9,6 +9,39 @@ function get_department_infos($mysqli, $ID){
 
 }
 
+function get_all_user_depmnt_assignments($mysqli, $ShowDeleted=false, $AllAssignments=[], $UserObj=[]){
+
+    $Assignments = [];
+
+    if(($mysqli==NULL)){
+
+        foreach ($AllAssignments as $Assignment){
+
+            if($Assignment['user']==$UserObj['id']){
+                $Assignments[] = $Assignment;
+            }
+
+        }
+
+    } else {
+
+        if($ShowDeleted){
+            $sql = "SELECT * FROM user_department_assignments ORDER BY user ASC";
+        }else{
+            $sql = "SELECT * FROM user_department_assignments WHERE delete_user IS NULL ORDER BY user ASC";
+        }
+
+        if($stmt = $mysqli->query($sql)){
+            while ($row = $stmt->fetch_assoc()) {
+                $Assignments[] = $row;
+            }
+        }
+    }
+
+    return $Assignments;
+
+}
+
 function get_list_of_all_departments($mysqli, $ShowDeleted=false){
 
     $Users = [];

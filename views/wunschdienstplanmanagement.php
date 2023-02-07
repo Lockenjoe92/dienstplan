@@ -233,7 +233,7 @@ function wunschdienstplan_uebersicht_kalender_user($Year){
 
 }
 
-function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
+function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
 
     $HTML = '';
     $mysqli = connect_db();
@@ -241,6 +241,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli, true);
     $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+    $AllUserAssignments = get_all_user_depmnt_assignments($mysqli);
     $FirstDayOfCalendarString = "01-".$Month."-".$Year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
 
@@ -258,6 +259,9 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
     // Generate Rows based on Users
     $TableRows = "";
     foreach ($AllUsers as $User) {
+
+        //Count assignments of this user (so we only show people who are working here this month)
+        $AssignmentCounter = 0;
 
         // Don't show people from HR
         if($User['abteilungsrollen']!="Verwaltung"){
@@ -285,20 +289,26 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year){
 
                 //Catch Month shift
                 if(date("m", $ThisDay)==$Month){
-                    $ReturnValues = populate_day_wuup_tabelle_management($ThisDay,$User['id'],$AllAbwesenheiten,$AllWishes,$AllWishTypes,$User['abteilungsrollen'], $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
+                    $ReturnValues = populate_day_wuup_tabelle_management($ThisDay,$User,$AllAbwesenheiten,$AllWishes,$AllWishTypes,$User['abteilungsrollen'], $AllUserAssignments, $UE, $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
                     $TableRowContent .= $ReturnValues['HTML'];
                     $NewDayStatData['total']=$ReturnValues['total'];
                     $NewDayStatData['OA']=$ReturnValues['OA'];
                     $NewDayStatData['FA']=$ReturnValues['FA'];
                     $NewDayStatData['AA']=$ReturnValues['AA'];
                     $DataDays[$a] = $NewDayStatData;
+                    if($ReturnValues['assignment_today']){
+                        $AssignmentCounter++;
+                    }
                 }
 
             }
 
             $TableRowContent .= "<td>".calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $Year)."</td>";
             $TableRowContent .= "</tr>";
-            $TableRows .= $TableRowContent;
+
+            if($AssignmentCounter>0){
+                $TableRows .= $TableRowContent;
+            }
         }
     }
 
@@ -852,7 +862,7 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch){
 
 }
 
-function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$AllWishes,$WishTypes,$RollenUser,$Total,$OA=0,$FA=0,$AA=0){
+function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllWishes,$WishTypes,$RollenUser,$AllUserAssignments,$UE,$Total,$OA=0,$FA=0,$AA=0){
 
     $ReturnVals=[];
     $Abwesenheitstypen = explode(',',ABWESENHEITENTYPEN);
@@ -868,7 +878,7 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
     foreach ($AllAbwesenheiten as $Abwesenheit){
 
         // Only check Abwesenheiten that count for User
-        if($Abwesenheit['user']==$UserID){
+        if($Abwesenheit['user']==$User['id']){
 
             //Check if Abwesenheit is active on this day
             if(($Day>=strtotime($Abwesenheit['begin']))&&($Day<=strtotime($Abwesenheit['end']))){
@@ -923,7 +933,7 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
     foreach($AllWishes as $wish){
 
         // Only check Abwesenheiten that count for User
-        if($wish['user']==$UserID) {
+        if($wish['user']==$User['id']) {
 
             //Check if Abwesenheit is active on this day
             if(strtotime($wish['date'])==$Day){
@@ -963,6 +973,14 @@ function populate_day_wuup_tabelle_management($Day,$UserID,$AllAbwesenheiten,$Al
                 }
             }
         }
+    }
+
+    // Check if user is actually in the chosen UE at selected day - this is used for deciding if user is to be displayed in other function
+    $AssignmentToday = get_user_assigned_department_at_date(NULL, $User, $Day, $AllUserAssignments);
+    if($UE==$AssignmentToday){
+        $ReturnVals['assignment_today']=true;
+    } else {
+        $ReturnVals['assignment_today']=false;
     }
 
     $ReturnVals['HTML']=$Answer;
