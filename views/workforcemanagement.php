@@ -497,6 +497,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
                 $FormHTML .= form_hidden_input_generator('nutzergruppen[]', $RollenPlaceholder);
             }
             $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_user_action', 'btn-primary', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
+            $FormHTML .= form_group_continue_return_buttons(true, 'Passwort zurücksetzen', 'reset_user_password_action', 'btn-danger', false, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
 
             // Gap it
             $FormHTML = grid_gap_generator($FormHTML);
@@ -508,6 +509,90 @@ function edit_user_workforce_management($mysqli, $admin=false){
             return card_builder('Mitarbeiter/in '.$MitarbeiterName.' bearbeiten',$ReturnMessage, $FORM);
         }
 
+    }
+
+}
+
+function reset_user_password_workforce_management($mysqli){
+
+    // Initialize Placeholder & Error Variables
+    $FormHTML = "";
+    $OutputMode = "show_form";
+    $DAUcheck = $UserCounter = 0;
+    $DAUerr = "";
+    $FoundUser = [];
+
+    if(isset($_POST['reset_user_password_action'])){
+        $SelectedUserID = $_POST['user_id'];
+    } elseif(isset($_POST['reset_user_password_action_action'])){
+        $SelectedUserID = $_POST['user_id'];
+    } else {
+        $SelectedUserID = $_GET['user_id'];
+    }
+
+    // Catch first DAU scenarios
+    if(!is_numeric($SelectedUserID)){
+        $DAUcheck++;
+        $DAUerr = "Kein/e gültige/n User/in ausgewählt. Bitte nochmal probieren!";
+    } else {
+        $AllUsers = get_sorted_list_of_all_users($mysqli, 'id', true);
+        foreach ($AllUsers as $User){
+            if($User['id']==$SelectedUserID){
+                $FoundUser = $User;
+                $MitarbeiterName = $FoundUser['vorname']." ".$FoundUser['nachname'];
+                $UserCounter++;
+            }
+        }
+
+        if($UserCounter==0){
+            $DAUcheck++;
+            $DAUerr = "Kein/e gültige/n User/in ausgewählt. Bitte nochmal probieren!";
+        }
+    }
+
+    // Show return card in case no valid user id was passed
+    if($DAUcheck>0){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Passwort Mitarbeiter/in zurücksetzen',$DAUerr, $FORM);
+    } else {
+
+        if(isset($_POST['reset_user_password_action_action'])){
+
+            if(isset($_POST['reset_user_password_sendmail'])){
+                $SendMail = true;
+            } else {
+                $SendMail = false;
+            }
+
+            $Result = reset_user_password($mysqli, $FoundUser, $SendMail);
+            if($Result['success']){
+                $ReturnMessage = "Passwort der Nutzer/in ".$MitarbeiterName." erfolgreich zurückgesetzt!<br>Das neue temporäre Passwort lautet:<b>".$Result['pass']."</b>";
+            } else {
+                $ReturnMessage = $Result['err'];
+                $DAUcheck++;
+            }
+
+            //Set Output mode
+            if($DAUcheck==0){
+                $OutputMode = "return_card";
+            }
+        }
+
+        if($OutputMode=="show_form"){
+            $FormHTML .= form_hidden_input_generator('user_id', $_POST['user_id']);
+            $FormHTML .= form_group_switch('Mail an Mitarbeiter/in senden', 'reset_user_password_sendmail', true);
+            $FormHTML .= form_group_continue_return_buttons(true, 'Zurücksetzen', 'reset_user_password_action_action', 'btn-danger', true, 'Abbrechen', 'workforcemanagement_go_back', 'btn-primary');
+
+            // Gap it
+            $FormHTML = grid_gap_generator($FormHTML);
+            $FORM = form_builder($FormHTML, 'self', 'POST');
+            return card_builder('Passwort Mitarbeiter/in '.$MitarbeiterName.' zurücksetzen','Möchten Sie das Passwort wirklich zurücksetzen?<br>Optional kann das neue Passwort der/dem Mitarbeiter/in automatisch per Mail zugesendet werden.', $FORM);
+        } else {
+            $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
+            $FORM = form_builder($FormHTML, 'self', 'POST');
+            return card_builder('Passwort Mitarbeiter/in '.$MitarbeiterName.' zurücksetzen',$ReturnMessage, $FORM);
+        }
     }
 
 }

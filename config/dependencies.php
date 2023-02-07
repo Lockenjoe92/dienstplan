@@ -13,6 +13,8 @@ include_once "./tools/user_management.php";
 include_once "./tools/abwesenheiten_management.php";
 include_once "./tools/wunschdienstplan_management.php";
 include_once "./tools/department_management.php";
+include_once "./tools/mail_management.php";
+include_once "./tools/protocol_management.php";
 
 // Website Skeleton Functions
 include_once "./site_skeleton/site_skeleton.php";

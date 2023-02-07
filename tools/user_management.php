@@ -99,6 +99,48 @@ function edit_user($SelectedUser, $Vorname, $Nachname, $UEdefault, $Mitarbeitern
     return $Antwort;
 }
 
+function reset_user_password($mysqli, $UserObj, $SendMail=true){
+
+    //Fetch current User Infos
+    $CurrentUserInfos = get_current_user_infos($mysqli, get_current_user_id());
+
+    //Generate new Password
+    $pass = bin2hex(random_bytes(7)); //creates cryptographically secure random string
+    $pass_hash = password_hash($pass, PASSWORD_DEFAULT); // Creates a password hash
+
+    //Generate Mail Bausteine
+    $Bausteine['[name_user]'] = $UserObj['vorname'].' '.$UserObj['nachname'];
+    $Bausteine['[new_pass]'] = $pass;
+
+    //Update User
+    // Prepare statement & DB Access
+    $sql = "UPDATE users SET password = ? WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("si", $pass_hash, $UserObj['id']);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+            $Antwort['pass']=$pass;
+            if($SendMail){
+                $ProtocolDetails = "Das Passwort von ".$UserObj['nachname']." ".$UserObj['vorname']." wurde durch ".$CurrentUserInfos['vorname']." ".$CurrentUserInfos['nachname']." zurückgesetzt";
+                mail_senden($mysqli, 'new-password', $UserObj, $Bausteine, 'new_password', $ProtocolDetails);
+            }
+        } else{
+            $Antwort['success']=true;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+
+    return $Antwort;
+}
+
 function get_current_user_id(){
     session_start();
     return $_SESSION['user'];

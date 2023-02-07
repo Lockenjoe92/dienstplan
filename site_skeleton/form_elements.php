@@ -98,6 +98,30 @@ function form_group_input_date($Label, $name, $Value='', $HasFormControl=true, $
     return $HTML;
 }
 
+function form_group_checkbox($Label, $name, $Checked=false, $Disabled=false){
+
+    if($Checked){$Checked='checked';}
+    if($Disabled){$Disabled='disabled';}
+
+    $HTML = '<div class="form-check"><input class="form-check-input" type="checkbox" name="'.$name.'" id="flexCheck-'.$name.'" '.$Checked.' '.$Disabled.'>
+            <label class="form-check-label" for="flexCheck-'.$name.'">'.$Label.'</label></div>';
+
+    return $HTML;
+}
+
+function form_group_switch($Label, $name, $Checked=false, $Disabled=false){
+
+    if($Checked){$Checked='checked';}
+    if($Disabled){$Disabled='disabled';}
+
+    $HTML = '<div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="'.$name.'" id="flexCheck-'.$name.'" '.$Checked.' '.$Disabled.'>
+            <label class="form-check-label" for="flexCheck-'.$name.'">'.$Label.'</label>
+            </div>';
+
+    return $HTML;
+}
+
 function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $ContinueName='', $ContinueClass='btn-primary', $GoBack=true, $GoBackValue='', $GoBackName='', $GoBackClass='btn-primary'){
 
     $HTML = '<div class="form-group">';
