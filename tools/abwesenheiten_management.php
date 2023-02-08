@@ -186,7 +186,7 @@ function complete_edit_abwesenheitsantrag($mysqli, $IDantrag, $Begin, $End, $Typ
 
 }
 
-function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate='', $EntryComment='', $Status = 'Beantragt', $DatumBearbeitet = ''){
+function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate='', $EntryComment='', $Status = 'Beantragt', $DatumBearbeitet = '', $BearbeitetVon=''){
 
     // Prepare variables and generate initial password
     $mysqli = connect_db();
@@ -194,10 +194,10 @@ function add_abwesenheitsantrag($User, $BeginDate, $EndDate, $Type, $Urgency, $E
     $CurrentUserID = get_current_user_id();
 
     // Prepare statement & DB Access
-    $sql = "INSERT INTO abwesenheitsantraege (user, begin, end, type, urgency, create_date, create_user, create_comment, bearbeitet_am, status_bearbeitung) VALUES (?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO abwesenheitsantraege (user, begin, end, type, urgency, create_date, create_user, create_comment, bearbeitet_am, status_bearbeitung, bearbeitet_von) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("isssssssss", $User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate, $CurrentUserID, $EntryComment, $DatumBearbeitet, $Status);
+        $stmt->bind_param("isssssssssi", $User, $BeginDate, $EndDate, $Type, $Urgency, $EntryDate, $CurrentUserID, $EntryComment, $DatumBearbeitet, $Status, $BearbeitetVon);
 
         // Attempt to execute the prepared statement
         if($stmt->execute()){

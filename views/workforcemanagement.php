@@ -1,16 +1,16 @@
 <?php
 
-function table_workforce_management($mysqli){
+function table_workforce_management($mysqli,$Admin=false){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
     $Users = get_sorted_list_of_all_users($mysqli);
 
     // Setup Toolbar
-    $HTML = '<div id="toolbar">
-                <a id="add_user" class="btn btn-primary" href="workforce_management.php?mode=add_user">
-                <i class="bi bi-person-fill-add"></i> Hinzufügen</a>
-            </div>';
+    $HTML = '<div id="toolbar">';
+    $HTML .= '<a id="add_user" class="btn btn-primary" href="workforce_management.php?mode=add_user"><i class="bi bi-person-fill-add"></i> Hinzufügen</a>';
+    #if($Admin){$HTML .= ' <a id="bulk_pswd_rst" class="btn btn-outline-danger" href="workforce_management.php?mode=bulk_user_pswd_rst"><i class="bi bi-arrow-counterclockwise"></i> Alle Passwörter zurücksetzen</a>';}
+    $HTML .= '</div>';
 
     // Initialize Table
     $HTML .= '<table data-toggle="table" 

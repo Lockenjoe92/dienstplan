@@ -221,7 +221,7 @@ function add_entry_abwesenheiten_management($mysqli){
     $statusPlaceholder = "Beantragt";
     $entryDatePlaceholder = date('Y-m-d');
     $ReturnMessage = $userIDPlaceholder = $startDatePlaceholder = $endDatePlaceholder = $typePlaceholder = $urgencyPlaceholder = $commentPlaceholder = $approvalDatePlaceholder = "";
-    $startDateErr = $endDateErr = $entryDateErr = $approvalDateErr = "";
+    $startDateErr = $endDateErr = $entryDateErr = $approvalDateErr = $ApprovalUser = "";
 
     // Do stuff
     if(isset($_POST['add_abwesenheit_action'])){
@@ -252,10 +252,11 @@ function add_entry_abwesenheiten_management($mysqli){
         }
 
         if($approvalDatePlaceholder!=''){
-            if($statusPlaceholder!='Beantragt'){
+            if($statusPlaceholder=='Beantragt'){
                 $DAUcheck++;
                 $approvalDateErr = "Wenn der Antrag als bereits bearbeitet festgehalten werden soll, muss er entweder als genehmigt oder abgelehnt markiert sein!";
             }
+            $ApprovalUser = get_current_user_id();
         }
 
         //Check overlaps!
@@ -267,7 +268,7 @@ function add_entry_abwesenheiten_management($mysqli){
 
         if($DAUcheck==0){
 
-            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder, $statusPlaceholder, $approvalDatePlaceholder);
+            $Return = add_abwesenheitsantrag($userIDPlaceholder, $startDatePlaceholder, $endDatePlaceholder, $typePlaceholder, $urgencyPlaceholder, $entryDatePlaceholder, $commentPlaceholder, $statusPlaceholder, $approvalDatePlaceholder, $ApprovalUser);
             if($Return['success']){
                 $OutputMode="show_return_card";
                 $ReturnMessage = "Abwesenheit erfolgreich angelegt!";
