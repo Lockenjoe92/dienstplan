@@ -72,7 +72,7 @@ data-show-multi-sort="true"
 
         // Optionally show comments
         if($Abwesenheit['create_comment']!=''){
-            $Comment = '<i class="bi bi-megaphone-fill"> ';
+            $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'"><i class="bi bi-megaphone-fill"></i></a>';
         } else {
             $Comment = '';
         }
