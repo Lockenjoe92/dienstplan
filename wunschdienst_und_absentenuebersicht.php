@@ -11,6 +11,7 @@ $Month = date('m');
 // Check if the user is already logged in, if yes then redirect him to welcome page
 if(isset($_POST['action_change_date'])){
     $Role = "dienstplan_".$_POST['org_ue'];
+    $UE = $_POST['org_ue'];
     if(is_numeric($_POST['year'])){
         $Year = $_POST['year'];
     }

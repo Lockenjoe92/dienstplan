@@ -370,7 +370,7 @@ function form_group_dropdown_abwesenheiten_dringlichkeiten_typen($Label, $name, 
     return $HTML;
 }
 
-function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false){
+function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false, $ManagementMode = false){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
     $HTML .= '<div class="form-group">';
@@ -399,10 +399,21 @@ function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value=''
         foreach ($Options as $option){
 
             if($option['belongs_to_depmnt']==$department['id']){
-                if($Value==$option['id']){
-                    $OptionsHTML .= '<option value="'.$option['id'].'" selected>'.$option['name'].'</option>';
+
+                if($ManagementMode){
+                    if($Value==$option['id']){
+                        $OptionsHTML .= '<option value="'.$option['id'].'" selected>'.$option['name'].'</option>';
+                    } else {
+                        $OptionsHTML .= '<option value="'.$option['id'].'">'.$option['name'].'</option>';
+                    }
                 } else {
-                    $OptionsHTML .= '<option value="'.$option['id'].'">'.$option['name'].'</option>';
+                    if($option['visible_for_users']==1){
+                        if($Value==$option['id']){
+                            $OptionsHTML .= '<option value="'.$option['id'].'" selected>'.$option['name'].'</option>';
+                        } else {
+                            $OptionsHTML .= '<option value="'.$option['id'].'">'.$option['name'].'</option>';
+                        }
+                    }
                 }
             }
         }

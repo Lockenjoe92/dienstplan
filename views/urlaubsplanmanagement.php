@@ -104,7 +104,17 @@ function urlaubsplan_tabelle_user($month, $year){
         //Catch Month shift
         if(date("m", $ThisDay)==$month){
             $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
-            $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
+            $ColoringAbteilungsuebersicht = 'class="table-success"';
+
+            if ($DataDay['total']>SHOWYELLOWWISHESURLAUB){
+                $ColoringAbteilungsuebersicht = 'class="table-warning"';
+            }
+
+            if($DataDay['total']>SHOWREDWISHESURLAUB) {
+                $ColoringAbteilungsuebersicht = 'class="table-danger"';
+            }
+
+            $TableHeaderRowTotal .= "<th ".$ColoringAbteilungsuebersicht.">".$DataDay['total']."</th>";
             #$TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
             #$TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
             #$TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
@@ -112,6 +122,7 @@ function urlaubsplan_tabelle_user($month, $year){
 
     }
 
+    #$TableHeaderRowUsers .= "<th rowspan='2' class='rotate'>Ges.<br>dieses<br>Jahr</th></tr>";
     $TableHeaderRowUsers .= "</tr>";
     $TableHeaderRowTotal .= "</tr>";
     #$TableHeaderRowOA .= "</tr>";

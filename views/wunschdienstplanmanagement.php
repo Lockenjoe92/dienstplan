@@ -4,7 +4,7 @@ function table_wunschdienstplan_user($mysqli,$Nutzerrollen){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
-    $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+    $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli, false);
     $Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
     $CurrentUser = get_current_user_id();
     $CurrentUserInfos = get_current_user_infos($mysqli,$CurrentUser);
@@ -95,7 +95,7 @@ function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year)
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
-    $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+    $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli, true);
     $Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
     $Users = get_sorted_list_of_all_users($mysqli);
 
@@ -592,7 +592,7 @@ function add_dienstwunsch_management($mysqli){
         $FormHTML .= form_hidden_input_generator('org_ue', $UE);
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, false);
         $FormHTML .= form_group_dropdown_all_users('MitarbeiterIn', 'user', $userIDPlaceholder, true, '', false);
-        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr, false, true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_input_date('Antragsdatum', 'application_date', $ApplicationDatePlaceholder, true, $ApplicationDateErr, false);
@@ -713,7 +713,7 @@ function delete_dienstwunsch_management($mysqli, $dienstwunsch){
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
         $FormHTML .= form_group_dropdown_all_users('MitarbeiterIn', 'user', $UserPlaceholder, true, '', true);
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
-        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
+        $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true, true);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang', 'delete_comment', $DeleteComment, true, $DeleteCommentErr, false);
         $FormHTML .= "<br>";
@@ -845,7 +845,7 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch){
         $FormHTML .= form_hidden_input_generator('org_ue', $UE);
         $FormHTML .= form_group_input_date('Datum', 'date', $DatePlaceholder, true, $DateErr, true);
         $FormHTML .= form_group_dropdown_all_users('MitarbeiterIn', 'user', $userIDPlaceholder, true, '', true);
-        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr, false);
+        $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr, false, true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, true, $CommentErr, false);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
@@ -929,7 +929,9 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
 
     //Loop through all Wishes
     //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
-    $NightShit = "";
+    $CatchHolidayWeekendShift = false;
+    $CatchDayColor = $CatchNightColor = "table-secondary";
+    $CatchDayContent = $CatchNightContent = "";
 
     foreach($AllWishes as $wish){
 
@@ -953,18 +955,21 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
                         if($HolidayWeekend){
                             if($wishType['type']=='ruf'){
                                 $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$Content."</td>";
+                            } elseif ($wishType['type']=='all'){
+                                $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$Content."</td>";
                             } else {
+
                                 //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
                                 if($wishType['type']=='nacht'){
-                                    $NightShit = "<td class='text-center ".$wishType['colors']."'>".$Content."</td>";
+                                    $CatchHolidayWeekendShift=true;
+                                    $CatchDayColor = $wishType['colors'];
+                                    $CatchDayContent = $Content;
                                 }
+
                                 if($wishType['type']=='tag'){
-                                    if($NightShit!=""){
-                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$Content."</td>".$NightShit;
-                                        $NightShit = '';
-                                    } else {
-                                        $Answer = "<td class='text-center ".$wishType['colors']."'>".$Content."</td><td class='table-secondary'></td>";
-                                    }
+                                    $CatchHolidayWeekendShift=true;
+                                    $CatchNightColor = $wishType['colors'];
+                                    $CatchNightContent = $Content;
                                 }
                             }
                         } else {
@@ -974,6 +979,11 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
                 }
             }
         }
+    }
+
+    // If were dealing with Weekends/Holidays it gets complicated
+    if($CatchHolidayWeekendShift){
+        $Answer = "<td class='text-center ".$CatchDayColor."'>".$CatchDayContent."</td><td class='text-center ".$CatchNightColor."'>".$CatchNightContent."</td>";
     }
 
     // Check if user is actually in the chosen UE at selected day - this is used for deciding if user is to be displayed in other function
