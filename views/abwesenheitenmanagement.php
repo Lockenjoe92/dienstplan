@@ -4,8 +4,33 @@ function table_abwesenheiten_management($mysqli, $Nutzerrollen,$UE=1){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
-    $Abwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $AbwesenheitenAll = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $AllAssignments = get_all_user_depmnt_assignments($mysqli);
     $Users = get_sorted_list_of_all_users($mysqli);
+
+    // Presort Abwesenheiten so we only have a list with users who actually ever work at said UE
+    $Abwesenheiten = [];
+    foreach ($AbwesenheitenAll as $Abwesenheit){
+        foreach ($Users as $user){
+            if($Abwesenheit['user']==$user['id']){
+                if($user['default_abteilung']==$UE){
+                    $Abwesenheiten[]=$Abwesenheit;
+                } else {
+                    foreach ($AllAssignments as $assignment){
+                        if($assignment['user']==$Abwesenheit['user']){
+                            if($assignment['department']==$UE){
+                                # Only show people who are assigned this year
+                                $FirstDayThisYear = date('Y').'-m-d';
+                                if($assignment['end']>$FirstDayThisYear){
+                                    $Abwesenheiten[]=$Abwesenheit;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Setup Toolbar
     $HTML = '<div id="toolbar">
