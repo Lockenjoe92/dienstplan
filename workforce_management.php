@@ -26,11 +26,15 @@ if(isset($_POST['workforcemanagement_go_back'])){
     $HTML .= add_user_sondereinteilung_management(connect_db());
 } elseif(isset($_POST['delete_user_sondereinteilung_action'])){
     $HTML .= delete_user_sondereinteilung_management(connect_db());
+} elseif(isset($_POST['delete_user_sondereinteilung_action_action'])){
+    $HTML .= delete_user_sondereinteilung_management(connect_db());
 } elseif (isset($_POST['edit_user_action'])){
     $HTML .= edit_user_workforce_management(connect_db(), $Admin);
 } elseif (isset($_POST['reset_user_password_action'])){
     $HTML .= reset_user_password_workforce_management(connect_db(), $Admin);
 } elseif (isset($_POST['edit_user_sondereinteilung_action'])){
+    $HTML .= edit_user_sondereinteilung_management(connect_db(), $Admin);
+} elseif (isset($_POST['edit_user_sondereinteilung_action_action'])){
     $HTML .= edit_user_sondereinteilung_management(connect_db(), $Admin);
 } elseif (isset($_POST['reset_user_password_action_action'])){
     $HTML .= reset_user_password_workforce_management(connect_db(), $Admin);

@@ -494,7 +494,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $FormHTML .= form_group_dropdown_unterabteilungen('Gehört primär zu Unterabteilung', 'ue', $uePlaceholder, true, $ueErr, false);
 
             // UE Sondereinteilung
-            $FormHTML .= form_group_dropdown_sondereinteilungen_unterabteilungen('Sondereinteilungen', 'sondereinteilungen[]', $SondereinteilungenPlaceholder, false, $sondereinteilungenErr, false);
+            $FormHTML .= form_group_dropdown_sondereinteilungen_unterabteilungen('Sondereinteilungen', 'sondereinteilungen', $SondereinteilungenPlaceholder, false, $sondereinteilungenErr, false);
             if(sizeof($SondereinteilungenPlaceholder)>0){
                 $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_sondereinteilung_action', 'btn-primary', true, 'Bearbeiten', 'edit_user_sondereinteilung_action', 'btn-primary', true, 'Löschen', 'delete_user_sondereinteilung_action', 'btn-danger');
             } else {
@@ -633,7 +633,7 @@ function add_user_sondereinteilung_management($mysqli){
 			$DAUcount++;
 			$beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Sondereinteilung liegen!";
 		}
-		
+
 		$Catches = 0;
 		foreach ($UserAssignments as $assignment){
             $Catch=true;
@@ -646,18 +646,18 @@ function add_user_sondereinteilung_management($mysqli){
             if((strtotime($assignment['begin'])>$endPlaceholder) && (strtotime($assignment['end'])>$endPlaceholder)){
                 $Catch=false;
             }
-			
+
             if($Catch){
                 $Catches++;
             }
 
         }
-		
+
 		if($Catches>0){
 			$beginErr = "Im ausgewähltem Zeitraum liegt bereits eine Sondereinteilung für den/die Mitarbeiterin vor!";
 			$DAUcount++;
 		}
-		
+
         if($DAUcount==0){
             # Add entry to db
             $ReturnVals = add_user_sondereinteilung($mysqli, $_POST['user_id'], $uePlaceholder, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
@@ -665,7 +665,7 @@ function add_user_sondereinteilung_management($mysqli){
                 $ShowReturn = true;
                 $ReturnMessage = "Sondereinteilung erfolgreich angelegt!";
             } else {
-                $ShowReturn = true;
+                $ShowReturn = false;
                 $ReturnMessage = $ReturnVals['err'];
             }
         }
@@ -701,15 +701,149 @@ function add_user_sondereinteilung_management($mysqli){
 function edit_user_sondereinteilung_management($mysqli){
 
     $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+    $AssignmentID = $_POST['sondereinteilungen'];
+    $AssignmentInfos = get_dept_assignment_info($mysqli,$AssignmentID);
+    $UserAssignments = get_user_depmnt_assignments($mysqli, $_POST['user_id'], false, $AssignmentID);
 
-    return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' bearbeiten','', '');
+    // Define Placeholders
+    $uePlaceholder = $AssignmentInfos['department'];
+    $beginPlaceholder = $AssignmentInfos['begin'];
+    $endPlaceholder = $AssignmentInfos['end'];
+    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $ueErr = $beginErr = $endErr = '';
+    $DAUcount = 0;
+    $ShowReturn = false;
 
+    if(isset($_POST['edit_user_sondereinteilung_action_action'])){
+        $uePlaceholder = $_POST['ue_chosen'];
+        $beginPlaceholder = $_POST['begin'];
+        $endPlaceholder = $_POST['end'];
+        $commentPlaceholder = $_POST['comment'];
+
+        # Do some checks
+        if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
+            $DAUcount++;
+            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Sondereinteilung liegen!";
+        }
+
+        $Catches = 0;
+        foreach ($UserAssignments as $assignment){
+            $Catch=true;
+            //Check non-overlap cases
+            //Case 1: Begin and End of Item are smaller than end of new assignment
+            if((strtotime($assignment['begin'])<strtotime($beginPlaceholder)) && (strtotime($assignment['end'])<strtotime($beginPlaceholder))){
+                $Catch=false;
+            }
+            //Case 2: Begin and End of Item are bigger than end of new assignment
+            if((strtotime($assignment['begin'])>strtotime($endPlaceholder)) && (strtotime($assignment['end'])>strtotime($endPlaceholder))){
+                $Catch=false;
+            }
+
+            if($Catch){
+                $Catches++;
+            }
+
+        }
+
+        if($Catches>0){
+            $beginErr = "Im ausgewähltem Zeitraum liegt bereits eine Sondereinteilung für den/die Mitarbeiterin vor!";
+            $DAUcount++;
+        }
+
+        if($DAUcount==0){
+            $ReturnVals = edit_user_sondereinteilung($mysqli, $AssignmentID, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Sondereinteilung erfolgreich bearbeitet!";
+            } else {
+                $ShowReturn = false;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' bearbeiten',$ReturnMessage, $FORM);
+    }else {
+        #Build the form
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_hidden_input_generator('sondereinteilungen', $AssignmentID);
+        $FormHTML .= form_hidden_input_generator('ue_chosen', $uePlaceholder);
+        $FormHTML .= form_group_dropdown_unterabteilungen('Unterabteilung', 'ue_chosen', $uePlaceholder, true, $ueErr, true, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, false);
+        $FormHTML .= form_group_input_text('Kommentar (optional)', 'comment', $commentPlaceholder, false, '', false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_user_sondereinteilung_action_action', 'btn-primary', true, 'Abbrechen', 'abort_user_sondereinteilung_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Sondereinteilung für ' . $UserInfos['vorname'] . ' ' . $UserInfos['nachname'] . ' bearbeiten', '', $FORM);
+    }
 }
 
 function delete_user_sondereinteilung_management($mysqli){
 
     $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+    $AssignmentID = $_POST['sondereinteilungen'];
+    $AssignmentInfos = get_dept_assignment_info($mysqli,$AssignmentID);
 
-    return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' löschen','', '');
+    // Define Placeholders
+    $uePlaceholder = $AssignmentInfos['department'];
+    $beginPlaceholder = $AssignmentInfos['begin'];
+    $endPlaceholder = $AssignmentInfos['end'];
+    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $ueErr = $beginErr = $endErr = "";
+    $DAUcount = 0;
+    $ShowReturn = false;
 
+    if(isset($_POST['delete_user_sondereinteilung_action_action'])){
+        if($DAUcount==0){
+            $ReturnVals = delete_user_sondereinteilung($mysqli, $AssignmentID, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Sondereinteilung erfolgreich gelöscht!";
+            } else {
+                $ShowReturn = true;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' löschen',$ReturnMessage, $FORM);
+    } else {
+        #Build the form
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_hidden_input_generator('sondereinteilungen', $AssignmentID);
+        $FormHTML .= form_hidden_input_generator('ue_chosen', $uePlaceholder);
+        $FormHTML .= form_group_dropdown_unterabteilungen('Unterabteilung', 'ue_chosen', $uePlaceholder, true, $ueErr, true, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, true);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, true);
+        $FormHTML .= form_group_input_text('Bisherige Kommentare', 'comment', $commentPlaceholder, false, '', true);
+        $FormHTML .= form_group_input_text('Kommentare zum Löschen (optional)', 'delete_comment', '', false, '', false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_user_sondereinteilung_action_action', 'btn-primary', true, 'Abbrechen', 'abort_user_sondereinteilung_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Sondereinteilung für ' . $UserInfos['vorname'] . ' ' . $UserInfos['nachname'] . ' löschen', '', $FORM);
+
+    }
 }

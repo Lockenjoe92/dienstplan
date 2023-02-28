@@ -100,3 +100,11 @@ function get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths){
     $LastDayOfMonthBefore = date('Y-m-d', strtotime('-1 day', strtotime($WarpUpxMonths)));
     return $LastDayOfMonthBefore;
 }
+
+function get_dept_assignment_info($mysqli, $assignmentID){
+
+    $sql = "SELECT * FROM user_department_assignments WHERE id = ".$assignmentID;
+    if($stmt = $mysqli->query($sql)){
+        return $stmt->fetch_assoc();
+    }
+}
