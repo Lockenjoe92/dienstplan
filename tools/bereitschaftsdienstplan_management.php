@@ -39,3 +39,11 @@ function get_list_of_all_bd_matrixes($mysqli, $ShowDeleted=false){
     return $BDtypes;
 
 }
+
+function get_bd_assignment_info($mysqli, $assignmentID){
+
+    $sql = "SELECT * FROM user_bereitschaftsdienst_assignments WHERE id = ".$assignmentID;
+    if($stmt = $mysqli->query($sql)){
+        return $stmt->fetch_assoc();
+    }
+}

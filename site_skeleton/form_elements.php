@@ -533,6 +533,66 @@ function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormC
 
 }
 
+function form_group_dropdown_dienstgruppen($Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false, $primaryName = ''){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    if($Value==""){
+        $PrimSelected = "selected";
+    } else {
+        $PrimSelected = "";
+    }
+
+    if($primaryName==''){
+        $primaryName = "Primäre Unterabteilung auswählen";
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Departments = get_list_of_all_bd_types(connect_db());
+
+    foreach ($Departments as $department){
+
+        if($Value==$department['id']){
+            $OptionsHTML .= '<option value="'.$department['id'].'" selected>'.$department['kuerzel'].' - '.$department['name'].'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$department['id'].'">'.$department['kuerzel'].' - '.$department['name'].'</option>';
+        }
+    }
+
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">'.$primaryName.'</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">'.$primaryName.'</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
 function form_group_dropdown_sondereinteilungen_unterabteilungen($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
@@ -561,6 +621,67 @@ function form_group_dropdown_sondereinteilungen_unterabteilungen($Label, $name, 
 
     if (sizeof($Values)==0){
         $OptionsHTML .= '<option value="">Bislang keine Sondereinteilungen erfasst!</option>';
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
+function form_group_dropdown_dienstgruppenzugehörigkeiten($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Dienste = get_list_of_all_bd_types(connect_db());
+    $Dienstname = "";
+
+    foreach ($Values as $value) {
+        foreach ($Dienste as $Dienst) {
+            if($value['bd_type']==$Dienst['id']){
+                $Dienstname = $Dienst['name'];
+            }
+        }
+        if($value['end']=='2099-12-31'){
+
+            if(strtotime($value['begin'])<time()){
+                $TimeString = "seit";
+            } else {
+                $TimeString = "ab";
+            }
+
+            $OptionsHTML .= '<option value="'.$value['id'].'">'.$TimeString.' '.$value['begin'].': '.$Dienstname.'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$value['id'].'">'.$value['begin'].' bis '.$value['end'].': '.$Dienstname.'</option>';
+        }
+    }
+
+    if (sizeof($Values)==0){
+        $OptionsHTML .= '<option value="">Bislang keine Dienstgruppenzugehörigkeit erfasst!</option>';
     }
 
     if($HasFormControl) {

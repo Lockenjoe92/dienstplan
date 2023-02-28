@@ -316,6 +316,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
         $urlaubPlaceholder = $FoundUser['urlaubstage'];
         $uePlaceholder = $FoundUser['default_abteilung'];
         $SondereinteilungenPlaceholder = get_user_depmnt_assignments($mysqli, $SelectedUserID, false);
+        $DienstgruppenPlaceholder = get_user_dienstgruppen_zugehoerigkeiten($mysqli, $SelectedUserID, false);
         $RollenPlaceholder = explode(',',$FoundUser['nutzergruppen']);
         $freieTagePlaceholder = explode(',', $FoundUser['freie_tage']);
 
@@ -499,6 +500,14 @@ function edit_user_workforce_management($mysqli, $admin=false){
                 $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_sondereinteilung_action', 'btn-primary', true, 'Bearbeiten', 'edit_user_sondereinteilung_action', 'btn-primary', true, 'Löschen', 'delete_user_sondereinteilung_action', 'btn-danger');
             } else {
                 $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_sondereinteilung_action', 'btn-primary', false, 'Bearbeiten', 'edit_user_sondereinteilung_action', 'btn-primary', false, 'Löschen', 'delete_user_sondereinteilung_action', 'btn-danger');
+            }
+
+            // Dienstgruppenzugehörigkeit
+            $FormHTML .= form_group_dropdown_dienstgruppenzugehörigkeiten('Zugehörigkeiten Dienstgruppen', 'dienstgruppen', $DienstgruppenPlaceholder, false, '', false);
+            if(sizeof($DienstgruppenPlaceholder)>0){
+                $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_dienstgruppe_action', 'btn-primary', true, 'Bearbeiten', 'edit_user_dienstgruppe_action', 'btn-primary', true, 'Löschen', 'delete_user_dienstgruppe_action', 'btn-danger');
+            } else {
+                $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_dienstgruppe_action', 'btn-primary', false, 'Bearbeiten', 'edit_user_dienstgruppe_action', 'btn-primary', false, 'Löschen', 'delete_user_dienstgruppe_action', 'btn-danger');
             }
 
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);
@@ -844,6 +853,228 @@ function delete_user_sondereinteilung_management($mysqli){
         $FORM = form_builder($FormHTML, 'self', 'POST');
 
         return card_builder('Sondereinteilung für ' . $UserInfos['vorname'] . ' ' . $UserInfos['nachname'] . ' löschen', '', $FORM);
+
+    }
+}
+
+function add_user_dienstgruppe_management($mysqli){
+
+    $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+    $UserAssignments = get_user_dienstgruppen_zugehoerigkeiten($mysqli, $_POST['user_id']);
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $dgPlaceholder = $beginPlaceholder = $endPlaceholder = $commentPlaceholder = $dgErr = $beginErr = $endErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['add_user_dienstgruppe_action_action'])){
+        $dgPlaceholder = $_POST['dg_chosen'];
+        $beginPlaceholder = $_POST['begin'];
+        $endPlaceholder = $_POST['end'];
+        if(empty($endPlaceholder)){
+            $endPlaceholder = "2099-12-31";
+        }
+        $commentPlaceholder = $_POST['comment'];
+
+        # Do some checks
+        if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
+            $DAUcount++;
+            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Sondereinteilung liegen!";
+        }
+
+        $Catches = 0;
+        foreach ($UserAssignments as $assignment){
+            if($dgPlaceholder==$assignment['id']){
+                $Catches++;
+            }
+        }
+
+        if($Catches>0){
+            $beginErr = "Der/die Mitarbeiter/in ist bereits dieser Dienstgruppe zugeteilt worden!";
+            $DAUcount++;
+        }
+
+        if($DAUcount==0){
+            # Add entry to db
+            $ReturnVals = add_user_dienstgruppe_zugehoerigkeit($mysqli, $_POST['user_id'], $dgPlaceholder, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Dienstgruppenzugehörigkeit erfolgreich angelegt!";
+            } else {
+                $ShowReturn = false;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstgruppenzugehörigkeit für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' anlegen',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_dropdown_dienstgruppen('Dienstgruppe', 'dg_chosen', $dgPlaceholder, true, $dgErr, false, 'Dienstgruppe wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, false);
+        $FormHTML .= form_group_input_date('Ende (optional)', 'end', $endPlaceholder, true, $endErr, false);
+        $FormHTML .= form_group_input_text('Kommentar (optional)', 'comment', $commentPlaceholder, false, '', false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_user_dienstgruppe_action_action', 'btn-primary', true, 'Abbrechen', 'abort_user_sondereinteilung_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstgruppenzugehörigkeit für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' anlegen','', $FORM);
+    }
+
+}
+
+function edit_user_dienstgruppe_management($mysqli){
+
+    $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+    $AssignmentID = $_POST['dienstgruppen'];
+    $AssignmentInfos = get_bd_assignment_info($mysqli,$AssignmentID);
+    $UserAssignments = get_user_dienstgruppen_zugehoerigkeiten($mysqli, $_POST['user_id'], false, $AssignmentID);
+
+    // Define Placeholders
+    $bdPlaceholder = $AssignmentInfos['bd_type'];
+    $beginPlaceholder = $AssignmentInfos['begin'];
+    $endPlaceholder = $AssignmentInfos['end'];
+    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $bdErr = $beginErr = $endErr = '';
+    $DAUcount = 0;
+    $ShowReturn = false;
+
+    if(isset($_POST['edit_user_dienstgruppe_action_action'])){
+        $bdPlaceholder = $_POST['bd_chosen'];
+        $beginPlaceholder = $_POST['begin'];
+        $endPlaceholder = $_POST['end'];
+        $commentPlaceholder = $_POST['comment'];
+
+        # Do some checks
+        if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
+            $DAUcount++;
+            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Dienstgruppenzugehörigkeit liegen!";
+        }
+
+        $Catches = 0;
+        foreach ($UserAssignments as $assignment){
+            if($bdPlaceholder==$assignment['id']){
+                $Catches++;
+            }
+        }
+
+        if($Catches>0){
+            $beginErr = "Der/die Mitarbeiter/in ist bereits dieser Dienstgruppe zugeteilt worden!";
+            $DAUcount++;
+        }
+
+        if($DAUcount==0){
+            $ReturnVals = edit_user_dienstgruppe_zugehoerigkeit($mysqli, $AssignmentID, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Dienstgruppenzugehörigkeit erfolgreich bearbeitet!";
+            } else {
+                $ShowReturn = false;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstgruppenzugehörigkeit für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' bearbeiten',$ReturnMessage, $FORM);
+    }else {
+        #Build the form
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_hidden_input_generator('dienstgruppen', $AssignmentID);
+        $FormHTML .= form_hidden_input_generator('bd_chosen', $bdPlaceholder);
+        $FormHTML .= form_group_dropdown_dienstgruppen('Dienstgruppe', 'bd_chosen', $bdPlaceholder, true, $bdErr, true, 'Dienstgruppe wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, false);
+        $FormHTML .= form_group_input_text('Kommentar (optional)', 'comment', $commentPlaceholder, false, '', false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_user_dienstgruppe_action_action', 'btn-primary', true, 'Abbrechen', 'abort_user_sondereinteilung_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstgruppenzugehörigkeit für ' . $UserInfos['vorname'] . ' ' . $UserInfos['nachname'] . ' bearbeiten', '', $FORM);
+    }
+}
+
+function delete_user_dienstgruppe_management($mysqli){
+
+    $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+    $AssignmentID = $_POST['dienstgruppen'];
+    $AssignmentInfos = get_bd_assignment_info($mysqli,$AssignmentID);
+
+    // Define Placeholders
+    $bdPlaceholder = $AssignmentInfos['bd_type'];
+    $beginPlaceholder = $AssignmentInfos['begin'];
+    $endPlaceholder = $AssignmentInfos['end'];
+    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $DeleteCommentPlaceholder = "";
+    $ueErr = $beginErr = $endErr = "";
+    $DAUcount = 0;
+    $ShowReturn = false;
+
+    if(isset($_POST['delete_user_dienstgruppe_action_action'])){
+
+        $bdPlaceholder = $_POST['bd_chosen'];
+        $DeleteCommentPlaceholder = $_POST['delete_comment'];
+
+        if($DAUcount==0){
+            $ReturnVals = delete_user_dienstgruppe_zugehoerigkeit($mysqli, $AssignmentID, $DeleteCommentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Dienstgruppenzugehörigkeit erfolgreich gelöscht!";
+            } else {
+                $ShowReturn = true;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstgruppenzugehörigkeit für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' löschen',$ReturnMessage, $FORM);
+    } else {
+        #Build the form
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_hidden_input_generator('bd_chosen', $bdPlaceholder);
+        $FormHTML .= form_hidden_input_generator('dienstgruppen', $AssignmentID);
+        $FormHTML .= form_group_dropdown_dienstgruppen('Dienstgruppe', 'bd_chosen', $bdPlaceholder, true, $ueErr, true, 'Dienstgruppe wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, true);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, true);
+        $FormHTML .= form_group_input_text('Bisherige Kommentare', 'comment', $commentPlaceholder, false, '', true);
+        $FormHTML .= form_group_input_text('Kommentare zum Löschen (optional)', 'delete_comment', '', false, '', false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_user_dienstgruppe_action_action', 'btn-primary', true, 'Abbrechen', 'abort_user_sondereinteilung_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstgruppenzugehörigkeit für ' . $UserInfos['vorname'] . ' ' . $UserInfos['nachname'] . ' löschen', '', $FORM);
 
     }
 }

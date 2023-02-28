@@ -201,6 +201,32 @@ function get_user_depmnt_assignments($mysqli, $ID, $ShowDeleted=false, $SkipAssi
 
 }
 
+function get_user_dienstgruppen_zugehoerigkeiten($mysqli, $ID, $ShowDeleted=false, $SkipAssignment=0){
+
+    $Assignments = [];
+
+    if($ShowDeleted){
+        $sql = "SELECT * FROM user_bereitschaftsdienst_assignments WHERE user = ".$ID." ORDER BY begin ASC";
+    }else{
+        $sql = "SELECT * FROM user_bereitschaftsdienst_assignments WHERE user = ".$ID." AND delete_user IS NULL ORDER BY begin ASC";
+    }
+
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            if($SkipAssignment>0){
+                if($row['id']!=$SkipAssignment){
+                    $Assignments[] = $row;
+                }
+            } else {
+                $Assignments[] = $row;
+            }
+        }
+    }
+
+    return $Assignments;
+
+}
+
 function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignments=[]){
 
     $UserInfos = $user;
@@ -318,6 +344,94 @@ function delete_user_sondereinteilung($mysqli, $AssignmentID, $commentPlaceholde
 
     // Prepare statement & DB Access
     $sql = "UPDATE user_department_assignments SET delete_user = ?, delete_time = ?, delete_comment = ? WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("issi", $DeleteUser, $DeleteTime, $commentPlaceholder, $AssignmentID);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new sondereinteilung ID
+            $Antwort['success']=true;
+            $Antwort['newID'] = $mysqli->insert_id;
+        } else{
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+
+}
+
+function add_user_dienstgruppe_zugehoerigkeit($mysqli, $UserID, $uePlaceholder, $beginPlaceholder, $endPlaceholder, $commentPlaceholder){
+
+    $CreateUser = get_current_user_id();
+
+    // Prepare statement & DB Access
+    $sql = "INSERT INTO user_bereitschaftsdienst_assignments (user, bd_type, begin, end, create_user, create_comment) VALUES (?,?,?,?,?,?)";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("iissis", $UserID, $uePlaceholder, $beginPlaceholder, $endPlaceholder, $CreateUser, $commentPlaceholder);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new sondereinteilung ID
+            $Antwort['success']=true;
+            $Antwort['newID'] = $mysqli->insert_id;
+        } else{
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+
+}
+
+function edit_user_dienstgruppe_zugehoerigkeit($mysqli, $AssignmentID, $beginPlaceholder, $endPlaceholder, $commentPlaceholder){
+
+    $CreateUser = get_current_user_id();
+
+    // Prepare statement & DB Access
+    $sql = "UPDATE user_bereitschaftsdienst_assignments SET begin = ?, end = ?, create_comment = ? WHERE id = ?";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("sssi", $beginPlaceholder, $endPlaceholder, $commentPlaceholder, $AssignmentID);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new sondereinteilung ID
+            $Antwort['success']=true;
+            $Antwort['newID'] = $mysqli->insert_id;
+        } else{
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+
+}
+
+function delete_user_dienstgruppe_zugehoerigkeit($mysqli, $AssignmentID, $commentPlaceholder){
+
+    $DeleteUser = get_current_user_id();
+    $DeleteTime = date('Y-m-d G:i:s');
+
+    // Prepare statement & DB Access
+    $sql = "UPDATE user_bereitschaftsdienst_assignments SET delete_user = ?, delete_time = ?, delete_comment = ? WHERE id = ?";
     if($stmt = $mysqli->prepare($sql)){
         // Bind variables to the prepared statement as parameters
         $stmt->bind_param("issi", $DeleteUser, $DeleteTime, $commentPlaceholder, $AssignmentID);
