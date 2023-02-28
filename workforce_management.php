@@ -12,8 +12,6 @@ if(in_array('admin', explode(',',$Nutzergruppen))){
     $Admin = false;
 }
 
-var_dump($_POST);
-
 // Build content
 $HTML = "<h1 class='align-content-center'>Nutzerverwaltung</h1>";
 

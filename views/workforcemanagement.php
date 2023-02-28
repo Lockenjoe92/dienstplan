@@ -613,6 +613,7 @@ function reset_user_password_workforce_management($mysqli){
 function add_user_sondereinteilung_management($mysqli){
 
     $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+	$UserAssignments = get_user_depmnt_assignments($mysqli, $_POST['user_id']);
 
     #Initialize Placeholders & DAU handling
     $DAUcount = 0;
@@ -627,11 +628,37 @@ function add_user_sondereinteilung_management($mysqli){
         $endPlaceholder = $_POST['end'];
         $commentPlaceholder = $_POST['comment'];
 
+		# Do some checks
+		if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
+			$DAUcount++;
+			$beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Sondereinteilung liegen!";
+		}
+		
+		$Catches = 0;
+		foreach ($UserAssignments as $assignment){
+            $Catch=true;
+            //Check non-overlap cases
+            //Case 1: Begin and End of Item are smaller than end of new assignment
+            if((strtotime($assignment['begin'])<strtotime($beginPlaceholder)) && (strtotime($assignment['end'])<strtotime($beginPlaceholder))){
+                $Catch=false;
+            }
+            //Case 2: Begin and End of Item are bigger than end of new assignment
+            if((strtotime($assignment['begin'])>$endPlaceholder) && (strtotime($assignment['end'])>$endPlaceholder)){
+                $Catch=false;
+            }
+			
+            if($Catch){
+                $Catches++;
+            }
+
+        }
+		
+		if($Catches>0){
+			$beginErr = "Im ausgewähltem Zeitraum liegt bereits eine Sondereinteilung für den/die Mitarbeiterin vor!";
+			$DAUcount++;
+		}
+		
         if($DAUcount==0){
-
-            # Do some checks
-
-
             # Add entry to db
             $ReturnVals = add_user_sondereinteilung($mysqli, $_POST['user_id'], $uePlaceholder, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
             if($ReturnVals['success']){

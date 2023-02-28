@@ -329,7 +329,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
         $DataDay = $DataDays[$a];
 
         // Catch weekends or holidays, as this could mean different view rules
-        if(day_is_a_weekend_or_holiday($ThisDay)){
+        if((day_is_a_weekend_or_holiday($ThisDay))&&($UE==1)){
             //Catch Month shift
             if(date("m", $ThisDay)==$Month){
                 $TableHeaderRowUsers .= "<th colspan='2'>".date("d", $ThisDay)."</th>";
@@ -868,11 +868,17 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
     $ReturnVals=[];
     $Abwesenheitstypen = explode(',',ABWESENHEITENTYPEN);
     $HolidayWeekend = day_is_a_weekend_or_holiday($Day);
+    $AssignmentToday = get_user_assigned_department_at_date(NULL, $User, $Day, $AllUserAssignments);
+
     $Answer = "<td></td>";
 
     //Colorize stuff in case field is empty based on weekend/holidays
     if($HolidayWeekend){
-        $Answer = "<td class='table-secondary'></td><td class='table-secondary'></td>";
+        if($UE==1){
+            $Answer = "<td class='table-secondary'></td><td class='table-secondary'></td>";
+        } else {
+            $Answer = "<td class='table-secondary'></td>";
+        }
     }
 
     //Loop through all Abwesenheiten
@@ -900,27 +906,37 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
 
                 if($Abwesenheit['status_bearbeitung']=="Beantragt"){
                     if($HolidayWeekend){
-                        $Answer = "<td class='text-center table-warning' colspan='2'>".$Kuerzel."*</td>";
+                        if($UE==1){
+                            $Answer = "<td class='text-center table-warning' colspan='2'>".$Kuerzel."*</td>";
+                        } else {
+                            $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
+                        }
                     } else {
                         $Answer = "<td class='text-center table-warning'>".$Kuerzel."*</td>";
                     }
                 } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
                     if($HolidayWeekend){
-                        $Answer = "<td class='text-center ".$Farbe."' colspan='2'>".$Kuerzel."</td>";
+                        if($UE==1) {
+                            $Answer = "<td class='text-center " . $Farbe . "' colspan='2'>" . $Kuerzel . "</td>";
+                        } else {
+                            $Answer = "<td class='text-center " . $Farbe . "'>" . $Kuerzel . "</td>";
+                        }
                     } else {
                         $Answer = "<td class='text-center ".$Farbe."'>".$Kuerzel."</td>";
                     }
 
-                    //Sum up statistics
-                    $Total++;
-                    if($RollenUser=='OA'){
-                        $OA++;
-                    }
-                    if($RollenUser=='FA'){
-                        $FA++;
-                    }
-                    if($RollenUser=='AA'){
-                        $AA++;
+                    //Sum up statistics in this department
+                    if($AssignmentToday==$UE){
+                        $Total++;
+                        if($RollenUser=='OA'){
+                            $OA++;
+                        }
+                        if($RollenUser=='FA'){
+                            $FA++;
+                        }
+                        if($RollenUser=='AA'){
+                            $AA++;
+                        }
                     }
                 }
             }
@@ -931,7 +947,7 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
     //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
     $CatchHolidayWeekendShift = false;
     $CatchDayColor = $CatchNightColor = "table-secondary";
-    $CatchDayContent = $CatchNightContent = "";
+    $CatchDayContent = $CatchNightContent = $HolidayColspan = "";
 
     foreach($AllWishes as $wish){
 
@@ -953,20 +969,25 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
                         }
 
                         if($HolidayWeekend){
+
+                            if($UE==1){
+                                $HolidayColspan = "colspan='2'";
+                            }
+
                             if($wishType['type']=='ruf'){
-                                $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$Content."</td>";
+                                $Answer = "<td class='text-center ".$wishType['colors']."' ".$HolidayColspan.">".$Content."</td>";
                             } elseif ($wishType['type']=='all'){
-                                $Answer = "<td class='text-center ".$wishType['colors']."' colspan='2'>".$Content."</td>";
+                                $Answer = "<td class='text-center ".$wishType['colors']."' ".$HolidayColspan.">".$Content."</td>";
                             } else {
 
                                 //Catch funky case where there can be two wishes on a single day - ordered anti-alphabetically (tag->nacht)
-                                if($wishType['type']=='nacht'){
+                                if($wishType['type']=='tag'){
                                     $CatchHolidayWeekendShift=true;
                                     $CatchDayColor = $wishType['colors'];
                                     $CatchDayContent = $Content;
                                 }
 
-                                if($wishType['type']=='tag'){
+                                if($wishType['type']=='nacht'){
                                     $CatchHolidayWeekendShift=true;
                                     $CatchNightColor = $wishType['colors'];
                                     $CatchNightContent = $Content;
@@ -987,7 +1008,6 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
     }
 
     // Check if user is actually in the chosen UE at selected day - this is used for deciding if user is to be displayed in other function
-    $AssignmentToday = get_user_assigned_department_at_date(NULL, $User, $Day, $AllUserAssignments);
     if($UE==$AssignmentToday){
         $ReturnVals['assignment_today']=true;
     } else {

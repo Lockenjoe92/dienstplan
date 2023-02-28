@@ -199,6 +199,11 @@ function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignm
 
     $UserInfos = $user;
 
+    //Catch different time formats
+    if(substr_count($Date,'-')>0){
+        $Date = strtotime($Date);
+    }
+
     if($mysqli==NULL){
         $UserAssignments = get_all_user_depmnt_assignments(NULL, FALSE, $AllAssignments, $user);
     } else {
@@ -217,13 +222,14 @@ function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignm
             $Catch=true;
             //Check non-overlap cases
             //Case 1: Begin and End of Item are smaller
-            if((strtotime($assignment['begin'])<strtotime($Date)) && (strtotime($assignment['end'])<strtotime($Date))){
+            if((strtotime($assignment['begin'])<$Date) && (strtotime($assignment['end'])<$Date)){
                 $Catch=false;
             }
             //Case 2: Begin and End of Item are bigger
-            if((strtotime($assignment['begin'])>strtotime($Date)) && (strtotime($assignment['end'])>strtotime($Date))){
+            if((strtotime($assignment['begin'])>$Date) && (strtotime($assignment['end'])>$Date)){
                 $Catch=false;
             }
+			
             if($Catch){
                 $Catches[]=$assignment;
             }
@@ -233,7 +239,7 @@ function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignm
         if(sizeof($Catches)==0){
             return $DefaultDepartment;
         } elseif(sizeof($Catches)==1){
-            return $Catches['department'];
+            return $Catches[0]['department'];
         } else {
             return $DefaultDepartment;
         }
