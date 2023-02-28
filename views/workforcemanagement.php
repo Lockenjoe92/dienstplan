@@ -263,13 +263,15 @@ function edit_user_workforce_management($mysqli, $admin=false){
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
     $OutputMode = "show_form";
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $ueErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = "";
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $ueErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = $sondereinteilungenErr = "";
     $DAUcheck = 0;
     $UserCounter = 0;
     $FoundUser = [];
     $DAUerr = "";
 
     if(isset($_POST['edit_user_action'])){
+        $SelectedUserID = $_POST['user_id'];
+    } elseif(isset($_POST['abort_user_sondereinteilung_action'])){
         $SelectedUserID = $_POST['user_id'];
     } else {
         $SelectedUserID = $_GET['user_id'];
@@ -313,6 +315,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
         $vertragPlaceholder = $FoundUser['vertrag'];
         $urlaubPlaceholder = $FoundUser['urlaubstage'];
         $uePlaceholder = $FoundUser['default_abteilung'];
+        $SondereinteilungenPlaceholder = get_user_depmnt_assignments($mysqli, $SelectedUserID, false);
         $RollenPlaceholder = explode(',',$FoundUser['nutzergruppen']);
         $freieTagePlaceholder = explode(',', $FoundUser['freie_tage']);
 
@@ -328,7 +331,8 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $GruppePlaceholder = trim($_POST['gruppe']);
             $vertragPlaceholder = trim($_POST['vertrag']);
             $urlaubPlaceholder = trim($_POST['urlaub']);
-            $RollenPlaceholder = $_POST['nutzergruppen'];
+            $SondereinteilungenPlaceholder = $_POST['nutzergruppen'];
+            $RollenPlaceholder = $_POST['sondereinteilungen'];
             if(isset($_POST['free_days'])){
                 $freieTagePlaceholder = $_POST['free_days'];
             }
@@ -488,6 +492,15 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $FormHTML .= form_group_input_text('Urlaubstage', 'urlaub', $urlaubPlaceholder, true, $urlaubErr);
             $FormHTML .= form_group_dropdown_mitarbeitertypen('Mitarbeitergruppe', 'gruppe', $GruppePlaceholder, false, $gruppeErr, false);
             $FormHTML .= form_group_dropdown_unterabteilungen('Gehört primär zu Unterabteilung', 'ue', $uePlaceholder, true, $ueErr, false);
+
+            // UE Sondereinteilung
+            $FormHTML .= form_group_dropdown_sondereinteilungen_unterabteilungen('Sondereinteilungen', 'sondereinteilungen[]', $SondereinteilungenPlaceholder, false, $sondereinteilungenErr, false);
+            if(sizeof($SondereinteilungenPlaceholder)>0){
+                $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_sondereinteilung_action', 'btn-primary', true, 'Bearbeiten', 'edit_user_sondereinteilung_action', 'btn-primary', true, 'Löschen', 'delete_user_sondereinteilung_action', 'btn-danger');
+            } else {
+                $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_sondereinteilung_action', 'btn-primary', false, 'Bearbeiten', 'edit_user_sondereinteilung_action', 'btn-primary', false, 'Löschen', 'delete_user_sondereinteilung_action', 'btn-danger');
+            }
+
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);
 
             if($admin) {
@@ -594,5 +607,82 @@ function reset_user_password_workforce_management($mysqli){
             return card_builder('Passwort Mitarbeiter/in '.$MitarbeiterName.' zurücksetzen',$ReturnMessage, $FORM);
         }
     }
+
+}
+
+function add_user_sondereinteilung_management($mysqli){
+
+    $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $uePlaceholder = $beginPlaceholder = $endPlaceholder = $commentPlaceholder = $ueErr = $beginErr = $endErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['add_user_sondereinteilung_action_action'])){
+        $uePlaceholder = $_POST['ue_chosen'];
+        $beginPlaceholder = $_POST['begin'];
+        $endPlaceholder = $_POST['end'];
+        $commentPlaceholder = $_POST['comment'];
+
+        if($DAUcount==0){
+
+            # Do some checks
+
+
+            # Add entry to db
+            $ReturnVals = add_user_sondereinteilung($mysqli, $_POST['user_id'], $uePlaceholder, $beginPlaceholder, $endPlaceholder, $commentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Sondereinteilung erfolgreich angelegt!";
+            } else {
+                $ShowReturn = true;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' anlegen',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_hidden_input_generator('user_id', $_POST['user_id']);
+        $FormHTML .= form_group_dropdown_unterabteilungen('Unterabteilung', 'ue_chosen', $uePlaceholder, true, $ueErr, false, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, false);
+        $FormHTML .= form_group_input_text('Kommentar (optional)', 'comment', $commentPlaceholder, false, '', false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_user_sondereinteilung_action_action', 'btn-primary', true, 'Abbrechen', 'abort_user_sondereinteilung_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' anlegen','', $FORM);
+    }
+
+}
+
+function edit_user_sondereinteilung_management($mysqli){
+
+    $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+
+    return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' bearbeiten','', '');
+
+}
+
+function delete_user_sondereinteilung_management($mysqli){
+
+    $UserInfos = get_current_user_infos($mysqli, $_POST['user_id']);
+
+    return card_builder('Sondereinteilung für '.$UserInfos['vorname'].' '.$UserInfos['nachname'].' löschen','', '');
 
 }

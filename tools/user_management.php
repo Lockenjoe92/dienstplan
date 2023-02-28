@@ -180,9 +180,9 @@ function get_user_depmnt_assignments($mysqli, $ID, $ShowDeleted=false){
     $Assignments = [];
 
     if($ShowDeleted){
-        $sql = "SELECT * FROM user_department_assignments WHERE user = ".$ID." ORDER BY create_time ASC";
+        $sql = "SELECT * FROM user_department_assignments WHERE user = ".$ID." ORDER BY begin ASC";
     }else{
-        $sql = "SELECT * FROM user_department_assignments WHERE user = ".$ID." AND delete_user IS NULL ORDER BY create_time ASC";
+        $sql = "SELECT * FROM user_department_assignments WHERE user = ".$ID." AND delete_user IS NULL ORDER BY begin ASC";
     }
 
     if($stmt = $mysqli->query($sql)){
@@ -238,5 +238,34 @@ function get_user_assigned_department_at_date($mysqli, $user, $Date, $AllAssignm
             return $DefaultDepartment;
         }
     }
+
+}
+
+function add_user_sondereinteilung($mysqli, $UserID, $uePlaceholder, $beginPlaceholder, $endPlaceholder, $commentPlaceholder){
+
+    $CreateUser = get_current_user_id();
+
+    // Prepare statement & DB Access
+    $sql = "INSERT INTO user_department_assignments (user, department, begin, end, create_user, create_comment) VALUES (?,?,?,?,?,?)";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("iissis", $UserID, $uePlaceholder, $beginPlaceholder, $endPlaceholder, $CreateUser, $commentPlaceholder);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new sondereinteilung ID
+            $Antwort['success']=true;
+            $Antwort['newID'] = $mysqli->insert_id;
+        } else{
+            $Antwort['success']=false;
+            $Antwort['err']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
 
 }

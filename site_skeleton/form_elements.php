@@ -140,6 +140,34 @@ function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $
     return $HTML;
 }
 
+function form_group_sondereinteilungen_buttons($Add=true, $AddValue='', $AddName='', $AddClass='btn-primary', $Edit=true, $EditValue='', $EditName='', $EditClass='btn-primary', $Delete=true, $DeleteValue='', $DeleteName='', $DeleteClass='btn-danger'){
+
+    $HTML = '<div class="form-group">';
+
+    if($Add){
+        $HTML .= '<input type="submit" class="btn '.$AddClass.'" value="'.$AddValue.'" name="'.$AddName.'">';
+    }
+
+    $HTML .= " ";
+
+    if($Edit){
+        $HTML .= '<input type="submit" class="btn '.$EditClass.'" value="'.$EditValue.'" name="'.$EditName.'">';
+    } else {
+        $HTML .= '<input type="submit" class="btn '.$EditClass.'" value="'.$EditValue.'" name="'.$EditName.'" disabled>';
+    }
+
+    $HTML .= " ";
+
+    if($Delete){
+        $HTML .= '<input type="submit" class="btn '.$DeleteClass.'" value="'.$DeleteValue.'" name="'.$DeleteName.'">';
+    } else {
+        $HTML .= '<input type="submit" class="btn '.$DeleteClass.'" value="'.$DeleteValue.'" name="'.$DeleteName.'" disabled>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+}
+
 function form_group_dropdown_mitarbeitertypen($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
@@ -445,7 +473,7 @@ function form_group_dropdown_dienstwunschtypen($mysqli, $Label, $name, $Value=''
 
 }
 
-function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false){
+function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false, $primaryName = ''){
 
     $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
     $HTML .= '<div class="form-group">';
@@ -460,6 +488,10 @@ function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormC
         $PrimSelected = "selected";
     } else {
         $PrimSelected = "";
+    }
+
+    if($primaryName==''){
+        $primaryName = "Primäre Unterabteilung auswählen";
     }
 
     //Build Options List
@@ -484,14 +516,65 @@ function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormC
         }
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
-        $HTML .= '<option '.$PrimSelected.' disabled value="">Primäre Unterabteilung auswählen</option>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">'.$primaryName.'</option>';
         $HTML .= $OptionsHTML;
         $HTML .= '</select>';
         $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
     } else {
 
         $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
-        $HTML .= '<option '.$PrimSelected.' disabled value="">Primäre Unterabteilung auswählen</option>';
+        $HTML .= '<option '.$PrimSelected.' disabled value="">'.$primaryName.'</option>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
+function form_group_dropdown_sondereinteilungen_unterabteilungen($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+    $Departments = get_list_of_all_departments(connect_db());
+    $DepartmentName = '';
+
+    foreach ($Values as $Value){
+        foreach ($Departments as $department){
+            if ($department['id']==$Value['department']){
+                $DepartmentName = $department['name'];
+            }
+        }
+
+        $OptionsHTML .= '<option value="'.$Value['id'].'">'.$Value['begin'].' bis '.$Value['end'].': '.$DepartmentName.'</option>';
+    }
+
+    if (sizeof($Values)==0){
+        $OptionsHTML .= '<option value="">Bislang keine Sondereinteilungen erfasst!</option>';
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
         $HTML .= $OptionsHTML;
         $HTML .= '</select>';
     }
