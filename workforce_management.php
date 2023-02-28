@@ -5,7 +5,7 @@
 include_once "./config/dependencies.php";
 
 // Check if the user is already logged in, if yes then redirect him to welcome page
-$Nutzergruppen = session_manager('ausfaelle');
+$Nutzergruppen = session_manager('mitarbeitermanagement_view');
 if(in_array('admin', explode(',',$Nutzergruppen))){
     $Admin = true;
 } else {

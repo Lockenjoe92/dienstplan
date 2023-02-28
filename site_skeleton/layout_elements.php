@@ -15,9 +15,14 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
           </a>
           <ul class="dropdown-menu">';
 
-        if(in_array('ausfaelle', $UserRoles)){
-        $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php">Urlaubsplanung</a></li>
-            <li><a class="dropdown-item" href="abwesenheiten_management.php">Abwesenheiten</a></li>
+        if(in_array('ausfaelle_1', $UserRoles)){
+        $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php?org_ue=1">Urlaubsplanung Anästhesie</a></li>
+            <li><a class="dropdown-item" href="abwesenheiten_management.php?org_ue=1">Abwesenheiten Anästhesie</a></li>
+            <li><hr class="dropdown-divider"></li>';}
+
+        if(in_array('ausfaelle_2', $UserRoles)){
+            $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php?org_ue=2">Urlaubsplanung Intensiv</a></li>
+            <li><a class="dropdown-item" href="abwesenheiten_management.php?org_ue=2">Abwesenheiten Intensiv</a></li>
             <li><hr class="dropdown-divider"></li>';}
 
         $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="abwesenheiten_user.php">Meine Abwesenheiten</a></li>

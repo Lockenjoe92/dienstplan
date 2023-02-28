@@ -177,12 +177,13 @@ function urlaubsplan_tabelle_user($month, $year){
     return $Table;
 }
 
-function urlaubsplan_tabelle_management($month, $year){
+function urlaubsplan_tabelle_management($month, $year, $UE=1){
 
     $HTML = '';
     $mysqli = connect_db();
     $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC');
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $AllAssignments = get_all_user_depmnt_assignments($mysqli);
     $FirstDayOfCalendarString = "01-".$month."-".$year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
 
@@ -200,6 +201,8 @@ function urlaubsplan_tabelle_management($month, $year){
     // Generate Rows based on Users
     $TableRows = "";
     foreach ($AllUsers as $User) {
+
+        $AssignmentCounter = 0;
 
         // Don't show people from HR
         if($User['abteilungsrollen']!="Verwaltung"){
@@ -227,13 +230,16 @@ function urlaubsplan_tabelle_management($month, $year){
 
                 //Catch Month shift
                 if(date("m", $ThisDay)==$month){
-                    $ReturnValues = populate_day_urlaubsplan_tabelle_management($ThisDay,$User['id'],$AllAbwesenheiten,$User['abteilungsrollen'], $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
+                    $ReturnValues = populate_day_urlaubsplan_tabelle_management($ThisDay,$User,$AllAbwesenheiten,$User['abteilungsrollen'], $AllAssignments, $UE, $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
                     $TableRowContent .= $ReturnValues['HTML'];
                     $NewDayStatData['total']=$ReturnValues['total'];
                     $NewDayStatData['OA']=$ReturnValues['OA'];
                     $NewDayStatData['FA']=$ReturnValues['FA'];
                     $NewDayStatData['AA']=$ReturnValues['AA'];
                     $DataDays[$a] = $NewDayStatData;
+                    if($ReturnValues['assignment_today']){
+                        $AssignmentCounter++;
+                    }
                 }
 
             }
@@ -241,7 +247,10 @@ function urlaubsplan_tabelle_management($month, $year){
             $TableRowContent .= "<td>".calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $year)."</td>";
 
             $TableRowContent .= "</tr>";
-            $TableRows .= $TableRowContent;
+
+            if($AssignmentCounter>0){
+                $TableRows .= $TableRowContent;
+            }
         }
     }
 
@@ -298,10 +307,11 @@ function urlaubsplan_tabelle_management($month, $year){
 
 }
 
-function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenheiten,$RollenUser,$Total,$OA=0,$FA=0,$AA=0){
+function populate_day_urlaubsplan_tabelle_management($Day,$User,$AllAbwesenheiten,$RollenUser,$AllUserAssignments,$UE,$Total,$OA=0,$FA=0,$AA=0){
 
     $ReturnVals=[];
     $Abwesenheitstypen = explode(',',ABWESENHEITENTYPEN);
+    $AssignmentToday = get_user_assigned_department_at_date(NULL, $User, $Day, $AllUserAssignments);
     $Answer = "<td></td>";
 
     //Colorize stuff in case field is empty based on weekend/holidays
@@ -315,7 +325,7 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
     foreach ($AllAbwesenheiten as $Abwesenheit){
 
         // Only check Abwesenheiten that count for User
-        if($Abwesenheit['user']==$UserID){
+        if($Abwesenheit['user']==$User['id']){
 
             //Check if Abwesenheit is active on this day
             if(($Day>=strtotime($Abwesenheit['begin']))&&($Day<=strtotime($Abwesenheit['end']))){
@@ -348,19 +358,28 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
                     $Answer = "<td class='text-center ".$Farbe."'>".$Content."</td>";
 
                     //Sum up statistics
-                    $Total++;
-                    if($RollenUser=='OA'){
-                        $OA++;
-                    }
-                    if($RollenUser=='FA'){
-                        $FA++;
-                    }
-                    if($RollenUser=='AA'){
-                        $AA++;
+                    if($AssignmentToday==$UE) {
+                        $Total++;
+                        if ($RollenUser == 'OA') {
+                            $OA++;
+                        }
+                        if ($RollenUser == 'FA') {
+                            $FA++;
+                        }
+                        if ($RollenUser == 'AA') {
+                            $AA++;
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Check if user is actually in the chosen UE at selected day - this is used for deciding if user is to be displayed in other function
+    if($UE==$AssignmentToday){
+        $ReturnVals['assignment_today']=true;
+    } else {
+        $ReturnVals['assignment_today']=false;
     }
 
     $ReturnVals['HTML']=$Answer;
