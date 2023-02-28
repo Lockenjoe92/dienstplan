@@ -42,7 +42,7 @@ $mysqli = connect_db();
 $mysqli = connect_db();
 $UEInfos = get_department_infos($mysqli,$UE);
 $HTML = "<h1 class='text-center'>Urlaubsübersicht ".$UEInfos['name']."</h1>";
-$HTML .= urlaubsplan_funktionsbuttons($Month,$Year);
+$HTML .= urlaubsplan_funktionsbuttons($Month,$Year,$UE);
 $HTML .= urlaubsplan_tabelle_management($Month,$Year,$UE);
 
 // Space Out stuff

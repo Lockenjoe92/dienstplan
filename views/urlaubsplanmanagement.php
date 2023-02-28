@@ -1,8 +1,9 @@
 <?php
 
-function urlaubsplan_funktionsbuttons($Month,$Year){
+function urlaubsplan_funktionsbuttons($Month,$Year, $UE=1){
 
     $FORMhtml = '<div class="row">';
+    $FORMhtml .= form_hidden_input_generator('org_ue', $UE);
     $FORMhtml .= "<div class='col'>".form_dropdown_months('month',$Month)."</div>";
     $FORMhtml .= "<div class='col'>".form_dropdown_years('year', $Year)."</div>";
     $FORMhtml .= "<div class='col'>".form_group_continue_return_buttons(true, 'Reset', 'reset_calendar', 'btn-primary', true, 'Zeitraum wählen', 'action_change_date', 'btn-primary')."</div>";
@@ -108,6 +109,8 @@ function urlaubsplan_tabelle_user($month, $year){
         if(date("m", $ThisDay)==$month){
             $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
             $UEviewingUser = get_user_assigned_department_at_date(NULL, $CurrentUserInfos, $ThisDay,$AllAssignments);
+
+            # Start coloring the header
             $ColoringAbteilungsuebersicht = 'class="table-success"';
 
             if($UEviewingUser==1){
@@ -120,7 +123,8 @@ function urlaubsplan_tabelle_user($month, $year){
                 }
             } else {
 
-                if($User['abteilungsrollen']=="OA"){
+                if($CurrentUserInfos['abteilungsrollen']=="OA"){
+
                     if ($DataDay['OA']>SHOWYELLOWWISHESURLAUBIPSOA){
                         $ColoringAbteilungsuebersicht = 'class="table-warning"';
                     }
@@ -142,7 +146,16 @@ function urlaubsplan_tabelle_user($month, $year){
 
             }
 
-            $TableHeaderRowTotal .= "<th ".$ColoringAbteilungsuebersicht.">".$DataDay['total']."</th>";
+            if($UEviewingUser==1){
+                $TableHeaderRowTotal .= "<th ".$ColoringAbteilungsuebersicht.">".$DataDay['total']."</th>";
+            } else {
+                if($CurrentUserInfos['abteilungsrollen']=="OA"){
+                    $TableHeaderRowTotal .= "<th ".$ColoringAbteilungsuebersicht.">".$DataDay['OA']."</th>";
+                } else {
+                    $FAAACountToday = $DataDay['FA'] + $DataDay['AA'];
+                    $TableHeaderRowTotal .= "<th ".$ColoringAbteilungsuebersicht.">".$FAAACountToday."</th>";
+                }
+            }
             #$TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
             #$TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
             #$TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
@@ -273,9 +286,35 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
         if(date("m", $ThisDay)==$month){
             $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
             $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
-            $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
-            $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
-            $TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
+            if($UE==1){
+                $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
+                $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
+                $TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
+            } else {
+                if($DataDay['OA']<SHOWYELLOWWISHESURLAUBIPSOA){
+                    $TableHeaderRowOA .= "<th class='table-success'>".$DataDay['OA']."</th>";
+                } elseif (($DataDay['OA']>=SHOWYELLOWWISHESURLAUBIPSOA)&&($DataDay['OA']<SHOWREDWISHESURLAUBIPSOA)) {
+                    $TableHeaderRowOA .= "<th class='table-warning'>".$DataDay['OA']."</th>";
+                } elseif ($DataDay['OA']>=SHOWREDWISHESURLAUBIPSOA){
+                    $TableHeaderRowOA .= "<th class='table-danger'>".$DataDay['OA']."</th>";
+                }
+
+                if($DataDay['FA']<SHOWYELLOWWISHESURLAUBIPSFA){
+                    $TableHeaderRowFA .= "<th class='table-success'>".$DataDay['FA']."</th>";
+                } elseif (($DataDay['FA']>=SHOWYELLOWWISHESURLAUBIPSFA)&&($DataDay['FA']<SHOWREDWISHESURLAUBIPSFA)) {
+                    $TableHeaderRowFA .= "<th class='table-warning'>".$DataDay['FA']."</th>";
+                } elseif ($DataDay['FA']>=SHOWREDWISHESURLAUBIPSFA){
+                    $TableHeaderRowFA .= "<th class='table-danger'>".$DataDay['FA']."</th>";
+                }
+
+                if($DataDay['AA']<SHOWYELLOWWISHESURLAUBIPSAA){
+                    $TableHeaderRowAA .= "<th class='table-success'>".$DataDay['AA']."</th>";
+                } elseif (($DataDay['AA']>=SHOWYELLOWWISHESURLAUBIPSAA)&&($DataDay['AA']<SHOWREDWISHESURLAUBIPSAA)) {
+                    $TableHeaderRowAA .= "<th class='table-warning'>".$DataDay['AA']."</th>";
+                } elseif ($DataDay['AA']>=SHOWREDWISHESURLAUBIPSAA){
+                    $TableHeaderRowAA .= "<th class='table-danger'>".$DataDay['AA']."</th>";
+                }
+            }
         }
 
     }
