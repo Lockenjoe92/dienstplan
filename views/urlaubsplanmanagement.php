@@ -19,8 +19,10 @@ function urlaubsplan_tabelle_user($month, $year){
     $HTML = '';
     $mysqli = connect_db();
     $CurrentUser = get_current_user_id();
+    $CurrentUserInfos = get_current_user_infos($mysqli, $CurrentUser);
     $AllUsers = get_sorted_list_of_all_users($mysqli);
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $AllAssignments = get_all_user_depmnt_assignments($mysqli);
     $FirstDayOfCalendarString = "01-".$month."-".$year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
 
@@ -65,7 +67,8 @@ function urlaubsplan_tabelle_user($month, $year){
 
                 //Catch Month shift
                 if(date("m", $ThisDay)==$month){
-                    $ReturnValues = populate_day_urlaubsplan_tabelle_management($ThisDay,$User['id'],$AllAbwesenheiten,$User['abteilungsrollen'], $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
+                    $UEviewingUser = get_user_assigned_department_at_date(NULL, $CurrentUserInfos, $ThisDay,$AllAssignments);
+                    $ReturnValues = populate_day_urlaubsplan_tabelle_user($ThisDay,$User,$AllAbwesenheiten, $User['abteilungsrollen'],$UEviewingUser, $AllAssignments, $ThisDayData['total'], $ThisDayData['OA'], $ThisDayData['FA'], $ThisDayData['AA']);
                     $TableRowContent .= $ReturnValues['HTML'];
                     $NewDayStatData['total']=$ReturnValues['total'];
                     $NewDayStatData['OA']=$ReturnValues['OA'];
@@ -104,14 +107,39 @@ function urlaubsplan_tabelle_user($month, $year){
         //Catch Month shift
         if(date("m", $ThisDay)==$month){
             $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
+            $UEviewingUser = get_user_assigned_department_at_date(NULL, $CurrentUserInfos, $ThisDay,$AllAssignments);
             $ColoringAbteilungsuebersicht = 'class="table-success"';
 
-            if ($DataDay['total']>SHOWYELLOWWISHESURLAUB){
-                $ColoringAbteilungsuebersicht = 'class="table-warning"';
-            }
+            if($UEviewingUser==1){
+                if ($DataDay['total']>SHOWYELLOWWISHESURLAUB){
+                    $ColoringAbteilungsuebersicht = 'class="table-warning"';
+                }
 
-            if($DataDay['total']>SHOWREDWISHESURLAUB) {
-                $ColoringAbteilungsuebersicht = 'class="table-danger"';
+                if($DataDay['total']>SHOWREDWISHESURLAUB) {
+                    $ColoringAbteilungsuebersicht = 'class="table-danger"';
+                }
+            } else {
+
+                if($User['abteilungsrollen']=="OA"){
+                    if ($DataDay['OA']>SHOWYELLOWWISHESURLAUBIPSOA){
+                        $ColoringAbteilungsuebersicht = 'class="table-warning"';
+                    }
+
+                    if($DataDay['OA']>SHOWREDWISHESURLAUBIPSOA) {
+                        $ColoringAbteilungsuebersicht = 'class="table-danger"';
+                    }
+                } else {
+
+                    $FAAACountToday = $DataDay['FA'] + $DataDay['AA'];
+                    if ($FAAACountToday>SHOWYELLOWWISHESURLAUBIPS){
+                        $ColoringAbteilungsuebersicht = 'class="table-warning"';
+                    }
+
+                    if($FAAACountToday>SHOWREDWISHESURLAUBIPS) {
+                        $ColoringAbteilungsuebersicht = 'class="table-danger"';
+                    }
+                }
+
             }
 
             $TableHeaderRowTotal .= "<th ".$ColoringAbteilungsuebersicht.">".$DataDay['total']."</th>";
@@ -329,6 +357,85 @@ function populate_day_urlaubsplan_tabelle_management($Day,$UserID,$AllAbwesenhei
                     }
                     if($RollenUser=='AA'){
                         $AA++;
+                    }
+                }
+            }
+        }
+    }
+
+    $ReturnVals['HTML']=$Answer;
+    $ReturnVals['total']=$Total;
+    $ReturnVals['OA']=$OA;
+    $ReturnVals['FA']=$FA;
+    $ReturnVals['AA']=$AA;
+
+    return $ReturnVals;
+
+}
+
+function populate_day_urlaubsplan_tabelle_user($Day,$UserID,$AllAbwesenheiten,$RollenUser,$UEviewingUser,$AllAssignments,$Total,$OA=0,$FA=0,$AA=0){
+
+    $ReturnVals=[];
+    $AssignedUEthisUserToday = get_user_assigned_department_at_date(NULL,$UserID,$Day,$AllAssignments);
+
+    $Abwesenheitstypen = explode(',',ABWESENHEITENTYPEN);
+    $Answer = "<td></td>";
+
+    //Colorize stuff in case field is empty based on weekend/holidays
+    if((date('w',$Day)==0)OR(date('w',$Day)==6)){
+        $Answer = "<td class='table-secondary'></td>";
+    } elseif (in_array(date('Y-m-d',$Day), explode(',',LISTEFEIERTAGE))){
+        $Answer = "<td class='table-secondary'></td>";
+    }
+
+    //Loop through all Abwesenheiten
+    foreach ($AllAbwesenheiten as $Abwesenheit){
+
+        // Only check Abwesenheiten that count for User
+        if($Abwesenheit['user']==$UserID['id']){
+
+            //Check if Abwesenheit is active on this day
+            if(($Day>=strtotime($Abwesenheit['begin']))&&($Day<=strtotime($Abwesenheit['end']))){
+
+                $Kuerzel = "U";
+                $Farbe = "table-primary";
+
+                // Fetch type
+                foreach ($Abwesenheitstypen as $Abwesenheitstyp) {
+                    $DetailsAbwesenheitstyp = explode(':', $Abwesenheitstyp);
+                    if($Abwesenheit['type']==$DetailsAbwesenheitstyp[0]){
+                        $Kuerzel = $DetailsAbwesenheitstyp[1];
+                        if($DetailsAbwesenheitstyp[2]!=''){
+                            $Farbe = $DetailsAbwesenheitstyp[2];
+                        }
+                    }
+                }
+
+                // Generate Tooltip if Antrag has a comment
+                if($Abwesenheit['create_comment']!=''){
+                    $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'">'.$Kuerzel.'</a>';
+                } else {
+                    $Content = $Kuerzel;
+                }
+
+                if($Abwesenheit['status_bearbeitung']=="Beantragt"){
+                    $Answer = "<td class='text-center table-warning'>".$Content."*</td>";
+                } elseif ($Abwesenheit['status_bearbeitung']=="Genehmigt"){
+
+                    $Answer = "<td class='text-center ".$Farbe."'>".$Content."</td>";
+
+                    //Sum up statistics
+                    if($AssignedUEthisUserToday==$UEviewingUser){
+                        $Total++;
+                        if($RollenUser=='OA'){
+                            $OA++;
+                        }
+                        if($RollenUser=='FA'){
+                            $FA++;
+                        }
+                        if($RollenUser=='AA'){
+                            $AA++;
+                        }
                     }
                 }
             }

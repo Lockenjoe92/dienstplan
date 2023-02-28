@@ -9,7 +9,7 @@ function get_department_infos($mysqli, $ID){
 
 }
 
-function get_all_user_depmnt_assignments($mysqli, $ShowDeleted=false, $AllAssignments=[], $UserObj=[]){
+function get_all_user_depmnt_assignments($mysqli, $ShowDeleted=false, $AllAssignments=[], $UserObj=''){
 
     $Assignments = [];
 
@@ -17,8 +17,14 @@ function get_all_user_depmnt_assignments($mysqli, $ShowDeleted=false, $AllAssign
 
         foreach ($AllAssignments as $Assignment){
 
-            if($Assignment['user']==$UserObj['id']){
-                $Assignments[] = $Assignment;
+            if(is_array($UserObj)){
+                if($Assignment['user']==$UserObj['id']){
+                    $Assignments[] = $Assignment;
+                }
+            } else {
+                if($Assignment['user']==$UserObj){
+                    $Assignments[] = $Assignment;
+                }
             }
 
         }
