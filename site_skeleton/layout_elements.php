@@ -41,8 +41,14 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
             if(in_array($srcstring, $UserRoles)){
                 $DienstplanLinks .= '<li><a class="dropdown-item" href="wunschdienst_und_absentenuebersicht.php?org_ue='.$UE['id'].'">WuUP-Übersicht - '.$UE['name'].'</a></li>
             <li><a class="dropdown-item" href="dienstwuensche_management.php?org_ue='.$UE['id'].'">Dienstplanwünsche - '.$UE['name'].'</a></li>
-            <li><hr class="dropdown-divider"></li>
             ';}
+            if($UE['id']==1){
+                $srcstring = 'bereitschaftsdienstplan_'.$UE['id'];
+                if(in_array($srcstring, $UserRoles)){
+                    $DienstplanLinks .= '<li><a class="dropdown-item" href="bereitschaftsdienstplan_anaesthesie.php">Bereitschaftsdienstplan Anästhesie</a></li>';
+                }
+            }
+            $DienstplanLinks .= '<li><hr class="dropdown-divider"></li>';
         }
 
         $DienstplanLinks .= '
