@@ -8,13 +8,29 @@ function table_abwesenheiten_management($mysqli, $Nutzerrollen,$UE=1){
     $AllAssignments = get_all_user_depmnt_assignments($mysqli);
     $Users = get_sorted_list_of_all_users($mysqli);
 
+    $ShowGenehmigt = false;
+    if(isset($_GET['show_genehmigt'])){
+        if($_GET['show_genehmigt']=='true'){
+            $ShowGenehmigt = true;
+        }
+    }
+
     // Presort Abwesenheiten so we only have a list with users who actually ever work at said UE
     $Abwesenheiten = [];
     foreach ($AbwesenheitenAll as $Abwesenheit){
+
+        if($Abwesenheit['status_bearbeitung']=='Genehmigt'){
+            $AddApplication = $ShowGenehmigt;
+        } else {
+            $AddApplication = true;
+        }
+
         foreach ($Users as $user){
             if($Abwesenheit['user']==$user['id']){
                 if($user['default_abteilung']==$UE){
-                    $Abwesenheiten[]=$Abwesenheit;
+                    if($AddApplication){
+                        $Abwesenheiten[]=$Abwesenheit;
+                    }
                 } else {
                     foreach ($AllAssignments as $assignment){
                         if($assignment['user']==$Abwesenheit['user']){
@@ -22,7 +38,9 @@ function table_abwesenheiten_management($mysqli, $Nutzerrollen,$UE=1){
                                 # Only show people who are assigned this year
                                 $FirstDayThisYear = date('Y').'-m-d';
                                 if($assignment['end']>$FirstDayThisYear){
-                                    $Abwesenheiten[]=$Abwesenheit;
+                                    if($AddApplication){
+                                        $Abwesenheiten[]=$Abwesenheit;
+                                    }
                                 }
                             }
                         }
@@ -33,10 +51,14 @@ function table_abwesenheiten_management($mysqli, $Nutzerrollen,$UE=1){
     }
 
     // Setup Toolbar
-    $HTML = '<div id="toolbar">
-                <a id="add_user" class="btn btn-primary" href="abwesenheiten_management.php?org_ue='.$UE.'&mode=add_abwesenheit">
-                <i class="bi bi-person-fill-add"></i> Hinzufügen</a>
-            </div>';
+    $HTML = '<div id="toolbar">';
+    $HTML .= '<a id="add_user" class="btn btn-primary" href="abwesenheiten_management.php?org_ue='.$UE.'&mode=add_abwesenheit"><i class="bi bi-person-fill-add"></i> Hinzufügen</a> ';
+    if($ShowGenehmigt){
+        $HTML .= '<a id="add_user" class="btn btn-light" href="abwesenheiten_management.php?org_ue='.$UE.'&show_genehmigt=false"><i class="bi bi-eye-slash-fill"></i> genehmigte ausblenden</a>';
+    } else {
+        $HTML .= '<a id="add_user" class="btn btn-primary" href="abwesenheiten_management.php?org_ue='.$UE.'&show_genehmigt=true"><i class="bi bi-eye-fill"></i> genehmigte einblenden</a>';
+    }
+    $HTML .= '</div>';
 
     // Initialize Table
     $HTML .= '<table data-toggle="table" 
