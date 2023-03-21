@@ -110,7 +110,7 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                 if($Exploded[1]==0){
                     $Row .= "<td class='text-center align-middle table-secondary'></td>";
                 } else {
-                    $Row .= "<td class='text-center align-middle'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned)."</td>";
+                    $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned)."</td>";
                     $Tabindex++;
                 }
             }
@@ -130,25 +130,25 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned){
     if($Tabindex % 2 == 0){
 
         if(time()>$DateConcerned){
-            $buildPopup = '<a class="btn btn-outline-danger disabled btn-sm">
+            $buildPopup = '<a class="disabled">
   unbesetzt
 </a>';
         } else {
-            $buildPopup = '<a class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
+            $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
   besetzen
 </a>';
         }
 
     } elseif($Tabindex % 7 == 0) {
-        $buildPopup = '<a class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
+        $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
   Heinzelmann, M.
 </a>';
     } elseif($Tabindex % 3 == 0) {
-        $buildPopup = '<a class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
+        $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
   Smith, A.
 </a>';
     } else {
-        $buildPopup = '<a class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
+        $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
   Mustermann, M.
 </a>';
     }
@@ -190,4 +190,81 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned){
 </div>';
 
     return $buildPopup;
+}
+
+function table_bereitschaftsdienstplan_user($mysqli,$CurrentUser,$SelectedMonth='',$SelectedYear=''){
+
+    // deal with stupid "" and '' problems
+    $bla = '"{"key": "value"}"';
+    $Einteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
+    $BDtypen = get_list_of_all_bd_types($mysqli);
+    #$Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli, false);
+    #$Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
+
+    if(($SelectedMonth=='') && ($SelectedYear=='')){
+        $BeginDate = "01-".date('m-Y');
+    } else {
+        $BeginDate = "01-".$SelectedMonth."-".$SelectedYear;
+    }
+    $EndDate = date("Y-m-t", strtotime($BeginDate));
+
+    // Initialize Table
+    $HTML = '<table data-toggle="table" 
+data-locale="de-DE"
+data-show-columns="true" 
+  data-multiple-select-row="true"
+  data-click-to-select="true"
+  data-pagination="true">';
+
+    // Setup Table Head
+    $HTML .= '<thead>
+                <tr class="tr-class-1">
+                    <th data-field="day" data-sortable="true">Tag</th>
+                    <th data-field="type" data-sortable="true">Diensttyp</th>
+                    <th>Optionen</th>
+                </tr>
+              </thead>';
+
+    // Fill table body
+    $HTML .= '<tbody>';
+    $counter = 1;
+    foreach ($Einteilungen as $Einteilung){
+
+        if($Einteilung['user'] == $CurrentUser){
+            if(($Einteilung['day']>=$BeginDate) && ($Einteilung['day']<=$EndDate)){
+                // Build rows
+                if($counter==1){
+                    $HTML .= '<tr id="tr-id-1" class="tr-class-1" data-title="bootstrap table" data-object='.$bla.'>';
+                } else {
+                    $HTML .= '<tr id="tr-id-'.$counter.'" class="tr-class-'.$counter.'">';
+                }
+
+
+                // Build edit/delete Buttons
+                $Options = '';
+
+                $DienstType = get_bereitschaftsdiensttype_details_by_type_id($BDtypen, $Einteilung['bd_type']);
+
+                if($counter==1){
+                    $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Einteilung['day'].'</td>';
+                    $HTML .= '<td>'.$DienstType['name'].'</td>';
+                    $HTML .= '<td> '.$Options.'</td>';
+                } else {
+                    $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Einteilung['day'].'</td>';
+                    $HTML .= '<td>'.$DienstType['name'].'</td>';
+                    $HTML .= '<td> '.$Options.'</td>';
+                }
+
+                // close row and count up
+                $HTML .= "</tr>";
+                $counter++;
+            }
+        }
+
+    }
+    $HTML .= '</tbody>';
+    $HTML .= '</table>';
+
+    return $HTML;
+
 }

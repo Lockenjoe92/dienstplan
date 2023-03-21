@@ -222,9 +222,13 @@ data-show-multi-sort="true"
             //Coloring
             $ColorCommand="";
             foreach(explode(',', ABWESENHEITENBEARBEITUNGSSTATI) as $Status){
-                $DeconstructStatus = explode(':', $Status);
-                if($Abwesenheit['status_bearbeitung']==$DeconstructStatus[0]){
-                    $ColorCommand = $DeconstructStatus[1];
+                if($DashboardMode){
+                    $ColorCommand = '';
+                } else {
+                    $DeconstructStatus = explode(':', $Status);
+                    if($Abwesenheit['status_bearbeitung']==$DeconstructStatus[0]){
+                        $ColorCommand = $DeconstructStatus[1];
+                    }
                 }
             }
 
@@ -256,7 +260,7 @@ data-show-multi-sort="true"
 
             // Optionally show comments
             if($Abwesenheit['create_comment']!=''){
-                $Comment = '<i class="bi bi-megaphone-fill"> ';
+                $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'"><i class="bi bi-megaphone-fill"></i></a>';
             } else {
                 $Comment = '';
             }

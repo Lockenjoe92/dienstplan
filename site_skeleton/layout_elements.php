@@ -111,9 +111,9 @@ function alert_builder($alert, $class='alert-danger'){
 
 }
 
-function card_builder($CardTitle, $CardSubtitle, $CardContent, $wrapWithCol=false){
+function card_builder($CardTitle, $CardSubtitle, $CardContent, $wrapWithCol=false, $horizontzalMode=''){
 
-    $HTML = '<div class="card">
+    $HTML = '<div class="card '.$horizontzalMode.'">
                    <div class="card-body">';
 
     $HTML .= '<h5 class="card-title">'.$CardTitle.'</h5>';
