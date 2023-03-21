@@ -111,7 +111,7 @@ function alert_builder($alert, $class='alert-danger'){
 
 }
 
-function card_builder($CardTitle, $CardSubtitle, $CardContent){
+function card_builder($CardTitle, $CardSubtitle, $CardContent, $wrapWithCol=false){
 
     $HTML = '<div class="card">
                    <div class="card-body">';
@@ -126,6 +126,11 @@ function card_builder($CardTitle, $CardSubtitle, $CardContent){
 
     $HTML .= '</div>
               </div>';
+
+    if($wrapWithCol){
+        $HTML = "<div class='col'>".$HTML."</div>";
+    }
+
     return $HTML;
 }
 

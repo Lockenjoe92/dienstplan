@@ -32,3 +32,4 @@ include_once "./views/abwesenheitenmanagement.php";
 include_once "./views/urlaubsplanmanagement.php";
 include_once "./views/wunschdienstplanmanagement.php";
 include_once "./views/bereitschaftsdienstplanmanagement.php";
+include_once "./views/dashboardcards.php";

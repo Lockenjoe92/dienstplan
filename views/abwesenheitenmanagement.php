@@ -154,7 +154,7 @@ data-show-multi-sort="true"
     return $HTML;
 }
 
-function table_abwesenheiten_user($mysqli, $Nutzerrollen){
+function table_abwesenheiten_user($mysqli, $Nutzerrollen, $DashboardMode=false){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
@@ -168,7 +168,14 @@ function table_abwesenheiten_user($mysqli, $Nutzerrollen){
             </div>';
 
     // Initialize Table
-    $HTML .= '<table data-toggle="table" 
+    if($DashboardMode) {
+        $HTML .= '<table data-toggle="table" 
+data-locale="de-DE"
+data-toolbar="#toolbar" 
+data-show-columns="true" 
+  data-pagination="true">';
+    } else {
+        $HTML .= '<table data-toggle="table" 
 data-search="true" 
 data-locale="de-DE"
 data-toolbar="#toolbar" 
@@ -178,9 +185,20 @@ data-show-multi-sort="true"
   data-multiple-select-row="true"
   data-click-to-select="true"
   data-pagination="true">';
+    }
 
     // Setup Table Head
-    $HTML .= '<thead>
+    if($DashboardMode){
+        $HTML .= '<thead>
+                <tr class="tr-class-1">
+                    <th data-field="beginn" data-sortable="true">Beginn</th>
+                    <th data-field="ende" data-sortable="true">Ende</th>
+                    <th data-field="Antragsart" data-sortable="true">Antragsart</th>
+                    <th>Optionen</th>
+                </tr>
+              </thead>';
+    } else {
+        $HTML .= '<thead>
                 <tr class="tr-class-1">
                     <th data-field="status" data-sortable="true">Status</th>
                     <th data-field="beginn" data-sortable="true">Beginn</th>
@@ -191,6 +209,8 @@ data-show-multi-sort="true"
                     <th>Optionen</th>
                 </tr>
               </thead>';
+    }
+
 
     // Fill table body
     $HTML .= '<tbody>';
@@ -210,9 +230,21 @@ data-show-multi-sort="true"
 
             // Build rows
             if($counter==1){
-                $HTML .= '<tr id="tr-id-1" class="tr-class-1 '.$ColorCommand.'" data-title="bootstrap table" data-object='.$bla.'>';
+                if($DashboardMode){
+                    if($Abwesenheit['status_bearbeitung']=='Genehmigt'){
+                        $HTML .= '<tr id="tr-id-1" class="tr-class-1 '.$ColorCommand.'" data-title="bootstrap table" data-object='.$bla.'>';
+                    }
+                } else {
+                    $HTML .= '<tr id="tr-id-1" class="tr-class-1 '.$ColorCommand.'" data-title="bootstrap table" data-object='.$bla.'>';
+                }
             } else {
-                $HTML .= '<tr id="tr-id-'.$counter.'" class="tr-class-'.$counter.' '.$ColorCommand.'">';
+                if($DashboardMode){
+                    if($Abwesenheit['status_bearbeitung']=='Genehmigt'){
+                        $HTML .= '<tr id="tr-id-' . $counter . '" class="tr-class-' . $counter . ' ' . $ColorCommand . '">';
+                    }
+                } else {
+                    $HTML .= '<tr id="tr-id-' . $counter . '" class="tr-class-' . $counter . ' ' . $ColorCommand . '">';
+                }
             }
 
             // Build edit/delete Buttons
@@ -230,26 +262,50 @@ data-show-multi-sort="true"
             }
 
             if($counter==1){
-                $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['status_bearbeitung'].'</td>';
-                $HTML .= '<td>'.$Abwesenheit['begin'].'</td>';
-                $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
-                $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
-                $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
-                $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-                $HTML .= '<td> '.$Options.$Comment.'</td>';
+                if($DashboardMode){
+                    if($Abwesenheit['status_bearbeitung']=='Genehmigt'){
+                        $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['begin'].'</td>';
+                        $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
+                        $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
+                        $HTML .= '<td> '.$Options.$Comment.'</td>';
+                    }
+                } else {
+                    $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['status_bearbeitung'].'</td>';
+                    $HTML .= '<td>'.$Abwesenheit['begin'].'</td>';
+                    $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
+                    $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
+                    $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
+                    $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
+                    $HTML .= '<td> '.$Options.$Comment.'</td>';
+                }
             } else {
-                $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Abwesenheit['status_bearbeitung'].'</td>';
-                $HTML .= '<td>'.$Abwesenheit['begin'].'</td>';
-                $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
-                $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
-                $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
-                $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-                $HTML .= '<td> '.$Options.$Comment.'</td>';
+                if($DashboardMode){
+                    if($Abwesenheit['status_bearbeitung']=='Genehmigt') {
+                        $HTML .= '<td id="td-id-' . $counter . '" class="td-class-' . $counter . '"">' . $Abwesenheit['begin'] . '</td>';
+                        $HTML .= '<td>' . $Abwesenheit['end'] . '</td>';
+                        $HTML .= '<td>' . $Abwesenheit['type'] . '</td>';
+                        $HTML .= '<td> ' . $Options . $Comment . '</td>';
+                    }
+                } else {
+                    $HTML .= '<td id="td-id-' . $counter . '" class="td-class-' . $counter . '"">' . $Abwesenheit['status_bearbeitung'] . '</td>';
+                    $HTML .= '<td>' . $Abwesenheit['begin'] . '</td>';
+                    $HTML .= '<td>' . $Abwesenheit['end'] . '</td>';
+                    $HTML .= '<td>' . $Abwesenheit['type'] . '</td>';
+                    $HTML .= '<td>' . date('Y-m-d', strtotime($Abwesenheit['create_date'])) . '</td>';
+                    $HTML .= '<td>' . $Abwesenheit['urgency'] . '</td>';
+                    $HTML .= '<td> ' . $Options . $Comment . '</td>';
+                }
             }
 
             // close row and count up
             $HTML .= "</tr>";
-            $counter++;
+            if($DashboardMode){
+                if($Abwesenheit['status_bearbeitung']=='Genehmigt') {
+                    $counter++;
+                }
+            } else {
+                $counter++;
+            }
         }
 
     }
