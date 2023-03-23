@@ -272,3 +272,90 @@ function day_is_a_weekend_or_holiday($Day){
     }
 
 }
+
+function get_negative_bd_wishes_user_on_certain_day($user, $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned){
+
+    $return = [];
+
+    foreach ($Allwishes as $wish){
+
+        if($wish['user'] == $user){
+
+            if(strtotime($wish['date'])==$DateConcerned){
+
+                //now lets check if the wish is a negative wish-type
+                if(!check_wishtype_booleaniness($wish['type'], $AllWishTypes)){
+
+                    //Check if wish-type corresponds to current BD-type
+                    $DienstType = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
+                    $WishType = get_bereitschaftsdienstwuenschetype_details_by_type_id($AllWishTypes, $wish['type']);
+
+                    if($WishType['type']==$DienstType['type']){
+                        $return[] = $wish;
+                    } elseif ($WishType['type']=='all_day'){
+                        $return[] = $wish;
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return $return;
+
+}
+
+function get_positive_bd_wishes_user_on_certain_day($user, $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned){
+
+    $return = [];
+
+    foreach ($Allwishes as $wish){
+
+        if($wish['user'] == $user){
+
+            if(strtotime($wish['date'])==$DateConcerned){
+
+                //now lets check if the wish is a positive wish-type
+                if(check_wishtype_booleaniness($wish['type'], $AllWishTypes)){
+
+                    //Check if wish-type corresponds to current BD-type
+                    $DienstType = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
+                    $WishType = get_bereitschaftsdienstwuenschetype_details_by_type_id($AllWishTypes, $wish['type']);
+
+                    if($WishType['type']==$DienstType['type']){
+
+                        $return[] = $wish;
+
+                    } elseif ($WishType['type']=='all_day'){
+                        $return[] = $wish;
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return $return;
+}
+
+function check_wishtype_booleaniness($WishTypeID, $AllWishTypes){
+
+    $WishType = [];
+    foreach ($AllWishTypes as $AllWishType){
+        if($AllWishType['id']==$WishTypeID){
+            $WishType = $AllWishType;
+        }
+    }
+
+    if($WishType['boolean']==0){
+        return false;
+    } else {
+        return true;
+    }
+}

@@ -342,3 +342,26 @@ function check_abwesenheit_date_overlap_user($UserID,$AllItems,$Begin,$End,$Igno
 
     return $Return;
 }
+
+function get_abwesenheit_existing_for_user_on_given_day($UserID,$AllItems,$Day){
+
+    $Found = [];
+
+    foreach ($AllItems as $Item){
+
+        if($Item['user']==$UserID){
+
+            if($Item['status_bearbeitung']=='Genehmigt'){
+
+                if((strtotime($Item['begin'])<=$Day) && (strtotime($Item['end'])>=$Day)){
+                    $Found = $Item;
+                }
+
+            }
+
+        }
+
+    }
+
+    return $Found;
+}

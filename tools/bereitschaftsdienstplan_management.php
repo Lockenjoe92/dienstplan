@@ -48,6 +48,51 @@ function get_bd_assignment_info($mysqli, $assignmentID){
     }
 }
 
+function get_users_with_bd_assignment_type($mysqli, $assignmentID){
+
+    $sql = "SELECT * FROM user_bereitschaftsdienst_assignments WHERE bd_type = ".$assignmentID;
+    if($stmt = $mysqli->query($sql)){
+        return $stmt->fetch_assoc();
+    }
+}
+
+function get_all_users_bd_assignments($mysqli, $includeDeleted=false){
+
+    $BDeinteilungen = [];
+    if($includeDeleted){
+        $sql = "SELECT * FROM user_bereitschaftsdienst_assignments";
+    } else {
+        $sql = "SELECT * FROM user_bereitschaftsdienst_assignments WHERE delete_time IS NULL";
+    }
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            $BDeinteilungen[] = $row;
+        }
+    }
+
+    return $BDeinteilungen;
+}
+
+function get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($Type, $allAssignments, $Day){
+
+    $List = [];
+
+    foreach ($allAssignments as $Assignment){
+
+        if ($Assignment['bd_type']==$Type){
+
+            if((strtotime($Assignment['begin'])<=$Day) && (strtotime($Assignment['end'])>=$Day)){
+                $List[] = $Assignment;
+            }
+
+        }
+
+    }
+
+    return $List;
+
+}
+
 function get_sorted_list_of_all_bd_einteilungen($mysqli, $ShowDeleted=false){
     $BDeinteilungen = [];
 
@@ -90,4 +135,169 @@ function get_bereitschaftsdiensttype_details_by_type_id($Wunschtypen, $WunschTyp
         }
     }
 
+}
+
+function get_bereitschaftsdienstwuenschetype_details_by_type_id($Wunschtypen, $WunschTypeID){
+
+    foreach ($Wunschtypen as $wunschtyp){
+        if($wunschtyp['id']==$WunschTypeID){
+            return $wunschtyp;
+        }
+    }
+
+}
+
+function get_bereitschaftsdienst_einteilungen_on_day($day, $BDeinteilungen, $certainType=0){
+
+    $counter = [];
+    foreach ($BDeinteilungen as $BDeinteilung){
+
+        if(strtotime($BDeinteilung['day'])==$day){
+
+            if($certainType>0){
+                if($BDeinteilung['bd_type'] == $certainType){
+                    $counter[] = $BDeinteilung;
+                }
+            } else {
+                $counter[] = $BDeinteilung;
+            }
+
+        }
+
+    }
+
+    return $counter;
+}
+
+function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes){
+
+    $Answer = [];
+    $GoodCandidateCounter = 0;
+
+    //1. Get Candidates based on assigned BD Group
+    $firstListOfCandidates = get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($BDType, $AllBDassignments, $DateConcerned);
+
+    //2. Build 3 sublists based on abwesenheiten, wishes and prior assignments
+    // Array is built as follows: 'userID', 'userName', 'table-color', 'reason'
+    $GreenList = [];
+    $BlankList = [];
+    $RedList = [];
+
+    foreach ($firstListOfCandidates as $firstListOfCandidate){
+
+        $CandidateInfos = [];
+        $CandidatePersonalInfos = get_user_infos_by_id_from_list($firstListOfCandidate['user'], $AllUsers);
+        $CandidateInfos['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
+        $NeedsRed = false;
+        $NeedsGreen = false;
+        $ReasonNeedsRed = '';
+        $ReasonNeedsGreen = '';
+        $VerfuegbarkeitRed = '';
+
+        //Check if User is unavailable due to Abwesenheit
+        $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($firstListOfCandidate['user'], $AllAbwesenheiten, $DateConcerned);
+        if(sizeof($AbwesenheitCheck)>0){
+            $NeedsRed = true;
+            $VerfuegbarkeitRed = $AbwesenheitCheck['type'];
+            $ReasonNeedsRed = $AbwesenheitCheck['create_comment'];
+        }
+
+        //Check if User is unavailable due to wish
+        $NegativeWishCheck = get_negative_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
+        if(sizeof($NegativeWishCheck)>0){
+            $NegativeWishCheck = $NegativeWishCheck[0];
+            $NeedsRed = true;
+            $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $NegativeWishCheck['type']);
+            $VerfuegbarkeitRed = $WishTypeDetails['name'];
+            $ReasonNeedsRed = $NegativeWishCheck['create_comment'];
+        }
+
+        //Check if user already has a FZA today
+        if(user_needs_fza_on_certain_date($firstListOfCandidate['user'], $AllBDeinteilungen, $AllBDTypes, $DateConcerned)){
+            $NeedsRed = true;
+            $VerfuegbarkeitRed = "FZA";
+            $ReasonNeedsRed = "FZA";
+        }
+
+        //Check if giving a user an assignment today will collide FZA with assignment tomorrow
+        $InfosOnCurrentBDtype = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
+        if($InfosOnCurrentBDtype['req_fza']==1){
+            $DateTomorrow = strtotime('+1 day',$DateConcerned);
+            $AllEinteilungenTomorrow = get_bereitschaftsdienst_einteilungen_on_day($DateTomorrow, $AllBDeinteilungen, 0);
+            foreach ($AllEinteilungenTomorrow as $AllEinteilungTomorrow){
+                if($AllEinteilungTomorrow['user']==$firstListOfCandidate['user']){
+                    $NeedsRed = true;
+                    $VerfuegbarkeitRed = "Nicht verfügbar";
+                    $ReasonNeedsRed = "Am Folgetag bereits eingeteilt";
+                }
+            }
+        }
+
+        if($NeedsRed){
+            $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+            $CandidateInfos['table-color'] = 'table-danger';
+            $CandidateInfos['reason'] = $ReasonNeedsRed;
+            $CandidateInfos['verfuegbarkeit'] = $VerfuegbarkeitRed;
+            $RedList[] = $CandidateInfos;
+        } else {
+
+            //Check for Green
+            //Check if User is unavailable due to wish
+            $PositiveWishCheck = get_positive_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
+            if(sizeof($PositiveWishCheck)>0){
+                $PositiveWishCheck = $PositiveWishCheck[0];
+                $NeedsGreen = true;
+                $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
+                $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
+            }
+
+            if($NeedsGreen){
+                $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+                $CandidateInfos['table-color'] = 'table-success';
+                $CandidateInfos['reason'] = $ReasonNeedsGreen;
+                $CandidateInfos['verfuegbarkeit'] = 'Gewünscht';
+                $GreenList[] = $CandidateInfos;
+                $GoodCandidateCounter++;
+            } else {
+                $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+                $CandidateInfos['table-color'] = '';
+                $CandidateInfos['reason'] = '';
+                $CandidateInfos['verfuegbarkeit'] = 'Verfügbar';
+                $BlankList[] = $CandidateInfos;
+                $GoodCandidateCounter++;
+            }
+        }
+    }
+
+    $CombinedList = array_merge($GreenList,$BlankList,$RedList);
+
+    $Answer['num_found_candidates'] = $GoodCandidateCounter;
+    $Answer['candidates'] = $CombinedList;
+    return $Answer;
+}
+
+function user_needs_fza_on_certain_date($userID, $AllBDeinteilungen, $AllBDTypes, $DateConcerned){
+
+    $Antwort = false;
+
+    foreach ($AllBDeinteilungen as $einteilung){
+
+        if($einteilung['user']==$userID){
+
+            $DienstType = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $einteilung['bd_type']);
+            if($DienstType['req_fza']==1){
+
+                if(strtotime('+1 day', strtotime($einteilung['day']))==$DateConcerned){
+
+                    $Antwort = true;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return $Antwort;
 }

@@ -454,3 +454,15 @@ function delete_user_dienstgruppe_zugehoerigkeit($mysqli, $AssignmentID, $commen
     return $Antwort;
 
 }
+
+function get_user_infos_by_id_from_list($userID, $userList){
+
+    foreach ($userList as $user){
+
+        if($userID == $user['id']){
+            return $user;
+        }
+
+    }
+
+}

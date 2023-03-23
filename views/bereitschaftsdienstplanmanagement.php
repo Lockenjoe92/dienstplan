@@ -18,8 +18,14 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
 
     //Initialze & fetch stuff
     $mysqli = connect_db();
+    $AllUsers = get_sorted_list_of_all_users($mysqli);
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
+    $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+    $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+    $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
+    $AllBDassignments = get_all_users_bd_assignments($mysqli);
+    $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $FirstDayOfSelectedMonthString = $Year."-".$Month."-01";
     $FirstDayOfSelectedMonth = strtotime($FirstDayOfSelectedMonthString);
 
@@ -41,7 +47,7 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
         $CommandDate = "+" . $a . " days";
         $DateConcerned = strtotime($CommandDate, $FirstDayOfSelectedMonth);
         if(date("m", $DateConcerned)==$Month) {
-            $Populate = populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $Tabindex);
+            $Populate = populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $Tabindex);
             $Tabindex = $Populate['tabindex'];
             $TableRows .= $Populate['HTML'];
         }
@@ -72,7 +78,7 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
 
 }
 
-function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $Tabindex){
+function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $Tabindex){
 
     if(day_is_a_weekend_or_holiday($DateConcerned)){
         $Holidayweekend = true;
@@ -110,7 +116,28 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                 if($Exploded[1]==0){
                     $Row .= "<td class='text-center align-middle table-secondary'></td>";
                 } else {
-                    $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned)."</td>";
+
+                    //1. check if this item already has been planned
+                    $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
+                    if(sizeof($Einteilung)==0){
+
+                        //2. no entries -> parse wishlist
+                        $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
+
+                        if(time()>$DateConcerned){
+                            $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $Einteilung, $Allwishes)."</td>";
+                        } else {
+                            if($ParserResults['num_found_candidates']>0){
+                                $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'])."</td>";
+                            } else {
+                                $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'])."</td>";
+                            }
+                        }
+
+                    } else {
+                        $UserDetails = get_user_infos_by_id_from_list($Einteilung[0]['user'], $AllUsers);
+                        $Row .= "<td class='text-center align-middle table-success'>".$UserDetails['nachname'].", ".$UserDetails['vorname']."</td>";
+                    }
                     $Tabindex++;
                 }
             }
@@ -125,35 +152,13 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
     return $ReturnVals;
 }
 
-function build_modal_popup_bd_planung($Tabindex, $DateConcerned){
-
-    if($Tabindex % 2 == 0){
+function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList){
 
         if(time()>$DateConcerned){
-            $buildPopup = '<a class="disabled">
-  unbesetzt
-</a>';
+            $buildPopup = '<p class="disabled">unbesetzt</p>';
         } else {
-            $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
-  besetzen
-</a>';
+            $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">besetzen</a>';
         }
-
-    } elseif($Tabindex % 7 == 0) {
-        $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
-  Heinzelmann, M.
-</a>';
-    } elseif($Tabindex % 3 == 0) {
-        $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
-  Smith, A.
-</a>';
-    } else {
-        $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">
-  Mustermann, M.
-</a>';
-    }
-
-
 
     $buildPopup .= '<!-- The Modal -->
 <div class="modal fade" id="myModal'.$Tabindex.'">
@@ -164,22 +169,24 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned){
       <div class="modal-header">
         <h4 class="modal-title">Dienst besetzen</h4>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
+      </div>';
 
-      <!-- Modal body -->
+    $buildPopup .= '<!-- Modal body -->
       <div class="modal-body">
         Mockup der Auswahltabelle
 		<table class="table">
-			<thead><th></th><th>Name</th><th>Verfügbarkeit</th><th>Kommentar</th></thead>
-			<tbody>
-			<tr class="table-success"><td><input type="checkbox" class="form-check-input" id="exampleCheck1"></td><td>Dampf, Hans</td><td>Gewünscht</td><td>Bitte Nachtdienst</td></tr>
-			<tr><td><input type="checkbox" class="form-check-input" id="exampleCheck1"></td><td>Mustermann, Max</td><td>Verfügbar</td><td></td></tr>
-			<tr class="table-danger"><td><input type="checkbox" class="form-check-input" id="exampleCheck1"></td><td>Müller, Florian</td><td>Ausschluss</td><td>Bin auf einer Hochzeit eingeladen...</td></tr>
-			</tbody>
-		</table>
-      </div>
+			<thead><th></th><th>Name</th><th>Verfügbarkeit</th><th>Grund/Kommentar</th></thead>
+			<tbody>';
 
-      <!-- Modal footer -->
+    foreach ($CandidatesList as $CandidateItem){
+        $buildPopup .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" id="exampleCheck1"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['reason'].'</td></tr>';
+    }
+
+    $buildPopup .= '</tbody>
+		</table>
+      </div>';
+
+    $buildPopup .= '<!-- Modal footer -->
       <div class="modal-footer">
 	  	<button type="button" class="btn btn-primary" name="action_add_bd_zuteilung">Zuteilen</button>
         <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Schließen</button>
