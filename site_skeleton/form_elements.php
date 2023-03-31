@@ -883,15 +883,14 @@ function form_dropdown_months($Name, $Value){
 
     $OptionsHTML = $HTML = "";
 
+    $Months = [[1,'Jan.'],[2,'Feb.'],[3,'März'],[4,'Apr.'],[5,'Mai'],[6,'Juni'],[7,'Juli'],[8,'Aug.'],[9,'Sep.'],[10,'Okt.'],[11,'Nov.'],[12,'Dez.']];
+
     // Render Month Options
-    for($a=1;$a<=12;$a++){
-        $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
-            IntlDateFormatter::NONE, NULL, NULL, "MMM");
-        $monthName = datefmt_format($format, mktime(0, 0, 0, $a));
-        if($Value==$a){
-            $OptionsHTML .= '<option value="'.$a.'" selected>'.$monthName.'</option>';
+    foreach ($Months as $month){
+        if($Value==$month[0]){
+            $OptionsHTML .= '<option value="'.$month[0].'" selected>'.$month[1].'</option>';
         } else {
-            $OptionsHTML .= '<option value="'.$a.'">'.$monthName.'</option>';
+            $OptionsHTML .= '<option value="'.$month[0].'">'.$month[1].'</option>';
         }
     }
 

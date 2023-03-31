@@ -219,6 +219,16 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             $ReasonNeedsRed = "FZA";
         }
 
+        //Check if User is already assigned somewhere else on same day
+        $AllEinteilungenToday = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, 0);
+        foreach ($AllEinteilungenToday as $EinteilungenToday){
+            if($EinteilungenToday['user']==$firstListOfCandidate['user']){
+                $NeedsRed = true;
+                $VerfuegbarkeitRed = "Nicht verfügbar";
+                $ReasonNeedsRed = "Mitarbeiter/in an diesem Tag bereits eingeteilt";
+            }
+        }
+
         //Check if giving a user an assignment today will collide FZA with assignment tomorrow
         $InfosOnCurrentBDtype = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
         if($InfosOnCurrentBDtype['req_fza']==1){

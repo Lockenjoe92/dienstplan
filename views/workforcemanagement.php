@@ -881,12 +881,12 @@ function add_user_dienstgruppe_management($mysqli){
         # Do some checks
         if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
             $DAUcount++;
-            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Sondereinteilung liegen!";
+            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Dienstgruppenzuteilung liegen!";
         }
 
         $Catches = 0;
         foreach ($UserAssignments as $assignment){
-            if($dgPlaceholder==$assignment['id']){
+            if($dgPlaceholder==$assignment['bd_type']){
                 $Catches++;
             }
         }

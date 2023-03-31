@@ -155,7 +155,7 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
 function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList){
 
         if(time()>$DateConcerned){
-            $buildPopup = '<p class="disabled">unbesetzt</p>';
+            $buildPopup = 'unbesetzt';
         } else {
             $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">besetzen</a>';
         }
