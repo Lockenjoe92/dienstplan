@@ -283,6 +283,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
 
     $Answer['num_found_candidates'] = $GoodCandidateCounter;
     $Answer['candidates'] = $CombinedList;
+    $Answer['bad_candidates'] = $RedList;
     return $Answer;
 }
 
@@ -318,26 +319,78 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
     $CurrentUserID = get_current_user_id();
     $Date = date('Y-m-d', $Dateconcerned);
 
-    // Prepare statement & DB Access
-    $sql = "INSERT INTO bereitschaftsdienstplan (day, bd_type, user, create_user, create_comment) VALUES (?,?,?,?,?)";
-    if($stmt = $mysqli->prepare($sql)){
-        // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("siiis", $Date, $BDtype, $User, $CurrentUserID, $comment);
+    //Load Stuff
+    $AllBDTypes = get_list_of_all_bd_types($mysqli);
+    $AllBDEinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
+    $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+    $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+    $AllBDassignments = get_all_users_bd_assignments($mysqli);
+    $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $AllUsers = get_sorted_list_of_all_users($mysqli);
 
-        // Attempt to execute the prepared statement
-        if($stmt->execute()){
-            // Return success + new users ID + Users Password
-            $Antwort['success']=true;
-            $Antwort['meldung'] = $UserInfos['vorname']." ".$UserInfos['nachname']." erfolgreich am ".date('d.m.Y', $Dateconcerned)." eingeteilt!";
-        } else{
-            $Antwort['success']=false;
-            $Antwort['meldung']="Fehler beim Datenbankzugriff";
-        }
+    $Antwort = [];
+    $DAUcount = 0;
+    $DAUerr = "";
 
-        // Close statement
-        $stmt->close();
+    //Perform last-minute sanity-checks!
+    if(!is_numeric($Dateconcerned)){
+        $DAUcount++;
+        $DAUerr .= "Falsches Datumsformat übermittelt. Bitte Vorgang nochmals probieren, ansonsten mit Entwickler in Verbindung setzen!";
     }
-    $mysqli->close();
+
+    if(empty($Dateconcerned)){
+        $DAUcount++;
+        $DAUerr .= "Kein/e Mitarbeiter/in ausgwählt. Bitte Vorgang nochmals probieren, ansonsten mit Entwickler in Verbindung setzen!";
+    }
+
+    if(user_needs_fza_on_certain_date($User, $AllBDEinteilungen, $AllBDTypes, $Dateconcerned)){
+        $DAUcount++;
+        $DAUerr .= $UserInfos['vorname']." ".$UserInfos['nachname']." hat am ".date('d.m.Y', $Dateconcerned)." FZA! Bitte ggf. die bisherigen Einteilungen bearbeiten!";
+    }
+
+    $ParsedCandidates = parse_bd_candidates_on_day_for_certain_bd_type($Dateconcerned, $BDtype, $AllBDEinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
+    $UserInRedlist = false;
+    $ReasonRedList = "";
+    foreach ($ParsedCandidates['bad_candidates'] as $parsedCandidate){
+        if($parsedCandidate['userID']==$User){
+            $UserInRedlist = true;
+            if(empty($parsedCandidate['reason'])){
+                $ReasonRedList = $parsedCandidate['verfuegbarkeit'];
+            } else {
+                $ReasonRedList = $parsedCandidate['verfuegbarkeit'].' - '.$parsedCandidate['reason'];
+            }
+        }
+    }
+
+    if($UserInRedlist){
+        $DAUcount++;
+        $DAUerr .= $UserInfos['vorname']." ".$UserInfos['nachname']." steht am ".date('d.m.Y', $Dateconcerned)." nicht zur Verfügung! Grund: ".$ReasonRedList;
+    }
+
+    if($DAUcount==0){
+        // Prepare statement & DB Access
+        $sql = "INSERT INTO bereitschaftsdienstplan (day, bd_type, user, create_user, create_comment) VALUES (?,?,?,?,?)";
+        if($stmt = $mysqli->prepare($sql)){
+            // Bind variables to the prepared statement as parameters
+            $stmt->bind_param("siiis", $Date, $BDtype, $User, $CurrentUserID, $comment);
+
+            // Attempt to execute the prepared statement
+            if($stmt->execute()){
+                // Return success + new users ID + Users Password
+                $Antwort['success']=true;
+                $Antwort['meldung'] = $UserInfos['vorname']." ".$UserInfos['nachname']." erfolgreich am ".date('d.m.Y', $Dateconcerned)." eingeteilt!";
+            } else{
+                $Antwort['success']=false;
+                $Antwort['meldung']="Fehler beim Datenbankzugriff";
+            }
+
+            // Close statement
+            $stmt->close();
+        }
+    } else {
+        $Antwort['success']=false;
+        $Antwort['meldung']=$DAUerr;
+    }
 
     return $Antwort;
 }
