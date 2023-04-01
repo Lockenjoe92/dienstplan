@@ -24,11 +24,11 @@ function site_body($SiteTitle, $Content, $loggedIn = false, $UserRoles=[], $UseC
                     '.nav_bar($loggedIn,$UserRoles).'
                     '.$Content.'
                     <script src="/js/bootstrap.bundle.js"></script>
+                    <script src="/js/main.js"></script>
                     <script src="js/jquery-3.6.3.min.js"></script>
                     <script src="https://unpkg.com/bootstrap-table@1.21.2/dist/bootstrap-table.min.js"></script>
                     <script src="https://unpkg.com/bootstrap-table@1.21.2/dist/extensions/multiple-sort/bootstrap-table-multiple-sort.js"></script>
                     <script src="https://unpkg.com/bootstrap-table@1.21.2/dist/bootstrap-table-locale-all.min.js"></script>
-                    <script src="/js/main.js"></script>
                 </body>';
 
     return $Return;

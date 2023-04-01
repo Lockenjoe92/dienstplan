@@ -125,12 +125,12 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                         $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
 
                         if(time()>$DateConcerned){
-                            $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $Einteilung, $Allwishes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'])."</td>";
                         } else {
                             if($ParserResults['num_found_candidates']>0){
-                                $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'])."</td>";
+                                $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'])."</td>";
                             } else {
-                                $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'])."</td>";
+                                $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'])."</td>";
                             }
                         }
 
@@ -152,7 +152,7 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
     return $ReturnVals;
 }
 
-function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList){
+function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype){
 
         if(time()>$DateConcerned){
             $buildPopup = 'unbesetzt';
@@ -171,28 +171,33 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>';
 
-    $buildPopup .= '<!-- Modal body -->
+    $buildPopupBody = '<!-- Modal body -->
       <div class="modal-body">
-        Mockup der Auswahltabelle
 		<table class="table">
 			<thead><th></th><th>Name</th><th>Verfügbarkeit</th><th>Grund/Kommentar</th></thead>
 			<tbody>';
 
     foreach ($CandidatesList as $CandidateItem){
-        $buildPopup .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" id="exampleCheck1"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['reason'].'</td></tr>';
+        $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['reason'].'</td></tr>';
     }
 
-    $buildPopup .= '</tbody>
+    $buildPopupBody .= '</tbody>
 		</table>
+		'.form_group_input_text("Kommentar (optional)", "comment", "", false).'
       </div>';
 
-    $buildPopup .= '<!-- Modal footer -->
+    $buildPopupBody .= '<!-- Modal footer -->
       <div class="modal-footer">
-	  	<button type="button" class="btn btn-primary" name="action_add_bd_zuteilung">Zuteilen</button>
+	  	<input type="submit" class="btn btn-primary" value="Zuteilen" name="action_add_bd_zuteilung"></input>
         <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Schließen</button>
-      </div>
+      </div>';
 
-    </div>
+    $buildPopupBody .= form_hidden_input_generator('date_concerned', $DateConcerned);
+    $buildPopupBody .= form_hidden_input_generator('bd_type', $BDtype);
+
+    $buildPopup .= form_builder($buildPopupBody);
+
+    $buildPopup .='</div>
   </div>
 </div>';
 

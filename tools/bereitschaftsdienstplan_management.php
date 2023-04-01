@@ -311,3 +311,66 @@ function user_needs_fza_on_certain_date($userID, $AllBDeinteilungen, $AllBDTypes
 
     return $Antwort;
 }
+
+function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
+
+    $UserInfos = get_current_user_infos($mysqli, $User);
+    $CurrentUserID = get_current_user_id();
+    $Date = date('Y-m-d', $Dateconcerned);
+
+    // Prepare statement & DB Access
+    $sql = "INSERT INTO bereitschaftsdienstplan (day, bd_type, user, create_user, create_comment) VALUES (?,?,?,?,?)";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("siiis", $Date, $BDtype, $User, $CurrentUserID, $comment);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+            $Antwort['meldung'] = $UserInfos['vorname']." ".$UserInfos['nachname']." erfolgreich am ".date('d.m.Y', $Dateconcerned)." eingeteilt!";
+        } else{
+            $Antwort['success']=false;
+            $Antwort['meldung']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+    $mysqli->close();
+
+    return $Antwort;
+}
+
+function parse_add_bd_entry($mysqli){
+
+    $Date = $_POST['date_concerned'];
+    $BDtype = $_POST['bd_type'];
+    $comment = $_POST['comment'];
+    $User = 0;
+
+    for($a=1;$a<=1000;$a++){
+        if($User==0){
+            if(isset($_POST['chosen_user_'.$a])){
+                $User = $a;
+            }
+        }
+    }
+
+    $Parser = add_bd_entry($mysqli, $User, $Date, $BDtype, $comment);
+
+    if($Parser['success']){
+        $Answer = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <strong>Erfolg!</strong> '.$Parser['meldung'].'
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>';
+    } else {
+        $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>Fehler!</strong> '.$Parser['meldung'].'
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>';
+    }
+
+    return $Answer;
+
+}
