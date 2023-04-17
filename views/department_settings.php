@@ -385,7 +385,9 @@ function delete_department_event_management($mysqli, $selectedID=0){
     $deleteCommentPlaceholder = $beginErr = $endErr = $nameErr = "";
 
     # Populate Placeholders if action is clicked
-    if(isset($_POST['edit_department_event_action_action'])){
+    if(isset($_POST['delete_department_event_action_action'])){
+
+        $deleteCommentPlaceholder = $_POST['delete_comment'];
 
         if($DAUcount==0){
             # edit entry in db
@@ -415,7 +417,7 @@ function delete_department_event_management($mysqli, $selectedID=0){
         $FormHTML .= form_group_input_text('Details', 'details', $detailPlaceholder, false, '', true, 'Unterabteilung wählen');
         $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, true);
         $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, true);
-        $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang (optional)', 'details', $detailPlaceholder, false, '', true, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang (optional)', 'delete_comment', $deleteCommentPlaceholder, false, '', false, 'Unterabteilung wählen');
         $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_department_event_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
 
         // Gap it

@@ -119,11 +119,10 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
 
                     //1. check if this item already has been planned
                     $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
+                    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
+
                     if(sizeof($Einteilung)==0){
-
                         //2. no entries -> parse wishlist
-                        $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
-
                         if(time()>$DateConcerned){
                             $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'])."</td>";
                         } else {
@@ -135,8 +134,7 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                         }
 
                     } else {
-                        $UserDetails = get_user_infos_by_id_from_list($Einteilung[0]['user'], $AllUsers);
-                        $Row .= "<td class='text-center align-middle table-success'>".$UserDetails['nachname'].", ".$UserDetails['vorname']."</td>";
+                        $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'])."</td>";
                     }
                     $Tabindex++;
                 }
@@ -154,8 +152,12 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
 
 function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype){
 
-        if(time()>$DateConcerned){
+        $LimDate = strtotime("+3 days", $DateConcerned);
+
+        if(time()>$LimDate){
             $buildPopup = 'unbesetzt';
+        } elseif (time()>$DateConcerned) {
+            $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">nachtragen</a>';
         } else {
             $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">besetzen</a>';
         }
