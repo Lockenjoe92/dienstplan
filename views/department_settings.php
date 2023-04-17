@@ -138,3 +138,34 @@ function table_management_department_events($mysqli){
     return $HTML;
 
 }
+
+function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, $AllUsers){
+
+    $FoundRelevantEventsOnSelectedDay = [];
+    foreach ($AllDepartmentEvents as $Event){
+        if(($ThisDay >= strtotime($Event['begin'])) && ($ThisDay <= strtotime($Event['end']))){
+            $FoundRelevantEventsOnSelectedDay[] = $Event;
+        }
+    }
+
+    //Now Build Content
+    $TooltipContent = "";
+    $Counter = 0;
+    foreach ($FoundRelevantEventsOnSelectedDay as $RelevantItems) {
+        $Numerator = $Counter + 1;
+        $ItemInfos = "(".$Numerator.") ".$RelevantItems['name'].": ".$RelevantItems['details'];
+        $TooltipContent .= $ItemInfos;
+        if($Counter > 0){
+            $TooltipContent .= '---';
+        }
+        $Counter++;
+    }
+
+    if($Counter > 0){
+        $ToolTip = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$TooltipContent.'"><i class="bi bi-megaphone-fill bi-xs"></i></a>';
+    } else {
+        $ToolTip = "";
+    }
+
+    return "<td>".$ToolTip."</td>";
+}
