@@ -15,7 +15,7 @@ function table_management_department_events($mysqli){
     $FirstDayThisYear = strtotime(date('Y').'01-01 00:00:01');
     foreach ($Events as $event){
         $EndOfCurrentEvent = strtotime($event['end']);
-        if($EndOfCurrentEvent<$Now){
+        if($EndOfCurrentEvent>$Now){
             $ActiveEvents[] = $event;
         } else {
             if($EndOfCurrentEvent>$FirstDayThisYear){
@@ -26,12 +26,21 @@ function table_management_department_events($mysqli){
         }
     }
 
+    // Setup Toolbar
+    $HTML = '<div id="toolbar">';
+    $HTML .= '<a id="add_event" class="btn btn-primary" href="department_settings.php?mode=add_department_event"><i class="bi bi-person-fill-add"></i> Hinzufügen</a> ';
+    $HTML .= '</div>';
+
     // Initialize Table Active Stuff
-    $HTML = '<table data-toggle="table" 
-    data-locale="de-DE"
-    data-show-columns="true" 
-    data-multiple-select-row="true"
-    data-click-to-select="true"
+    $HTML .= '<table data-toggle="table" 
+    data-search="true" 
+data-locale="de-DE"
+data-toolbar="#toolbar" 
+data-show-columns="true" 
+data-search-highlight="true" 
+data-show-multi-sort="true"
+  data-multiple-select-row="true"
+  data-click-to-select="true"
     data-pagination="true">';
 
     // Setup Table Head
@@ -139,7 +148,7 @@ function table_management_department_events($mysqli){
 
 }
 
-function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, $AllUsers){
+function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents){
 
     $FoundRelevantEventsOnSelectedDay = [];
     foreach ($AllDepartmentEvents as $Event){
@@ -168,4 +177,95 @@ function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, 
     }
 
     return "<td>".$ToolTip."</td>";
+}
+
+function add_department_event_management($mysqli){
+
+    $KnownEvents = get_sorted_list_of_all_department_events($mysqli);
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $namePlaceholder = $beginPlaceholder = $endPlaceholder = $detailPlaceholder = $beginErr = $endErr = $nameErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['add_department_event_action_action'])){
+        $namePlaceholder = $_POST['name'];
+        $beginPlaceholder = $_POST['begin'];
+        $endPlaceholder = $_POST['end'];
+        $detailPlaceholder = $_POST['details'];
+
+        # Do some checks
+        if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
+            $DAUcount++;
+            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Veranstaltung liegen!";
+        }
+
+        if(empty($namePlaceholder)){
+            $DAUcount++;
+            $nameErr = "Bitte geben Sie einen Veranstaltungstitel an!<br>";
+        }
+
+        $Catches = 0;
+        foreach ($KnownEvents as $KnownEvent){
+            $Catch=true;
+            //Check non-overlap cases
+            //Case 1: Begin and End of Item are smaller than end of new assignment
+            if((strtotime($KnownEvent['begin'])<strtotime($beginPlaceholder)) && (strtotime($KnownEvent['end'])<strtotime($beginPlaceholder))){
+                $Catch=false;
+            }
+            //Case 2: Begin and End of Item are bigger than end of new assignment
+            if((strtotime($KnownEvent['begin'])>$endPlaceholder) && (strtotime($KnownEvent['end'])>$endPlaceholder)){
+                $Catch=false;
+            }
+
+            if($Catch){
+                if($KnownEvent['name']==$namePlaceholder){
+                    $Catches++;
+                }
+            }
+        }
+
+        if($Catches>0){
+            $beginErr = "Im ausgewähltem Zeitraum liegt bereits eine Veranstaltung mit dem identischen Titel vor!";
+            $DAUcount++;
+        }
+
+        if($DAUcount==0){
+            # Add entry to db
+            $ReturnVals = add_department_event($mysqli, $namePlaceholder, $detailPlaceholder, $beginPlaceholder, $endPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Veranstaltung erfolgreich angelegt!";
+            } else {
+                $ShowReturn = false;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Veranstaltung '.$namePlaceholder.' erfolgreich angelegt!',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_group_input_text('Veranstaltungstitel', 'name', $namePlaceholder, true, $nameErr, false, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_text('Details', 'details', $detailPlaceholder, false, '', false, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_department_event_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Neue Veranstaltung anlegen','', $FORM);
+    }
+
 }

@@ -1,9 +1,8 @@
 <?php
 
-function add_department_event($Name, $Details, $TableClass='table-success', $From, $To){
+function add_department_event($mysqli, $Name, $Details, $From, $To, $TableClass='table-success'){
 
     // Prepare variables
-    $mysqli = connect_db();
     $Antwort = [];
     $CurrentUserID = get_current_user_id();
 
@@ -35,10 +34,9 @@ function add_department_event($Name, $Details, $TableClass='table-success', $Fro
 
 }
 
-function edit_department_event($ID, $Name, $Details, $TableClass='table-success', $From, $To){
+function edit_department_event($mysqli, $ID, $Name, $Details, $From, $To, $TableClass='table-success'){
 
     // Prepare variables
-    $mysqli = connect_db();
     $Antwort = [];
     $CurrentUserID = get_current_user_id();
 
@@ -68,10 +66,9 @@ function edit_department_event($ID, $Name, $Details, $TableClass='table-success'
 
 }
 
-function delete_department_event($ID, $DeleteComment){
+function delete_department_event($mysqli, $ID, $DeleteComment){
 
     // Prepare variables
-    $mysqli = connect_db();
     $Antwort = [];
     $CurrentUserID = get_current_user_id();
     $CurrentTime = date('Y-m-d G:i:s');

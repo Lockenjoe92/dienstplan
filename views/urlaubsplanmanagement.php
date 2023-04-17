@@ -161,7 +161,7 @@ function urlaubsplan_tabelle_user($month, $year){
             #$TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
 
             # Start calculating Department Events Row
-            $TableHeaderRowEvents .= calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, $AllUsers);
+            $TableHeaderRowEvents .= calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents);
         }
 
     }
@@ -202,6 +202,7 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
     $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC');
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllAssignments = get_all_user_depmnt_assignments($mysqli);
+    $AllDepartmentEvents = get_sorted_list_of_all_department_events($mysqli);
     $FirstDayOfCalendarString = "01-".$month."-".$year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
 
@@ -276,6 +277,7 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
     $TableHeader = "<thead>";
 
     $TableHeaderRowUsers = "<tr><th></th>";
+    $TableHeaderRowEvents = "<tr><th>Veranstaltungen</th>";
     $TableHeaderRowTotal = "<tr><th>Gesamt</th>";
     $TableHeaderRowOA = "<tr><th>OA</th>";
     $TableHeaderRowFA = "<tr><th>FA</th>";
@@ -292,6 +294,7 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
             $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
             $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
             if($UE==1){
+                $TableHeaderRowEvents .= calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents);
                 $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
                 $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
                 $TableHeaderRowAA .= "<th>".$DataDay['AA']."</th>";
@@ -325,6 +328,7 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
     }
 
     $TableHeaderRowUsers .= "</tr>";
+    $TableHeaderRowEvents .= "</tr>";
     $TableHeaderRowTotal .= "</tr>";
     $TableHeaderRowOA .= "</tr>";
     $TableHeaderRowFA .= "</tr>";
@@ -332,6 +336,9 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
 
     //Build table head rows as wished
     $TableHeader .= $TableHeaderRowUsers;
+    if($UE==1){
+    $TableHeader .= $TableHeaderRowEvents;
+    }
     $TableHeader .= $TableHeaderRowTotal;
     $TableHeader .= $TableHeaderRowOA;
     $TableHeader .= $TableHeaderRowFA;
