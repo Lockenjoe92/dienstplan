@@ -920,3 +920,25 @@ function form_dropdown_years($Name, $Value){
 
     return $HTML;
 }
+
+function form_dropdown_mode_freigabe_bereitschaftsdienstplan_monate($Name, $Value){
+
+    $OptionsHTML = $HTML = "";
+
+    $Months = [[0,'Gesperrt'],[1,'Freigegeben']];
+
+    // Render Month Options
+    foreach ($Months as $month){
+        if($Value==$month[0]){
+            $OptionsHTML .= '<option value="'.$month[0].'" selected>'.$month[1].'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$month[0].'">'.$month[1].'</option>';
+        }
+    }
+
+    $HTML .= '<select class="form-select" name="'.$Name.'" id="'.$Name.'">';
+    $HTML .= $OptionsHTML;
+    $HTML .= '</select>';
+
+    return $HTML;
+}

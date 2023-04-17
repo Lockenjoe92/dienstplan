@@ -20,6 +20,21 @@ function get_list_of_all_bd_types($mysqli, $ShowDeleted=false){
 
 }
 
+function get_list_of_all_freiegegebene_bd_monate($mysqli){
+
+    $BDtypes = [];
+    $sql = "SELECT * FROM bereitschaftsdienstplan_freigeschaltete_monate";
+
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            $BDtypes[] = $row;
+        }
+    }
+
+    return $BDtypes;
+
+}
+
 function get_list_of_all_bd_matrixes($mysqli, $ShowDeleted=false){
 
     $BDtypes = [];
@@ -556,6 +571,22 @@ function parse_edit_bd_entry($mysqli){
         }
     } else {
         $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Kein/e zu entfernende/n Mitarbeiter/in ausgewählt!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    }
+
+    return $Answer;
+
+}
+
+function lade_bd_freigabestatus_monat($Month,$Year){
+
+    $mysqli = connect_db();
+    $Freigegeben = get_list_of_all_freiegegebene_bd_monate($mysqli);
+    $Answer = [];
+
+    foreach ($Freigegeben as $Freigabe) {
+        if(($Freigabe['month']==$Month) && ($Freigabe['year']==$Year)){
+            $Answer[] = $Freigabe;
+        }
     }
 
     return $Answer;
