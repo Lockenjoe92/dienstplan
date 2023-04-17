@@ -16,6 +16,7 @@ include_once "./tools/department_management.php";
 include_once "./tools/mail_management.php";
 include_once "./tools/protocol_management.php";
 include_once "./tools/bereitschaftsdienstplan_management.php";
+include_once "./tools/department_events.php";
 
 // Website Skeleton Functions
 include_once "./site_skeleton/site_skeleton.php";
@@ -33,3 +34,4 @@ include_once "./views/urlaubsplanmanagement.php";
 include_once "./views/wunschdienstplanmanagement.php";
 include_once "./views/bereitschaftsdienstplanmanagement.php";
 include_once "./views/dashboardcards.php";
+include_once "./views/department_settings.php";
