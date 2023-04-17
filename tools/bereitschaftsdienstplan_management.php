@@ -449,6 +449,10 @@ function parse_add_bd_entry($mysqli){
         }
     }
 
+    if(empty($comment)){
+        $comment = $_POST['comment_chosen_user_'.$User];
+    }
+
     $Parser = add_bd_entry($mysqli, $User, $Date, $BDtype, $comment);
 
     if($Parser['success']){
@@ -535,6 +539,9 @@ function parse_edit_bd_entry($mysqli){
         if($User!=0){
             $Parser = delete_bd_entry($mysqli, $OldUser, $Date, $BDtype, $comment);
             if($Parser['success']){
+                if(empty($comment)){
+                    $comment = $_POST['comment_chosen_user_'.$User];
+                }
                 $Parser2 = add_bd_entry($mysqli, $User, $Date,  $BDtype, $comment);
                 if($Parser2['success']){
                     $Answer = '<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Erfolg!</strong> Bereitschaftsdiensteinteilung erfolgreich geändert!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';

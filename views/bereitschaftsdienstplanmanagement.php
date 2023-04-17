@@ -186,7 +186,7 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
 
     $buildPopup .= '<!-- The Modal -->
 <div class="modal fade" id="myModal'.$Tabindex.'">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content">
 
       <!-- Modal Header -->
@@ -237,7 +237,7 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
     }
 
     foreach ($CandidatesList as $CandidateItem){
-        $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['reason'].'</td></tr>';
+        $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['reason'].'<input type="hidden" name="comment_chosen_user_'.$CandidateItem['userID'].'" value="'.$CandidateItem['reason'].'"></input></td></tr>';
     }
 
     $buildPopupBody .= '</tbody>
