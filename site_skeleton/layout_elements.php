@@ -74,8 +74,14 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Einstellungen
           </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="change_password_user.php">Passwort ändern</a></li>
+          <ul class="dropdown-menu">';
+
+        if(in_array('department_settings_view', $UserRoles)){
+            $UserSettingsLinks .= '<li><a class="dropdown-item" href="department_settings.php">Abteilungseinstellungen</a></li>';
+            $UserSettingsLinks .= '<li><hr class="dropdown-divider"></li>';
+        }
+
+        $UserSettingsLinks .= '<li><a class="dropdown-item" href="change_password_user.php">Passwort ändern</a></li>
           </ul>
         </li>';
 
