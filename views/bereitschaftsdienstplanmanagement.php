@@ -116,7 +116,6 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                 if($Exploded[1]==0){
                     $Row .= "<td class='text-center align-middle table-secondary'></td>";
                 } else {
-
                     //1. check if this item already has been planned
                     $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
                     $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
@@ -134,7 +133,11 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                         }
 
                     } else {
-                        $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'])."</td>";
+                        if(sizeof($Einteilung)==$BDType['req_employees_per_day']){
+                            $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $Einteilung, $AllUsers)."</td>";
+                        } else {
+                            $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $Einteilung, $AllUsers)."</td>";
+                        }
                     }
                     $Tabindex++;
                 }
@@ -150,16 +153,35 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
     return $ReturnVals;
 }
 
-function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype){
+function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype, $UserAssignmentsOnDay=[], $AllUsers=[]){
 
         $LimDate = strtotime("+3 days", $DateConcerned);
 
-        if(time()>$LimDate){
-            $buildPopup = 'unbesetzt';
-        } elseif (time()>$DateConcerned) {
-            $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">nachtragen</a>';
+        if(sizeof($UserAssignmentsOnDay)==0){
+            if(time()>$LimDate){
+                $buildPopup = 'unbesetzt';
+            } elseif (time()>$DateConcerned) {
+                $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">nachtragen</a>';
+            } else {
+                $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">besetzen</a>';
+            }
         } else {
-            $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">besetzen</a>';
+            $AssignedUserNames = "";
+            $Counter = 0;
+            foreach ($UserAssignmentsOnDay as $User) {
+                $SelectedUserInfos = get_user_infos_by_id_from_list($User['user'], $AllUsers);
+                if($Counter>0){
+                    $AssignedUserNames .= "<br>";
+                }
+                $AssignedUserNames .= $SelectedUserInfos['nachname'].', '.$SelectedUserInfos['vorname'];
+                $Counter++;
+            }
+
+            if(time()>$LimDate){
+                $buildPopup = $AssignedUserNames;
+            } else {
+                $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">'.$AssignedUserNames.'</a>';
+            }
         }
 
     $buildPopup .= '<!-- The Modal -->
@@ -168,8 +190,23 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
     <div class="modal-content">
 
       <!-- Modal Header -->
-      <div class="modal-header">
-        <h4 class="modal-title">Dienst besetzen</h4>
+      <div class="modal-header">';
+
+        if(sizeof($UserAssignmentsOnDay)==0){
+            //Edit mode firstly highlights already assigned users and removes them from the red list
+            $EditMode = false;
+            if (time()>$DateConcerned) {
+                $buildPopup .= '<h4 class="modal-title">Besetzung nachtragen</h4>';
+            } else {
+                $buildPopup .= '<h4 class="modal-title">Dienst besetzen</h4>';
+            }
+        } else {
+            $EditMode = true;
+            $buildPopup .= '<h4 class="modal-title">Besetzung ändern</h4>';
+        }
+
+
+    $buildPopup .= '
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>';
 
@@ -178,6 +215,26 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
 		<table class="table">
 			<thead><th></th><th>Name</th><th>Verfügbarkeit</th><th>Grund/Kommentar</th></thead>
 			<tbody>';
+
+    //Edit mode firstly highlights already assigned users and removes them from the red list
+    if($EditMode){
+        $IDsOfAssignedUsers = [];
+        foreach($UserAssignmentsOnDay as $AssignedUser){
+            $SelectedUserInfos = get_user_infos_by_id_from_list($AssignedUser['user'], $AllUsers);
+            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['user'].'"></td><td>'.$SelectedUserInfos['nachname'].', '.$SelectedUserInfos['vorname'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['create_comment'].'</td></tr>';
+            $IDsOfAssignedUsers[] = $AssignedUser['user'];
+        }
+
+        //Now remove Assigned Users from Candidate-List
+        $UpdatedCandidatesList = [];
+        foreach ($CandidatesList as $CandidateItem){
+            if(!in_array($CandidateItem['userID'], $IDsOfAssignedUsers)){
+                $UpdatedCandidatesList[] = $CandidateItem;
+            }
+        }
+
+        $CandidatesList = $UpdatedCandidatesList;
+    }
 
     foreach ($CandidatesList as $CandidateItem){
         $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['reason'].'</td></tr>';
@@ -188,11 +245,20 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
 		'.form_group_input_text("Kommentar (optional)", "comment", "", false).'
       </div>';
 
-    $buildPopupBody .= '<!-- Modal footer -->
+    if($EditMode){
+        $buildPopupBody .= '<!-- Modal footer -->
+      <div class="modal-footer">
+	  	<input type="submit" class="btn btn-outline-primary" value="Zuteilung ändern" name="action_edit_bd_zuteilung"></input>
+        <input type="submit" class="btn btn-outline-danger" value="Zuteilung löschen" name="action_delete_bd_zuteilung"></input>
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Schließen</button>
+      </div>';
+    } else {
+        $buildPopupBody .= '<!-- Modal footer -->
       <div class="modal-footer">
 	  	<input type="submit" class="btn btn-primary" value="Zuteilen" name="action_add_bd_zuteilung"></input>
         <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Schließen</button>
       </div>';
+    }
 
     $buildPopupBody .= form_hidden_input_generator('date_concerned', $DateConcerned);
     $buildPopupBody .= form_hidden_input_generator('bd_type', $BDtype);

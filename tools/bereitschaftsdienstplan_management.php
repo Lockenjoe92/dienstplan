@@ -327,6 +327,7 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
     $AllBDassignments = get_all_users_bd_assignments($mysqli);
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllUsers = get_sorted_list_of_all_users($mysqli);
+    $Einteilungen = get_bereitschaftsdienst_einteilungen_on_day($Dateconcerned, $AllBDEinteilungen, $BDtype);
 
     $Antwort = [];
     $DAUcount = 0;
@@ -346,6 +347,13 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
     if(user_needs_fza_on_certain_date($User, $AllBDEinteilungen, $AllBDTypes, $Dateconcerned)){
         $DAUcount++;
         $DAUerr .= $UserInfos['vorname']." ".$UserInfos['nachname']." hat am ".date('d.m.Y', $Dateconcerned)." FZA! Bitte ggf. die bisherigen Einteilungen bearbeiten!";
+    }
+
+    //Respect Size limits of BD Type
+    $BDtypeInfos = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDtype);
+    if(sizeof($Einteilungen)>=$BDtypeInfos['req_employees_per_day']){
+        $DAUcount++;
+        $DAUerr .= "Die maximale Anzahl an MitarbeiterInnen für diesen Bereitschaftsdiensttyp ist bereits erreicht!<br>";
     }
 
     $ParsedCandidates = parse_bd_candidates_on_day_for_certain_bd_type($Dateconcerned, $BDtype, $AllBDEinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
@@ -395,6 +403,37 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
     return $Antwort;
 }
 
+function delete_bd_entry($mysqli, $User, $Date, $BDtype, $comment){
+
+    $Antwort = [];
+    $time = date('Y-m-d G:i:s');
+    $day = date("Y-m-d", $Date);
+    $currentUserID = get_current_user_id();
+    $stmnt = "UPDATE bereitschaftsdienstplan SET delete_user = ?, delete_time = ?, delete_comment = ? WHERE user = ? AND day = ? AND bd_type = ? AND delete_user IS NULL";
+
+    if($stmt = $mysqli->prepare($stmnt)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("issisi", $currentUserID, $time, $comment, $User, $day, $BDtype);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success
+            $Antwort['success']=true;
+            $Antwort['meldung']="Bereitschaftsdiensteinteilung erfolgreich gelöscht!";
+        } else{
+            $Antwort['success']=false;
+            $Antwort['meldung']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+
+    return $Antwort;
+
+
+}
+
 function parse_add_bd_entry($mysqli){
 
     $Date = $_POST['date_concerned'];
@@ -422,6 +461,94 @@ function parse_add_bd_entry($mysqli){
   <strong>Fehler!</strong> '.$Parser['meldung'].'
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>';
+    }
+
+    return $Answer;
+
+}
+
+function parse_delete_bd_entry($mysqli){
+
+    $Date = $_POST['date_concerned'];
+    $BDtype = $_POST['bd_type'];
+    $comment = $_POST['comment'];
+    $User = 0;
+
+    for($a=1;$a<=1000;$a++){
+        if($User==0){
+            if(isset($_POST['assigned_user_'.$a])){
+                $User = $a;
+            }
+        }
+    }
+
+    if($User!=0){
+        $Parser = delete_bd_entry($mysqli, $User, $Date, $BDtype, $comment);
+
+        if($Parser['success']){
+            $Answer = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <strong>Erfolg!</strong> '.$Parser['meldung'].'
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>';
+        } else {
+            $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>Fehler!</strong> '.$Parser['meldung'].'
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>';
+        }
+    } else {
+        $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>Fehler!</strong> Kein/e Mitarbeiter/in ausgewählt!
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>';
+    }
+
+
+    return $Answer;
+
+}
+
+function parse_edit_bd_entry($mysqli){
+
+    $Date = $_POST['date_concerned'];
+    $BDtype = $_POST['bd_type'];
+    $comment = $_POST['comment'];
+    $User = $OldUser = 0;
+
+    for($a=1;$a<=1000;$a++){
+        if($OldUser==0){
+            if(isset($_POST['assigned_user_'.$a])){
+                $OldUser = $a;
+            }
+        }
+    }
+
+    for($a=1;$a<=1000;$a++){
+        if($User==0){
+            if(isset($_POST['chosen_user_'.$a])){
+                $User = $a;
+            }
+        }
+    }
+
+    if($OldUser!=0){
+        if($User!=0){
+            $Parser = delete_bd_entry($mysqli, $OldUser, $Date, $BDtype, $comment);
+            if($Parser['success']){
+                $Parser2 = add_bd_entry($mysqli, $User, $Date,  $BDtype, $comment);
+                if($Parser2['success']){
+                    $Answer = '<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Erfolg!</strong> Bereitschaftsdiensteinteilung erfolgreich geändert!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                } else {
+                    $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> '.$Parser2['meldung'].'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                }
+            } else {
+                $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> '.$Parser['meldung'].'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+            }
+        } else {
+            $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Kein/e Mitarbeiter/in zum Tausch ausgewählt!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        }
+    } else {
+        $Answer = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Kein/e zu entfernende/n Mitarbeiter/in ausgewählt!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
     }
 
     return $Answer;

@@ -30,7 +30,27 @@ if(isset($_POST['action_change_date'])){
     $ParserOutput = parse_add_bd_entry($mysqli);
 
     $Role = "bereitschaftsdienstplan_1";
-}else {
+} elseif (isset($_POST['action_delete_bd_zuteilung'])){
+    if(is_numeric($_POST['date_concerned'])){
+        $DateSelected = $_POST['date_concerned'];
+        $Year = date('Y', $DateSelected);
+        $Month = date('m', $DateSelected);
+    }
+
+    $ParserOutput = parse_delete_bd_entry($mysqli);
+
+    $Role = "bereitschaftsdienstplan_1";
+}  elseif (isset($_POST['action_edit_bd_zuteilung'])){
+    if(is_numeric($_POST['date_concerned'])){
+        $DateSelected = $_POST['date_concerned'];
+        $Year = date('Y', $DateSelected);
+        $Month = date('m', $DateSelected);
+    }
+
+    $ParserOutput = parse_edit_bd_entry($mysqli);
+
+    $Role = "bereitschaftsdienstplan_1";
+} else {
     $Role = "bereitschaftsdienstplan_1";
 }
 
