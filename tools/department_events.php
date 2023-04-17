@@ -116,3 +116,11 @@ function get_sorted_list_of_all_department_events($mysqli, $ShowDeleted=false){
     return $Users;
 
 }
+
+function get_department_event_infos_by_id_from_list($AllEvents, $ID){
+    foreach ($AllEvents as $Event){
+        if($Event['id']==$ID){
+            return $Event;
+        }
+    }
+}

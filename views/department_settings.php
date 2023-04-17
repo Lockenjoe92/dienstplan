@@ -60,7 +60,7 @@ data-show-multi-sort="true"
     $counter = 1;
     foreach ($ActiveEvents as $activeEvent) {
         // Build edit/delete Buttons
-        $Options = '';
+        $Options = '<a href="department_settings.php?mode=edit_department_event&event_id='.$activeEvent['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="department_settings.php?mode=delete_department_event&event_id='.$activeEvent['id'].'"><i class="bi bi-trash3-fill"></i></a>';
         $Anleger = get_user_infos_by_id_from_list($activeEvent['create_user'], $userList);
         $AnlegerInfos = $Anleger['nachname'].', '.$Anleger['vorname'];
 
@@ -116,7 +116,7 @@ data-show-multi-sort="true"
     $counter = 1;
     foreach ($PassedEventsThisYear as $activeEvent) {
         // Build edit/delete Buttons
-        $Options = '';
+        $Options = '<a href="department_settings.php?mode=edit_department_event&event_id='.$activeEvent['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="department_settings.php?mode=delete_department_event&event_id='.$activeEvent['id'].'"><i class="bi bi-trash3-fill"></i></a>';
         $Anleger = get_user_infos_by_id_from_list($activeEvent['create_user'], $userList);
         $AnlegerInfos = $Anleger['nachname'].', '.$Anleger['vorname'];
 
@@ -163,10 +163,10 @@ function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents){
     foreach ($FoundRelevantEventsOnSelectedDay as $RelevantItems) {
         $Numerator = $Counter + 1;
         $ItemInfos = "(".$Numerator.") ".$RelevantItems['name'].": ".$RelevantItems['details'];
-        $TooltipContent .= $ItemInfos;
         if($Counter > 0){
-            $TooltipContent .= '---';
+            $TooltipContent .= '  ---  ';
         }
+        $TooltipContent .= $ItemInfos;
         $Counter++;
     }
 
@@ -268,4 +268,160 @@ function add_department_event_management($mysqli){
         return card_builder('Neue Veranstaltung anlegen','', $FORM);
     }
 
+}
+
+function edit_department_event_management($mysqli, $selectedID=0){
+
+    $KnownEvents = get_sorted_list_of_all_department_events($mysqli);
+    $EventInfos = get_department_event_infos_by_id_from_list($KnownEvents, $selectedID);
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $namePlaceholder = $EventInfos['name'];
+    $beginPlaceholder = $EventInfos['begin'];
+    $endPlaceholder = $EventInfos['end'];
+    $detailPlaceholder = $EventInfos['details'];
+    $beginErr = $endErr = $nameErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['edit_department_event_action_action'])){
+
+        $namePlaceholder = $_POST['name'];
+        $beginPlaceholder = $_POST['begin'];
+        $endPlaceholder = $_POST['end'];
+        $detailPlaceholder = $_POST['details'];
+
+        # Do some checks
+        if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
+            $DAUcount++;
+            $beginErr = $endErr = "Das Enddatum darf nicht vor dem Beginn der Veranstaltung liegen!";
+        }
+
+        if(empty($namePlaceholder)){
+            $DAUcount++;
+            $nameErr = "Bitte geben Sie einen Veranstaltungstitel an!<br>";
+        }
+
+        $Catches = 0;
+        foreach ($KnownEvents as $KnownEvent){
+            if($KnownEvent['id']!=$selectedID){
+                $Catch=true;
+                //Check non-overlap cases
+                //Case 1: Begin and End of Item are smaller than end of new assignment
+                if((strtotime($KnownEvent['begin'])<strtotime($beginPlaceholder)) && (strtotime($KnownEvent['end'])<strtotime($beginPlaceholder))){
+                    $Catch=false;
+                }
+                //Case 2: Begin and End of Item are bigger than end of new assignment
+                if((strtotime($KnownEvent['begin'])>$endPlaceholder) && (strtotime($KnownEvent['end'])>$endPlaceholder)){
+                    $Catch=false;
+                }
+
+                if($Catch){
+                    if($KnownEvent['name']==$namePlaceholder){
+                        $Catches++;
+                    }
+                }
+            }
+        }
+
+        if($Catches>0){
+            $beginErr = "Im ausgewähltem Zeitraum liegt bereits eine Veranstaltung mit dem identischen Titel vor!";
+            $DAUcount++;
+        }
+
+        if($DAUcount==0){
+            # edit entry in db
+            $ReturnVals = edit_department_event($mysqli, $selectedID, $namePlaceholder, $detailPlaceholder, $beginPlaceholder, $endPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Veranstaltung ".$namePlaceholder." erfolgreich bearbeitet!";
+            } else {
+                $ShowReturn = false;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Veranstaltung '.$namePlaceholder.' erfolgreich bearbeitet!',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_hidden_input_generator('edit_department_event_id', $selectedID);
+        $FormHTML .= form_group_input_text('Veranstaltungstitel', 'name', $namePlaceholder, true, $nameErr, false, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_text('Details', 'details', $detailPlaceholder, false, '', false, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, false);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_department_event_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Veranstaltung '.$namePlaceholder.' bearbeiten','', $FORM);
+    }
+}
+
+function delete_department_event_management($mysqli, $selectedID=0){
+
+    $KnownEvents = get_sorted_list_of_all_department_events($mysqli);
+    $EventInfos = get_department_event_infos_by_id_from_list($KnownEvents, $selectedID);
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $namePlaceholder = $EventInfos['name'];
+    $beginPlaceholder = $EventInfos['begin'];
+    $endPlaceholder = $EventInfos['end'];
+    $detailPlaceholder = $EventInfos['details'];
+    $deleteCommentPlaceholder = $beginErr = $endErr = $nameErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['edit_department_event_action_action'])){
+
+        if($DAUcount==0){
+            # edit entry in db
+            $ReturnVals = delete_department_event($mysqli, $selectedID, $deleteCommentPlaceholder);
+            if($ReturnVals['success']){
+                $ShowReturn = true;
+                $ReturnMessage = "Veranstaltung ".$namePlaceholder." erfolgreich gelöscht!";
+            } else {
+                $ShowReturn = false;
+                $ReturnMessage = $ReturnVals['err'];
+            }
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Veranstaltung '.$namePlaceholder.' erfolgreich gelöscht!',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_hidden_input_generator('delete_department_event_id', $selectedID);
+        $FormHTML .= form_group_input_text('Veranstaltungstitel', 'name', $namePlaceholder, true, $nameErr, true, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_text('Details', 'details', $detailPlaceholder, false, '', true, 'Unterabteilung wählen');
+        $FormHTML .= form_group_input_date('Beginn', 'begin', $beginPlaceholder, true, $beginErr, true);
+        $FormHTML .= form_group_input_date('Ende', 'end', $endPlaceholder, true, $endErr, true);
+        $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang (optional)', 'details', $detailPlaceholder, false, '', true, 'Unterabteilung wählen');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_department_event_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Veranstaltung '.$namePlaceholder.' löschen','Möchten Sie die Veranstaltung '.$namePlaceholder.' wirklich löschen?', $FORM);
+    }
 }
