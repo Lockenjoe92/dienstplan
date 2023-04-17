@@ -99,3 +99,23 @@ function delete_department_event($ID, $DeleteComment){
     return $Antwort;
 
 }
+
+function get_sorted_list_of_all_department_events($mysqli, $ShowDeleted=false){
+
+    $Users = [];
+
+    if($ShowDeleted){
+        $sql = "SELECT * FROM department_events ORDER BY begin, name ASC";
+    }else{
+        $sql = "SELECT * FROM department_events WHERE delete_time IS NULL ORDER BY begin, name ASC";
+    }
+
+    if($stmt = $mysqli->query($sql)){
+        while ($row = $stmt->fetch_assoc()) {
+            $Users[] = $row;
+        }
+    }
+
+    return $Users;
+
+}
