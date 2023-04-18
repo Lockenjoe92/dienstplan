@@ -23,6 +23,7 @@ if(isset($_POST['action_change_date'])){
 
 $Nutzergruppen = session_manager();
 $mysqli = connect_db();
+$Freigaben = lade_bd_freigabestatus_monat($Month, $Year);
 
 // Start dem outputs
 $HTML = '';
@@ -33,9 +34,9 @@ $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
 $monthName = datefmt_format($format, mktime(0, 0, 0, $Month));
 
 $HTML .= "<h1 class='align-self-center'>Bereitschaftsdienstplan ".$monthName." ".$Year."</h1>";
-$HTML .= bereitschaftsdienstplan_funktionsbuttons_users($Month, $Year);
+$HTML .= bereitschaftsdienstplan_funktionsbuttons_users($Month, $Year, $Freigaben);
 $HTML .= $ParserOutput;
-$HTML .= bereitschaftsdienstplan_table_users($Month,$Year);
+$HTML .= bereitschaftsdienstplan_table_users($Month,$Year,$Freigaben);
 
 $HTML = grid_gap_generator($HTML);
 

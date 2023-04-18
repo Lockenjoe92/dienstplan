@@ -33,7 +33,7 @@ function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year){
 
 }
 
-function bereitschaftsdienstplan_funktionsbuttons_users($Month,$Year){
+function bereitschaftsdienstplan_funktionsbuttons_users($Month,$Year,$Freigaben=[]){
 
     $FORMhtml = '<div class="container text-center">';
     $FORMhtml .= '<div class="row align-items-center">';
@@ -41,11 +41,26 @@ function bereitschaftsdienstplan_funktionsbuttons_users($Month,$Year){
     $FORMhtml .= "<div class='col'>".form_dropdown_years('year', $Year)."</div>";
     $FORMhtml .= "<div class='col'>".form_group_continue_return_buttons(true, 'Reset', 'reset_calendar', 'btn-primary', true, 'Zeitraum wählen', 'action_change_date', 'btn-primary')."</div>";
     $FORMhtml .= "</div>";
+
+    $FORMhtml .= '<div class="row align-items-center">';
+    if(sizeof($Freigaben)==0){
+        $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
+        $FORMhtml .= "<div class='col'>Dieser Monat wurde noch nicht freigegeben!</div>";
+        $FORMhtml .= "<div class='col'></div>";
+
+    } else {
+        $Freigaben = $Freigaben[0];
+        $mysqli = connect_db();
+        $AllUsers = get_sorted_list_of_all_users($mysqli);
+        $UserInfosFreigebender = get_user_infos_by_id_from_list($Freigaben['freigegeben_von'], $AllUsers);
+        $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
+        $FORMhtml .= "<div class='col'>Am ".date('d.m.Y', strtotime($Freigaben['timestamp']))." von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben.</div>";
+        $FORMhtml .= "<div class='col'></div>";
+    }
+    $FORMhtml .= "</div>";
     $FORMhtml .= "</div>";
 
-    $HTML = container_builder(form_builder($FORMhtml, 'self', 'POST'));
-
-    return $HTML;
+    return container_builder(form_builder($FORMhtml));
 
 }
 
@@ -113,20 +128,22 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
 
 }
 
-function bereitschaftsdienstplan_table_users($Month,$Year){
+function bereitschaftsdienstplan_table_users($Month,$Year,$Freigaben=[]){
 
     //Initialze & fetch stuff
     $mysqli = connect_db();
     $AllUsers = get_sorted_list_of_all_users($mysqli);
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
-    $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
-    $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
     $AllBDassignments = get_all_users_bd_assignments($mysqli);
-    $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $FirstDayOfSelectedMonthString = $Year."-".$Month."-01";
     $FirstDayOfSelectedMonth = strtotime($FirstDayOfSelectedMonthString);
+    if(sizeof($Freigaben)==0){
+        $Freigegeben = false;
+    } else {
+        $Freigegeben = true;
+    }
 
     // Initialize Table
     $Table = "<table class='table table-bordered table-sm table-condensed'>";
@@ -146,7 +163,7 @@ function bereitschaftsdienstplan_table_users($Month,$Year){
         $CommandDate = "+" . $a . " days";
         $DateConcerned = strtotime($CommandDate, $FirstDayOfSelectedMonth);
         if(date("m", $DateConcerned)==$Month) {
-            $Populate = populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllBDassignments, $AllUsers, $Tabindex);
+            $Populate = populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllUsers, $Freigegeben, $Tabindex);
             $Tabindex = $Populate['tabindex'];
             $TableRows .= $Populate['HTML'];
         }
@@ -252,7 +269,7 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
     return $ReturnVals;
 }
 
-function populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllBDassignments, $AllUsers, $Tabindex){
+function populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllUsers, $Freigegeben, $Tabindex){
     if(day_is_a_weekend_or_holiday($DateConcerned)){
         $Holidayweekend = true;
         $searchedDayType = 'weekend';
@@ -289,25 +306,29 @@ function populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes,
                 if($Exploded[1]==0){
                     $Row .= "<td class='text-center align-middle table-secondary'></td>";
                 } else {
-                    //1. check if this item already has been planned
-                    $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
-                    if(sizeof($Einteilung)==0){
-                        //2. no entries -> parse wishlist
-                        $Row .= "<td class='text-center align-middle table-danger'></td>";
-                    } else {
-                        $counter = 0;
-                        $RowContent = "";
-                        foreach($Einteilung as $User){
-                            if($counter>0){
-                                $RowContent .= "<br>";
-                            }
+                    if($Freigegeben){
+                        //1. check if this item already has been planned
+                        $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
+                        if(sizeof($Einteilung)==0){
+                            //2. no entries -> parse wishlist
+                            $Row .= "<td class='text-center align-middle table-danger'></td>";
+                        } else {
+                            $counter = 0;
+                            $RowContent = "";
+                            foreach($Einteilung as $User){
+                                if($counter>0){
+                                    $RowContent .= "<br>";
+                                }
 
-                            // Build User Name String
-                            $CurrentUserInfos = get_user_infos_by_id_from_list($User['user'], $AllUsers);
-                            $RowContent .= $CurrentUserInfos['nachname'].", ".$CurrentUserInfos['vorname'][0].".";
-                            $counter++;
+                                // Build User Name String
+                                $CurrentUserInfos = get_user_infos_by_id_from_list($User['user'], $AllUsers);
+                                $RowContent .= $CurrentUserInfos['nachname'].", ".$CurrentUserInfos['vorname'][0].".";
+                                $counter++;
+                            }
+                            $Row .= "<td class='text-center align-middle table-success'>".$RowContent."</td>";
                         }
-                        $Row .= "<td class='text-center align-middle table-success'>".$RowContent."</td>";
+                    } else {
+                        $Row .= "<td class='text-center align-middle table-light'></td>";
                     }
                     $Tabindex++;
                 }
