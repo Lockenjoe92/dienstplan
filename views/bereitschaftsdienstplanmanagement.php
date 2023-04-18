@@ -18,7 +18,10 @@ function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year){
     } else {
         $StatusMonat = $StatusMonat[0];
         $mysqli = connect_db();
-        $AllUsers = get_sorted_list_of_all_users($mysqli);
+        $SearchDate = $Year."-".$Month."-01";
+        $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+        $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
+
         $UserInfosFreigebender = get_user_infos_by_id_from_list($StatusMonat['freigegeben_von'], $AllUsers);
         $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
         $FORMhtml .= "<div class='col'>Am ".date('d.m.Y, G:i', strtotime($StatusMonat['timestamp']))." Uhr von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben!</div>";
@@ -68,7 +71,9 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
 
     //Initialze & fetch stuff
     $mysqli = connect_db();
-    $AllUsers = get_sorted_list_of_all_users($mysqli);
+    $SearchDate = $Year."-".$Month."-01";
+    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
     $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
@@ -132,11 +137,12 @@ function bereitschaftsdienstplan_table_users($Month,$Year,$Freigaben=[]){
 
     //Initialze & fetch stuff
     $mysqli = connect_db();
-    $AllUsers = get_sorted_list_of_all_users($mysqli);
+    $SearchDate = $Year."-".$Month."-01";
+    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
     $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
-    $AllBDassignments = get_all_users_bd_assignments($mysqli);
     $FirstDayOfSelectedMonthString = $Year."-".$Month."-01";
     $FirstDayOfSelectedMonth = strtotime($FirstDayOfSelectedMonthString);
     if(sizeof($Freigaben)==0){

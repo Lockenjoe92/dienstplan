@@ -97,7 +97,9 @@ function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year)
     $bla = '"{"key": "value"}"';
     $Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli, true);
     $Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
-    $Users = get_sorted_list_of_all_users($mysqli);
+    $SearchDate = $Year."-".$Month."-01";
+    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+    $Users = get_sorted_list_of_all_users($mysqli, '', false, $LastDayOfConcideredMonth);
 
     if(isset($_POST['org_ue'])){
         $UE = $_POST['org_ue'];
@@ -238,11 +240,15 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
 
     $HTML = '';
     $mysqli = connect_db();
-    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC');
+    $SearchDate = $Year."-".$Month."-01";
+    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
+
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli, true);
     $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $AllUserAssignments = get_all_user_depmnt_assignments($mysqli);
+    $AllDepartmentEvents = get_sorted_list_of_all_department_events($mysqli);
     $FirstDayOfCalendarString = "01-".$Month."-".$Year;
     $FirstDayOfCalendar = strtotime($FirstDayOfCalendarString);
 
@@ -301,7 +307,6 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
                         $AssignmentCounter++;
                     }
                 }
-
             }
 
             $TableRowContent .= "<td>".calculate_total_approved_holiday_days_for_user_in_selected_year($AllAbwesenheiten, $User, $Year)."</td>";
@@ -317,6 +322,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
     $TableHeader = "<thead>";
 
     $TableHeaderRowUsers = "<tr><th></th>";
+    $TableHeaderRowEvents = "<tr><th>Veranstaltungen in Abteilung</th>";
     $TableHeaderRowTotal = "<tr><th>Gesamt</th>";
     $TableHeaderRowOA = "<tr><th>OA</th>";
     $TableHeaderRowFA = "<tr><th>FA</th>";
@@ -333,6 +339,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
             //Catch Month shift
             if(date("m", $ThisDay)==$Month){
                 $TableHeaderRowUsers .= "<th colspan='2'>".date("d", $ThisDay)."</th>";
+                $TableHeaderRowEvents .= calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, 'th', 2);
                 $TableHeaderRowTotal .= "<th colspan='2'>".$DataDay['total']."</th>";
                 $TableHeaderRowOA .= "<th colspan='2'>".$DataDay['OA']."</th>";
                 $TableHeaderRowFA .= "<th colspan='2'>".$DataDay['FA']."</th>";
@@ -342,6 +349,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
             //Catch Month shift
             if(date("m", $ThisDay)==$Month){
                 $TableHeaderRowUsers .= "<th>".date("d", $ThisDay)."</th>";
+                $TableHeaderRowEvents .= calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, 'th', 1);
                 $TableHeaderRowTotal .= "<th>".$DataDay['total']."</th>";
                 $TableHeaderRowOA .= "<th>".$DataDay['OA']."</th>";
                 $TableHeaderRowFA .= "<th>".$DataDay['FA']."</th>";
@@ -352,6 +360,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
     }
 
     $TableHeaderRowUsers .= "</tr>";
+    $TableHeaderRowEvents .= "</tr>";
     $TableHeaderRowTotal .= "</tr>";
     $TableHeaderRowOA .= "</tr>";
     $TableHeaderRowFA .= "</tr>";
@@ -359,6 +368,7 @@ function wunschdienstplan_uebersicht_kalender_management($Month, $Year, $UE){
 
     //Build table head rows as wished
     $TableHeader .= $TableHeaderRowUsers;
+    $TableHeader .= $TableHeaderRowEvents;
     $TableHeader .= $TableHeaderRowTotal;
     $TableHeader .= $TableHeaderRowOA;
     $TableHeader .= $TableHeaderRowFA;

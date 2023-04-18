@@ -264,98 +264,100 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
     $BlankList = [];
     $RedList = [];
 
-    foreach ($firstListOfCandidates as $firstListOfCandidate){
+    foreach ($firstListOfCandidates as $firstListOfCandidate) {
 
         $CandidateInfos = [];
         $CandidatePersonalInfos = get_user_infos_by_id_from_list($firstListOfCandidate['user'], $AllUsers);
-        $CandidateInfos['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
-        $NeedsRed = false;
-        $NeedsGreen = false;
-        $ReasonNeedsRed = '';
-        $ReasonNeedsGreen = '';
-        $VerfuegbarkeitRed = '';
+        if ($CandidatePersonalInfos != FALSE) {
+            $CandidateInfos['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
+            $NeedsRed = false;
+            $NeedsGreen = false;
+            $ReasonNeedsRed = '';
+            $ReasonNeedsGreen = '';
+            $VerfuegbarkeitRed = '';
 
-        //Check if User is unavailable due to Abwesenheit
-        $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($firstListOfCandidate['user'], $AllAbwesenheiten, $DateConcerned);
-        if(sizeof($AbwesenheitCheck)>0){
-            $NeedsRed = true;
-            $VerfuegbarkeitRed = $AbwesenheitCheck['type'];
-            $ReasonNeedsRed = $AbwesenheitCheck['create_comment'];
-        }
-
-        //Check if User is unavailable due to wish
-        $NegativeWishCheck = get_negative_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
-        if(sizeof($NegativeWishCheck)>0){
-            $NegativeWishCheck = $NegativeWishCheck[0];
-            $NeedsRed = true;
-            $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $NegativeWishCheck['type']);
-            $VerfuegbarkeitRed = $WishTypeDetails['name'];
-            $ReasonNeedsRed = $NegativeWishCheck['create_comment'];
-        }
-
-        //Check if user already has a FZA today
-        if(user_needs_fza_on_certain_date($firstListOfCandidate['user'], $AllBDeinteilungen, $AllBDTypes, $DateConcerned)){
-            $NeedsRed = true;
-            $VerfuegbarkeitRed = "FZA";
-            $ReasonNeedsRed = "FZA";
-        }
-
-        //Check if User is already assigned somewhere else on same day
-        $AllEinteilungenToday = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, 0);
-        foreach ($AllEinteilungenToday as $EinteilungenToday){
-            if($EinteilungenToday['user']==$firstListOfCandidate['user']){
+            //Check if User is unavailable due to Abwesenheit
+            $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($firstListOfCandidate['user'], $AllAbwesenheiten, $DateConcerned);
+            if(sizeof($AbwesenheitCheck)>0){
                 $NeedsRed = true;
-                $VerfuegbarkeitRed = "Nicht verfügbar";
-                $ReasonNeedsRed = "Mitarbeiter/in an diesem Tag bereits eingeteilt";
+                $VerfuegbarkeitRed = $AbwesenheitCheck['type'];
+                $ReasonNeedsRed = $AbwesenheitCheck['create_comment'];
             }
-        }
 
-        //Check if giving a user an assignment today will collide FZA with assignment tomorrow
-        $InfosOnCurrentBDtype = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
-        if($InfosOnCurrentBDtype['req_fza']==1){
-            $DateTomorrow = strtotime('+1 day',$DateConcerned);
-            $AllEinteilungenTomorrow = get_bereitschaftsdienst_einteilungen_on_day($DateTomorrow, $AllBDeinteilungen, 0);
-            foreach ($AllEinteilungenTomorrow as $AllEinteilungTomorrow){
-                if($AllEinteilungTomorrow['user']==$firstListOfCandidate['user']){
+            //Check if User is unavailable due to wish
+            $NegativeWishCheck = get_negative_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
+            if(sizeof($NegativeWishCheck)>0){
+                $NegativeWishCheck = $NegativeWishCheck[0];
+                $NeedsRed = true;
+                $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $NegativeWishCheck['type']);
+                $VerfuegbarkeitRed = $WishTypeDetails['name'];
+                $ReasonNeedsRed = $NegativeWishCheck['create_comment'];
+            }
+
+            //Check if user already has a FZA today
+            if(user_needs_fza_on_certain_date($firstListOfCandidate['user'], $AllBDeinteilungen, $AllBDTypes, $DateConcerned)){
+                $NeedsRed = true;
+                $VerfuegbarkeitRed = "FZA";
+                $ReasonNeedsRed = "FZA";
+            }
+
+            //Check if User is already assigned somewhere else on same day
+            $AllEinteilungenToday = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, 0);
+            foreach ($AllEinteilungenToday as $EinteilungenToday){
+                if($EinteilungenToday['user']==$firstListOfCandidate['user']){
                     $NeedsRed = true;
                     $VerfuegbarkeitRed = "Nicht verfügbar";
-                    $ReasonNeedsRed = "Am Folgetag bereits eingeteilt";
+                    $ReasonNeedsRed = "Mitarbeiter/in an diesem Tag bereits eingeteilt";
                 }
             }
-        }
 
-        if($NeedsRed){
-            $CandidateInfos['userID'] = $firstListOfCandidate['user'];
-            $CandidateInfos['table-color'] = 'table-danger';
-            $CandidateInfos['reason'] = $ReasonNeedsRed;
-            $CandidateInfos['verfuegbarkeit'] = $VerfuegbarkeitRed;
-            $RedList[] = $CandidateInfos;
-        } else {
-
-            //Check for Green
-            //Check if User is unavailable due to wish
-            $PositiveWishCheck = get_positive_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
-            if(sizeof($PositiveWishCheck)>0){
-                $PositiveWishCheck = $PositiveWishCheck[0];
-                $NeedsGreen = true;
-                $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
-                $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
+            //Check if giving a user an assignment today will collide FZA with assignment tomorrow
+            $InfosOnCurrentBDtype = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
+            if($InfosOnCurrentBDtype['req_fza']==1){
+                $DateTomorrow = strtotime('+1 day',$DateConcerned);
+                $AllEinteilungenTomorrow = get_bereitschaftsdienst_einteilungen_on_day($DateTomorrow, $AllBDeinteilungen, 0);
+                foreach ($AllEinteilungenTomorrow as $AllEinteilungTomorrow){
+                    if($AllEinteilungTomorrow['user']==$firstListOfCandidate['user']){
+                        $NeedsRed = true;
+                        $VerfuegbarkeitRed = "Nicht verfügbar";
+                        $ReasonNeedsRed = "Am Folgetag bereits eingeteilt";
+                    }
+                }
             }
 
-            if($NeedsGreen){
+            if($NeedsRed){
                 $CandidateInfos['userID'] = $firstListOfCandidate['user'];
-                $CandidateInfos['table-color'] = 'table-success';
-                $CandidateInfos['reason'] = $ReasonNeedsGreen;
-                $CandidateInfos['verfuegbarkeit'] = 'Gewünscht';
-                $GreenList[] = $CandidateInfos;
-                $GoodCandidateCounter++;
+                $CandidateInfos['table-color'] = 'table-danger';
+                $CandidateInfos['reason'] = $ReasonNeedsRed;
+                $CandidateInfos['verfuegbarkeit'] = $VerfuegbarkeitRed;
+                $RedList[] = $CandidateInfos;
             } else {
-                $CandidateInfos['userID'] = $firstListOfCandidate['user'];
-                $CandidateInfos['table-color'] = '';
-                $CandidateInfos['reason'] = '';
-                $CandidateInfos['verfuegbarkeit'] = 'Verfügbar';
-                $BlankList[] = $CandidateInfos;
-                $GoodCandidateCounter++;
+
+                //Check for Green
+                //Check if User is unavailable due to wish
+                $PositiveWishCheck = get_positive_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
+                if(sizeof($PositiveWishCheck)>0){
+                    $PositiveWishCheck = $PositiveWishCheck[0];
+                    $NeedsGreen = true;
+                    $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
+                    $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
+                }
+
+                if($NeedsGreen){
+                    $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+                    $CandidateInfos['table-color'] = 'table-success';
+                    $CandidateInfos['reason'] = $ReasonNeedsGreen;
+                    $CandidateInfos['verfuegbarkeit'] = 'Gewünscht';
+                    $GreenList[] = $CandidateInfos;
+                    $GoodCandidateCounter++;
+                } else {
+                    $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+                    $CandidateInfos['table-color'] = '';
+                    $CandidateInfos['reason'] = '';
+                    $CandidateInfos['verfuegbarkeit'] = 'Verfügbar';
+                    $BlankList[] = $CandidateInfos;
+                    $GoodCandidateCounter++;
+                }
             }
         }
     }

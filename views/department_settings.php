@@ -148,7 +148,7 @@ data-show-multi-sort="true"
 
 }
 
-function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents){
+function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, $tdthMode="td", $Colspan=1){
 
     $FoundRelevantEventsOnSelectedDay = [];
     foreach ($AllDepartmentEvents as $Event){
@@ -176,7 +176,11 @@ function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents){
         $ToolTip = "";
     }
 
-    return "<td>".$ToolTip."</td>";
+    if($Colspan==1){
+        return "<".$tdthMode.">".$ToolTip."</".$tdthMode.">";
+    } elseif ($Colspan==2){
+        return "<".$tdthMode." colspan='2'>".$ToolTip."</".$tdthMode.">";
+    }
 }
 
 function add_department_event_management($mysqli){
