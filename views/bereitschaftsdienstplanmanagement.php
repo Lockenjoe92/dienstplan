@@ -11,11 +11,18 @@ function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year){
     $FORMhtml .= '<div class="row">';
     $StatusMonat = lade_bd_freigabestatus_monat($Month, $Year);
     if(sizeof($StatusMonat)==0){
-        $FORMhtml .= "<div class='col'>".form_dropdown_mode_freigabe_bereitschaftsdienstplan_monate('status', 0)."</div>";
+        $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
+        $FORMhtml .= "<div class='col'>Dieser Monat wurde noch nicht freigegeben!</div>";
+        $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-primary' value='Freigeben' name='save_bd_month_freigabestatus_go'></div>";
     } else {
-        $FORMhtml .= "<div class='col'>".form_dropdown_mode_freigabe_bereitschaftsdienstplan_monate('status', 1)."</div>";
+        $StatusMonat = $StatusMonat[0];
+        $mysqli = connect_db();
+        $AllUsers = get_sorted_list_of_all_users($mysqli);
+        $UserInfosFreigebender = get_user_infos_by_id_from_list($StatusMonat['freigegeben_von'], $AllUsers);
+        $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
+        $FORMhtml .= "<div class='col'>Am ".date('d.m.Y, G:i', strtotime($StatusMonat['timestamp']))." Uhr von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben!</div>";
+        $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-danger' value='Freigabe zurücknehmen' name='save_bd_month_freigabestatus_delete'></div>";
     }
-    $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-primary' value='Speichern' name='save_bd_month_freigabestatus'></div>";
     $FORMhtml .= "</div>";
 
     $HTML = container_builder(form_builder($FORMhtml, 'self', 'POST'));

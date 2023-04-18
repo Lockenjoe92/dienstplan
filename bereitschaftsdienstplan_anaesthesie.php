@@ -50,6 +50,40 @@ if(isset($_POST['action_change_date'])){
     $ParserOutput = parse_edit_bd_entry($mysqli);
 
     $Role = "bereitschaftsdienstplan_1";
+} elseif (isset($_POST['save_bd_month_freigabestatus_go'])){
+    if(is_numeric($_POST['year'])){
+        $Year = $_POST['year'];
+    }
+    if(is_numeric($_POST['month'])){
+        $Month = $_POST['month'];
+    }
+
+    $Parser = bd_monat_freigeben($mysqli, $Month, $Year);
+
+    if($Parser['success']){
+        $ParserOutput = '<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Erfolg!</strong> '.$Parser['meldung'].'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    } else {
+        $ParserOutput = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> '.$Parser['meldung'].'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    }
+
+    $Role = "bereitschaftsdienstplan_1";
+} elseif (isset($_POST['save_bd_month_freigabestatus_delete'])){
+    if(is_numeric($_POST['year'])){
+        $Year = $_POST['year'];
+    }
+    if(is_numeric($_POST['month'])){
+        $Month = $_POST['month'];
+    }
+
+    $Parser = bd_monat_freigabe_zuruecknehmen($mysqli, $Month, $Year);
+
+    if($Parser['success']){
+        $ParserOutput = '<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Erfolg!</strong> '.$Parser['meldung'].'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    } else {
+        $ParserOutput = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> '.$Parser['meldung'].'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    }
+
+    $Role = "bereitschaftsdienstplan_1";
 } else {
     $Role = "bereitschaftsdienstplan_1";
 }

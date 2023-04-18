@@ -23,7 +23,7 @@ function get_list_of_all_bd_types($mysqli, $ShowDeleted=false){
 function get_list_of_all_freiegegebene_bd_monate($mysqli){
 
     $BDtypes = [];
-    $sql = "SELECT * FROM bereitschaftsdienstplan_freigeschaltete_monate";
+    $sql = "SELECT * FROM bereitschaftsdienstplan_freigeschaltete_monate WHERE delete_user IS NULL";
 
     if($stmt = $mysqli->query($sql)){
         while ($row = $stmt->fetch_assoc()) {
@@ -32,6 +32,72 @@ function get_list_of_all_freiegegebene_bd_monate($mysqli){
     }
 
     return $BDtypes;
+
+}
+
+function bd_monat_freigeben($mysqli, $Month, $Year){
+
+    $Antwort = [];
+    $CurrentUser = get_current_user_id();
+    $AllUsers = get_sorted_list_of_all_users($mysqli);
+    $StatusMonat = lade_bd_freigabestatus_monat($Month, $Year);
+    if(sizeof($StatusMonat)==0) {
+
+        // Prepare statement & DB Access
+        $sql = "INSERT INTO bereitschaftsdienstplan_freigeschaltete_monate (month, year, freigegeben_von) VALUES (?,?,?)";
+        if ($stmt = $mysqli->prepare($sql)) {
+            // Bind variables to the prepared statement as parameters
+            $stmt->bind_param("iii", $Month, $Year, $CurrentUser);
+
+            // Attempt to execute the prepared statement
+            if ($stmt->execute()) {
+                // Return success + new users ID + Users Password
+                $Antwort['success'] = true;
+                $Antwort['meldung'] = "Bereitschaftsdienstplan " . $Month . "-" . $Year . " erfolgreich freigegeben!";
+            } else {
+                $Antwort['success'] = false;
+                $Antwort['meldung'] = "Fehler beim Datenbankzugriff";
+            }
+
+            // Close statement
+            $stmt->close();
+        }
+    } else {
+        $FreigabeUser = get_user_infos_by_id_from_list($StatusMonat[0]['freigegeben_von'], $AllUsers);
+        $Antwort['success'] = false;
+        $Antwort['meldung'] = "Der ausgewählte Monat wurde bereits am ".date('d.m.Y, G:i', strtotime($StatusMonat[0]['timestamp']))." Uhr von ".$FreigabeUser['vorname']." ".$FreigabeUser['nachname']." freigegeben!";
+    }
+    return $Antwort;
+
+}
+
+function bd_monat_freigabe_zuruecknehmen($mysqli, $Month, $Year, $DeleteComment = ""){
+
+    $Antwort = [];
+    $CurrentUser = get_current_user_id();
+    $DeleteTime = date('Y-m-d G:i:s');
+
+    // Prepare statement & DB Access
+    $sql = "UPDATE bereitschaftsdienstplan_freigeschaltete_monate SET delete_user = ?, delete_time = ?, delete_comment = ? WHERE month = ? AND year = ? AND delete_user IS NULL";
+    if($stmt = $mysqli->prepare($sql)){
+        // Bind variables to the prepared statement as parameters
+        $stmt->bind_param("issii", $CurrentUser, $DeleteTime, $DeleteComment, $Month, $Year);
+
+        // Attempt to execute the prepared statement
+        if($stmt->execute()){
+            // Return success + new users ID + Users Password
+            $Antwort['success']=true;
+            $Antwort['meldung'] = "Freigabe für Bereitschaftsdienstplan ".$Month."-".$Year." zurückgenommen!";
+        } else {
+            $Antwort['success']=false;
+            $Antwort['meldung']="Fehler beim Datenbankzugriff";
+        }
+
+        // Close statement
+        $stmt->close();
+    }
+
+    return $Antwort;
 
 }
 
