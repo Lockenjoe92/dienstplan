@@ -146,19 +146,24 @@ function get_current_user_id(){
     return $_SESSION['user'];
 }
 
-function get_sorted_list_of_all_users($mysqli, $orderBy='nachname ASC', $includeInactive=false, $UE=1){
+function get_sorted_list_of_all_users($mysqli, $orderBy='nachname ASC', $includeInactive=false, $MinDate='2050-12-31 23:59:59'){
 
     $Users = [];
-
-    if(!$includeInactive){
-        $sql = "SELECT * FROM users WHERE inaktiv_durch_user IS NULL ORDER BY ".$orderBy."";
-    } else {
-        $sql = "SELECT * FROM users ORDER BY ".$orderBy." ASC";
-    }
+    $sql = "SELECT * FROM users ORDER BY ".$orderBy."";
 
     if($stmt = $mysqli->query($sql)){
         while ($row = $stmt->fetch_assoc()) {
-            $Users[] = $row;
+            if($row['inaktiv_seit']!=NULL){
+                if(strtotime($MinDate)<strtotime($row['inaktiv_seit'])){
+                    $Users[] = $row;
+                } else {
+                    if($includeInactive){
+                        $Users[] = $row;
+                    }
+                }
+            } else {
+                $Users[] = $row;
+            }
         }
     }
 
