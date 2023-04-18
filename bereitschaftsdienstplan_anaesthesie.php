@@ -106,4 +106,4 @@ $HTML .= bereitschaftsdienstplan_table_management($Month,$Year);
 
 $HTML = grid_gap_generator($HTML);
 
-echo site_body('Wunschdienst Übersicht', $HTML, true, $Nutzergruppen);
+echo site_body('Bereitschaftsdienstplanung', $HTML, true, $Nutzergruppen);

@@ -45,12 +45,13 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
             if($UE['id']==1){
                 $srcstring = 'bereitschaftsdienstplan_'.$UE['id'];
                 if(in_array($srcstring, $UserRoles)){
-                    $DienstplanLinks .= '<li><a class="dropdown-item" href="bereitschaftsdienstplan_anaesthesie.php">Bereitschaftsdienstplan Anästhesie</a></li>';
+                    $DienstplanLinks .= '<li><a class="dropdown-item" href="bereitschaftsdienstplan_anaesthesie.php">Bereitschaftsdienstplanung</a></li>';
                 }
             }
             $DienstplanLinks .= '<li><hr class="dropdown-divider"></li>';
         }
 
+        $DienstplanLinks .= '<li><a class="dropdown-item" href="bereitschaftsdienstplan_anaesthesie_user.php">Bereitschaftsdienstplan</a></li>';
         $DienstplanLinks .= '
             <li><a class="dropdown-item" href="dienstplan_user.php">Mein Dienstplan</a></li>
           </ul>
