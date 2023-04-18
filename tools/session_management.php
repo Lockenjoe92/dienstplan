@@ -10,7 +10,7 @@ function session_manager($requiredRole='nutzer'){
     if(!$Validated){
         // Session could not be verified
         session_destroy();
-        header("location: login.php");
+        header("location: login.php?err_mode=1");
         exit;
     } else {
 
@@ -19,7 +19,7 @@ function session_manager($requiredRole='nutzer'){
 
             // Session has timed out
             session_destroy();
-            header("location: login.php");
+            header("location: login.php?err_mode=2");
             exit;
 
         } else {

@@ -13,6 +13,15 @@ if(isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true){
 $username = $password = "";
 $username_err = $password_err = $login_err = "";
 
+// Check if user has been bounced back from other page due to session expiration or failed validation
+if(isset($_GET['err_mode'])){
+    if($_GET['err_mode']== 1){
+        $login_err = "Die Sitzung konnte nicht verifiziert werden! Bitte melden Sie sich erneut an!";
+    } elseif ($_GET['err_mode']== 2){
+        $login_err = "Die Sitzung ist abgelaufen! Bitte melden Sie sich erneut an!";
+    }
+}
+
 // Processing form data when form is submitted
 if($_SERVER["REQUEST_METHOD"] == "POST"){
 
