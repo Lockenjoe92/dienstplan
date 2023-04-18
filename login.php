@@ -19,6 +19,8 @@ if(isset($_GET['err_mode'])){
         $login_err = "Die Sitzung konnte nicht verifiziert werden! Bitte melden Sie sich erneut an!";
     } elseif ($_GET['err_mode']== 2){
         $login_err = "Die Sitzung ist abgelaufen! Bitte melden Sie sich erneut an!";
+    } elseif ($_GET['err_mode']== 3){
+        $login_err = "Ihr Passwort wurde erfolgreich geändert! Bitte melden Sie sich erneut an!";
     }
 }
 

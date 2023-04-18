@@ -1,9 +1,6 @@
 <?php
 include_once "config/dependencies.php";
 
-// Check if the user is already logged in, if yes then redirect him to welcome page
-$Nutzergruppen = session_manager('nutzer');
-
 // Build content
 $HTML = "<h1 class='align-content-center'>Passwort ändern</h1>";
 
@@ -13,25 +10,25 @@ $new_password = $confirm_password = "";
 $new_password_err = $confirm_password_err = "";
 $presentationMode = "show_card";
 
-// Processing form data when form is submitted
-if(isset($_POST['change_pass_go_back'])){
-    header("location: dashboard.php");
-    exit();
-}
+// Check if the user is already logged in, if yes then redirect him to welcome page
+$Nutzergruppen = session_manager('nutzer');
+$ActionLink = 'self';
+$param_id = get_current_user_id();
 
-if(isset($_GET['alt_user_id'])){
-    $SelectedUser = $_GET['alt_user_id'];
-    if($SelectedUser>0){
-        $ActionLink = 'change_password_user.php?alt_user_id='.$SelectedUser.'';
-        $param_id = $SelectedUser;
-    } else {
-        $ActionLink = 'self';
-        $param_id = get_current_user_id();
-    }
-} else {
-    $ActionLink = 'self';
-    $param_id = get_current_user_id();
-}
+// Code for resetting passwords manually -> needed if all admins are not capable of logging in
+#if(isset($_GET['alt_user_id'])){
+#    $SelectedUser = $_GET['alt_user_id'];
+#    if($SelectedUser>0){
+#        $ActionLink = 'change_password_user.php?alt_user_id='.$SelectedUser.'';
+#        $param_id = $SelectedUser;
+#    } else {
+#        $ActionLink = 'self';
+#        $param_id = get_current_user_id();
+#    }
+#} else {
+#    $ActionLink = 'self';
+#    $param_id = get_current_user_id();
+#}
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
 
@@ -70,7 +67,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             if($stmt->execute()){
                 // Password updated successfully. Destroy the session, and redirect to login page
                 session_destroy();
-                header("location: dashboard.php");
+                header("location: login.php?err_mode=3");
                 exit();
             } else{
                 $presentationMode='show_card';
@@ -90,7 +87,7 @@ if($presentationMode=='show_card'){
     $FormHTML = form_group_input_password('Neues Passwort', 'new_password', $new_password, true, $new_password_err);
     $FormHTML .= form_group_input_password('Neues Passwort wiederholen', 'confirm_password', $confirm_password, true, $confirm_password_err);
     $FormHTML .= "<br>";
-    $FormHTML .= form_group_continue_return_buttons(true, 'Ändern', 'change_password_action', 'btn-primary', true, 'Zurück', 'change_pass_go_back', 'btn-primary');
+    $FormHTML .= form_group_continue_return_buttons(true, 'Ändern', 'change_password_action', 'btn-primary', true, 'Zurück', 'change_pass_go_back', 'btn-primary', true, 'dashboard.php');
 
     // Gap it
     $FormHTML = grid_gap_generator($FormHTML);
@@ -98,7 +95,7 @@ if($presentationMode=='show_card'){
     $HTML .= card_builder('Passwort ändern','', $FORM);
 } else {
     $FormHTML = $Error."<br>";
-    $FormHTML .= form_group_continue_return_buttons(false, '', '', 'btn-primary', true, 'Zurück', 'change_pass_go_back', 'btn-primary');
+    $FormHTML .= form_group_continue_return_buttons(false, '', '', 'btn-primary', true, 'Zurück', 'change_pass_go_back', 'btn-primary', true, 'dashboard.php');
     $FORM = form_builder($FormHTML, $ActionLink, 'POST');
     $HTML .= card_builder('Passwort ändern','', $FORM);
 }

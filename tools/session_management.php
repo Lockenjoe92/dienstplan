@@ -61,7 +61,7 @@ function session_valid($mysqli, $User, $Secret){
 
             // Check if only one session exists
             if ($stmt->num_rows == 1) {
-                $stmt->bind_result($ID, $TTL);
+                $stmt->bind_result($User, $TTL);
                 if($stmt->fetch()){
                     return $TTL;
                 }

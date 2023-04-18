@@ -122,12 +122,16 @@ function form_group_switch($Label, $name, $Checked=false, $Disabled=false){
     return $HTML;
 }
 
-function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $ContinueName='', $ContinueClass='btn-primary', $GoBack=true, $GoBackValue='', $GoBackName='', $GoBackClass='btn-primary'){
+function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $ContinueName='', $ContinueClass='btn-primary', $GoBack=true, $GoBackValue='', $GoBackName='', $GoBackClass='btn-primary', $GoBackHardlink=false, $GoBackHardlinkDestination=''){
 
     $HTML = '<div class="form-group">';
 
     if($GoBack){
-        $HTML .= '<input type="submit" class="btn '.$GoBackClass.'" value="'.$GoBackValue.'" name="'.$GoBackName.'">';
+        if(!$GoBackHardlink){
+            $HTML .= '<input type="action" class="btn '.$GoBackClass.'" value="'.$GoBackValue.'" name="'.$GoBackName.'">';
+        } else {
+            $HTML .= '<a class="btn '.$GoBackClass.'" href="'.$GoBackHardlinkDestination.'">'.$GoBackValue.'</a>';
+        }
     }
 
     $HTML .= " ";
@@ -911,28 +915,6 @@ function form_dropdown_years($Name, $Value){
             $OptionsHTML .= '<option value="'.$a.'" selected>'.$a.'</option>';
         } else {
             $OptionsHTML .= '<option value="'.$a.'">'.$a.'</option>';
-        }
-    }
-
-    $HTML .= '<select class="form-select" name="'.$Name.'" id="'.$Name.'">';
-    $HTML .= $OptionsHTML;
-    $HTML .= '</select>';
-
-    return $HTML;
-}
-
-function form_dropdown_mode_freigabe_bereitschaftsdienstplan_monate($Name, $Value){
-
-    $OptionsHTML = $HTML = "";
-
-    $Months = [[0,'Gesperrt'],[1,'Freigegeben']];
-
-    // Render Month Options
-    foreach ($Months as $month){
-        if($Value==$month[0]){
-            $OptionsHTML .= '<option value="'.$month[0].'" selected>'.$month[1].'</option>';
-        } else {
-            $OptionsHTML .= '<option value="'.$month[0].'">'.$month[1].'</option>';
         }
     }
 
