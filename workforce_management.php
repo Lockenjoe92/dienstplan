@@ -12,12 +12,24 @@ if(in_array('admin', explode(',',$Nutzergruppen))){
     $Admin = false;
 }
 
+if(empty($_GET['inactive'])){
+    $Show = false;
+} else {
+    if($_GET['inactive']=='hide'){
+        $Show = false;
+    } elseif($_GET['inactive']=='show') {
+        $Show = true;
+    } else {
+        $Show = false;
+    }
+}
+
 // Build content
 $HTML = "<h1 class='align-content-center'>Nutzerverwaltung</h1>";
 
 // Check on special modes (add_user, edit_user)
 if(isset($_POST['workforcemanagement_go_back'])){
-    $HTML .= table_workforce_management(connect_db(),$Admin);
+    $HTML .= table_workforce_management(connect_db(),$Admin, $Show);
 } elseif(isset($_POST['add_user_action'])){
     $HTML .= add_user_workforce_management(connect_db());
 } elseif(isset($_POST['add_user_sondereinteilung_action'])){
@@ -54,13 +66,13 @@ if(isset($_POST['workforcemanagement_go_back'])){
     $HTML .= edit_user_workforce_management(connect_db(), $Admin);
 } else {
     if(empty($_GET['mode'])){
-        $HTML .= table_workforce_management(connect_db(),$Admin);
+        $HTML .= table_workforce_management(connect_db(),$Admin, $Show);
     } elseif ($_GET['mode']=='add_user'){
         $HTML .= add_user_workforce_management(connect_db());
     } elseif ($_GET['mode']=='edit_user'){
         $HTML .= edit_user_workforce_management(connect_db(), $Admin);
     } else {
-        $HTML .= table_workforce_management(connect_db(),$Admin);
+        $HTML .= table_workforce_management(connect_db(),$Admin, $Show);
     }
 }
 

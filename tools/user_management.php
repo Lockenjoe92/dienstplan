@@ -69,18 +69,26 @@ function add_new_user($Vorname, $Nachname, $Username, $Mitarbeiternummer, $Mail,
     return $Antwort;
 }
 
-function edit_user($SelectedUser, $Vorname, $Nachname, $UEdefault, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage='', $IstNotarzt=false){
+function edit_user($SelectedUser, $Vorname, $Nachname, $UEdefault, $Mitarbeiternummer, $Mail, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage='', $IstNotarzt=false, $InactiveDate=''){
 
     // Prepare variables and generate initial password
     $mysqli = connect_db();
     $Antwort = [];
-    $CurrentUserID = get_current_user_id();
+    if(empty($InactiveDate)){
+        $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, nutzergruppen = ?, vertrag = ?, urlaubstage = ?, freie_tage = ?, default_abteilung = ? WHERE id = ?";
+    } else {
+        $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, nutzergruppen = ?, vertrag = ?, urlaubstage = ?, freie_tage = ?, default_abteilung = ?, inaktiv_seit = ?, inaktiv_durch_user = ? WHERE id = ?";
+        $CurrentUserID = get_current_user_id();
+    }
 
-    // Prepare statement & DB Access
-    $sql = "UPDATE users SET username = ?, mail = ?, mitarbeiternummer = ?, vorname = ?, nachname = ?, abteilungsrollen = ?, nutzergruppen = ?, vertrag = ?, urlaubstage = ?, freie_tage = ?, default_abteilung = ? WHERE id = ?";
     if($stmt = $mysqli->prepare($sql)){
+
         // Bind variables to the prepared statement as parameters
-        $stmt->bind_param("ssissssiisii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $SelectedUser);
+        if(empty($InactiveDate)){
+            $stmt->bind_param("ssissssiisii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $SelectedUser);
+        } else {
+            $stmt->bind_param("ssissssiisiisi", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $SelectedUser, $InactiveDate, $CurrentUserID);
+        }
 
         // Attempt to execute the prepared statement
         if($stmt->execute()){

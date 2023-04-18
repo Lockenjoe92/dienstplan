@@ -1,14 +1,24 @@
 <?php
 
-function table_workforce_management($mysqli,$Admin=false){
+function table_workforce_management($mysqli,$Admin=false,$ShowInactive=false){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
-    $Users = get_sorted_list_of_all_users($mysqli);
+
+    if($ShowInactive){
+        $Users = get_sorted_list_of_all_users($mysqli, 'nachname ASC', true);
+    } else {
+        $Users = get_sorted_list_of_all_users($mysqli, 'nachname ASC', false, date('Y-m-d'));
+    }
 
     // Setup Toolbar
     $HTML = '<div id="toolbar">';
     $HTML .= '<a id="add_user" class="btn btn-primary" href="workforce_management.php?mode=add_user"><i class="bi bi-person-fill-add"></i> Hinzufügen</a>';
+    if(!$ShowInactive){
+        $HTML .= ' <a id="show_inactive" class="btn btn-primary" href="workforce_management.php?inactive=show"><i class="bi bi-eye-fill"></i> zeige inaktive MitarbeiterInnen</a>';
+    } else {
+        $HTML .= ' <a id="show_inactive" class="btn btn-primary" href="workforce_management.php?inactive=hide"><i class="bi bi-eye-slash-fill"></i> inaktive MitarbeiterInnen ausblenden</a>';
+    }
     #if($Admin){$HTML .= ' <a id="bulk_pswd_rst" class="btn btn-outline-danger" href="workforce_management.php?mode=bulk_user_pswd_rst"><i class="bi bi-arrow-counterclockwise"></i> Alle Passwörter zurücksetzen</a>';}
     $HTML .= '</div>';
 
@@ -263,7 +273,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
     // Initialize Placeholder & Error Variables
     $FormHTML = "";
     $OutputMode = "show_form";
-    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $edvErr = $ueErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = $sondereinteilungenErr = "";
+    $vornameErr = $nachnameErr = $mitarbeiternummerErr = $mailErr = $inactiveErr = $edvErr = $ueErr = $gruppeErr = $urlaubErr = $vertragErr = $rollenErr = $sondereinteilungenErr = "";
     $DAUcheck = 0;
     $UserCounter = 0;
     $FoundUser = [];
@@ -315,6 +325,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
         $vertragPlaceholder = $FoundUser['vertrag'];
         $urlaubPlaceholder = $FoundUser['urlaubstage'];
         $uePlaceholder = $FoundUser['default_abteilung'];
+        $InactiveDatePlaceholder = date("Y-m-d", strtotime($FoundUser['inaktiv_seit']));
         $SondereinteilungenPlaceholder = get_user_depmnt_assignments($mysqli, $SelectedUserID, false);
         $DienstgruppenPlaceholder = get_user_dienstgruppen_zugehoerigkeiten($mysqli, $SelectedUserID, false);
         $RollenPlaceholder = explode(',',$FoundUser['nutzergruppen']);
@@ -333,6 +344,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $vertragPlaceholder = trim($_POST['vertrag']);
             $urlaubPlaceholder = trim($_POST['urlaub']);
             $RollenPlaceholder = $_POST['nutzergruppen'];
+            $InactiveDatePlaceholder = $_POST['inaktive_date'];
             $SondereinteilungenPlaceholder = $_POST['sondereinteilungen'];
             if(isset($_POST['free_days'])){
                 $freieTagePlaceholder = $_POST['free_days'];
@@ -383,6 +395,13 @@ function edit_user_workforce_management($mysqli, $admin=false){
             if(empty($urlaubPlaceholder)){
                 $urlaubErr = "Bitte geben Sie die Menge jährlicher Urlaubstage des/r neuen Nutzer/in an!";
                 $DAUcheck++;
+            }
+
+            if(!$admin){
+                if(time()>strtotime($InactiveDatePlaceholder)){
+                    $inactiveErr = "Ein/e Mitarbeiter/in kann nicht nachträglich, sondern nur geplant inaktiviert werden! Bitte kontaktieren Sie den Administrator oder überprüfen die Eingabe.";
+                    $DAUcheck++;
+                }
             }
 
             if(!is_numeric($urlaubPlaceholder)){
@@ -465,7 +484,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
                     $freieTagePlaceholder = implode(',',$freieTagePlaceholder);
                 }
 
-                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $uePlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder);
+                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $uePlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder, );
                 if($Result['success']){
                     $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich bearbeitet!";
                 } else {
@@ -511,6 +530,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             }
 
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);
+            $FormHTML .= form_group_input_date('Mitarbeiterin inaktiv ab', 'inaktive_date', $InactiveDatePlaceholder, true, $inactiveErr);
 
             if($admin) {
                 $FormHTML .= form_group_dropdown_toolrollen('Tool-Rollen', 'nutzergruppen[]', $RollenPlaceholder, false, $rollenErr, false);
