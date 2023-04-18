@@ -21,7 +21,9 @@ function urlaubsplan_tabelle_user($month, $year){
     $mysqli = connect_db();
     $CurrentUser = get_current_user_id();
     $CurrentUserInfos = get_current_user_infos($mysqli, $CurrentUser);
-    $AllUsers = get_sorted_list_of_all_users($mysqli);
+    $SearchDate = $year."-".$month."-01";
+    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllAssignments = get_all_user_depmnt_assignments($mysqli);
     $AllDepartmentEvents = get_sorted_list_of_all_department_events($mysqli);
@@ -199,7 +201,9 @@ function urlaubsplan_tabelle_management($month, $year, $UE=1){
 
     $HTML = '';
     $mysqli = connect_db();
-    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC');
+    $SearchDate = $year."-".$month."-01";
+    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllAssignments = get_all_user_depmnt_assignments($mysqli);
     $AllDepartmentEvents = get_sorted_list_of_all_department_events($mysqli);

@@ -128,7 +128,7 @@ function form_group_continue_return_buttons($Continue=true, $ContinueValue='', $
 
     if($GoBack){
         if(!$GoBackHardlink){
-            $HTML .= '<input type="action" class="btn '.$GoBackClass.'" value="'.$GoBackValue.'" name="'.$GoBackName.'">';
+            $HTML .= '<input type="submit" class="btn '.$GoBackClass.'" value="'.$GoBackValue.'" name="'.$GoBackName.'">';
         } else {
             $HTML .= '<a class="btn '.$GoBackClass.'" href="'.$GoBackHardlinkDestination.'">'.$GoBackValue.'</a>';
         }
