@@ -255,10 +255,86 @@ function compare_lastname($a, $b)
     return strnatcmp($a['surname'], $b['surname']);
 }
 
+function compare_bd_type_rank($a, $b)
+{
+    return strnatcmp($a['reihung'], $b['reihung']);
+}
+
+function compare_bd_candidates_based_on_rank_and_bd_auslastung($a, $b)
+{
+    // sort by last name
+    $retval = strnatcmp($a['highest_bd_rank'], $b['highest_bd_rank']);
+    // if last names are identical, sort by first name
+    if(!$retval) $retval = strnatcmp($a['dienstbelastung'], $b['dienstbelastung']);
+    return $retval;
+}
+
+function get_users_highest_ranking_bd_assignments_on_certain_day($User, $AllBDassignments, $AllBDTypes, $DateConcerned){
+
+    $List = [];
+
+    //First get all Users Assignments
+    foreach ($AllBDassignments as $Assignment){
+        if($Assignment['user']==$User){
+            if((strtotime($Assignment['begin'])<=$DateConcerned) && (strtotime($Assignment['end'])>=$DateConcerned)){
+                $BDtypeInfo = get_bd_type_infos_from_list($Assignment['bd_type'], $AllBDTypes);
+                $List[] = $BDtypeInfo;
+            }
+        }
+    }
+
+    //Now Sort by rank
+    usort($List, 'compare_bd_type_rank');
+
+    return $List;
+
+}
+
+function get_bd_type_infos_from_list($type, $AllBDTypes){
+
+    foreach ($AllBDTypes as $AllBDType){
+        if($AllBDType['id']==$type){
+            return $AllBDType;
+        }
+    }
+
+}
+
+function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20){
+
+    $Counter = 0;
+
+    //Calculate SearchDates
+    $FirstDayToConcider = date('Y-m-d', strtotime('- '.$WeeksPast.' weeks', $DateConcerned));
+    $LastDayToConcider = date('Y-m-d', strtotime('+ '.$WeeksFuture.' weeks', $DateConcerned));
+
+    //Now parse all Einteilungen
+    foreach ($AllBDeinteilungen as $Einteilung){
+        if($UserConcerned == $Einteilung['user']){
+
+            //Check if Einteilung is within search-parameters
+            if(($Einteilung['day']>=$FirstDayToConcider) && ($Einteilung['day']<=$LastDayToConcider)){
+
+                //Check if Date is weekend or holiday
+                if(day_is_a_weekend_or_holiday($DateConcerned)){
+                    $Counter += $PenaltyWeekend;
+                } else {
+                    $Counter += $PenaltyWeekDay;
+                }
+            }
+        }
+    }
+
+    return $Counter;
+
+}
+
 function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes){
 
     $Answer = [];
     $GoodCandidateCounter = 0;
+    $InfosBDType = get_bd_type_infos_from_list($BDType, $AllBDTypes);
+    $RankCurrentBDType = $InfosBDType['reihung'];
 
     //1. Get Candidates based on assigned BD Group
     $firstListOfCandidates = get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($BDType, $AllBDassignments, $DateConcerned);
@@ -266,7 +342,9 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
     //2. Build 3 sublists based on abwesenheiten, wishes and prior assignments
     // Array is built as follows: 'userID', 'userName', 'table-color', 'reason'
     $GreenList = [];
+    $GreenListButTooHighBDrankList = [];
     $BlankList = [];
+    $BlankButTooHighBDrankList = [];
     $RedList = [];
 
     foreach ($firstListOfCandidates as $firstListOfCandidate) {
@@ -276,6 +354,10 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
         if ($CandidatePersonalInfos != FALSE) {
             $CandidateInfos['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
             $CandidateInfos['surname'] = $CandidatePersonalInfos['nachname'];
+            $HRAssignments = get_users_highest_ranking_bd_assignments_on_certain_day($firstListOfCandidate['user'], $AllBDassignments, $AllBDTypes, $DateConcerned);
+            $CandidateInfos['highest_bd_rank_kuerzel'] = $HRAssignments[0]['dienstgruppe'];
+            $CandidateInfos['highest_bd_rank'] = $HRAssignments[0]['reihung'];
+            $CandidateInfos['dienstbelastung'] = calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $firstListOfCandidate['user'], $AllBDeinteilungen);
             $NeedsRed = false;
             $NeedsGreen = false;
             $ReasonNeedsRed = '';
@@ -353,14 +435,22 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                     $CandidateInfos['table-color'] = 'table-success';
                     $CandidateInfos['reason'] = $ReasonNeedsGreen;
                     $CandidateInfos['verfuegbarkeit'] = 'Gewünscht';
-                    $GreenList[] = $CandidateInfos;
+                    if($CandidateInfos['highest_bd_rank']>$RankCurrentBDType){
+                        $GreenListButTooHighBDrankList[] = $CandidateInfos;
+                    } else {
+                        $GreenList[] = $CandidateInfos;
+                    }
                     $GoodCandidateCounter++;
                 } else {
                     $CandidateInfos['userID'] = $firstListOfCandidate['user'];
                     $CandidateInfos['table-color'] = '';
                     $CandidateInfos['reason'] = '';
                     $CandidateInfos['verfuegbarkeit'] = 'Verfügbar';
-                    $BlankList[] = $CandidateInfos;
+                    if($CandidateInfos['highest_bd_rank']<$RankCurrentBDType){
+                        $BlankButTooHighBDrankList[] = $CandidateInfos;
+                    } else {
+                        $BlankList[] = $CandidateInfos;
+                    }
                     $GoodCandidateCounter++;
                 }
             }
@@ -371,7 +461,14 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
     //Sort Red List
     usort($RedList, 'compare_lastname');
 
-    $CombinedList = array_merge($GreenList,$BlankList,$RedList);
+    //Sort Green & White List
+    usort($GreenList,'compare_bd_candidates_based_on_rank_and_bd_auslastung');
+    usort($BlankList,'compare_bd_candidates_based_on_rank_and_bd_auslastung');
+    usort($GreenListButTooHighBDrankList,'compare_bd_candidates_based_on_rank_and_bd_auslastung');
+    usort($BlankButTooHighBDrankList,'compare_bd_candidates_based_on_rank_and_bd_auslastung');
+
+
+    $CombinedList = array_merge($GreenList,$GreenListButTooHighBDrankList,$BlankList,$BlankButTooHighBDrankList,$RedList);
 
     $Answer['num_found_candidates'] = $GoodCandidateCounter;
     $Answer['candidates'] = $CombinedList;
