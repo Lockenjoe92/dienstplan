@@ -241,26 +241,26 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                     $Row .= "<td class='text-center align-middle table-secondary'></td>";
                 } else {
                     //1. check if this item already has been planned
-                    $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
-                    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
+                    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend);
+                    $EinteilungenHeute = $ParserResults['assigned_candidates'];
 
-                    if(sizeof($Einteilung)==0){
+                    if(sizeof($EinteilungenHeute)==0){
                         //2. no entries -> parse wishlist
                         if(time()>$DateConcerned){
-                            $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], [], $AllBDTypes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
                         } else {
                             if($ParserResults['num_found_candidates']>0){
-                                $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], [], $AllBDTypes)."</td>";
+                                $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
                             } else {
-                                $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], [], $AllBDTypes)."</td>";
+                                $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
                             }
                         }
 
                     } else {
-                        if(sizeof($Einteilung)==$BDType['req_employees_per_day']){
-                            $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $Einteilung, $AllUsers, $AllBDTypes)."</td>";
+                        if(sizeof($EinteilungenHeute)==$BDType['req_employees_per_day']){
+                            $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $EinteilungenHeute, $AllBDTypes)."</td>";
                         } else {
-                            $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $Einteilung, $AllUsers, $AllBDTypes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $EinteilungenHeute, $AllBDTypes)."</td>";
                         }
                     }
                     $Tabindex++;
@@ -352,7 +352,7 @@ function populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes,
     return $ReturnVals;
 }
 
-function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype, $UserAssignmentsOnDay=[], $AllUsers=[], $AllBDTypes=[]){
+function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype, $UserAssignmentsOnDay=[], $AllBDTypes=[]){
 
         $LimDate = strtotime("+3 days", $DateConcerned);
         $BDtypeInfos = get_bd_type_infos_from_list($BDtype, $AllBDTypes);
@@ -370,11 +370,10 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
             $AssignedUserNames = "";
             $Counter = 0;
             foreach ($UserAssignmentsOnDay as $User) {
-                $SelectedUserInfos = get_user_infos_by_id_from_list($User['user'], $AllUsers);
                 if($Counter>0){
                     $AssignedUserNames .= "<br>";
                 }
-                $AssignedUserNames .= $SelectedUserInfos['nachname'].', '.$SelectedUserInfos['vorname'][0].'.';
+                $AssignedUserNames .= $User['userName'];
                 $Counter++;
             }
 
@@ -419,22 +418,9 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
 
     //Edit mode firstly highlights already assigned users and removes them from the red list
     if($EditMode){
-        $IDsOfAssignedUsers = [];
         foreach($UserAssignmentsOnDay as $AssignedUser){
-            $SelectedUserInfos = get_user_infos_by_id_from_list($AssignedUser['user'], $AllUsers);
-            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['user'].'"></td><td>'.$SelectedUserInfos['nachname'].', '.$SelectedUserInfos['vorname'].'</td><td></td><td>Eingeteilt</td><td></td><td>'.$AssignedUser['create_comment'].'</td></tr>';
-            $IDsOfAssignedUsers[] = $AssignedUser['user'];
+            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['assignmentObject']['user'].'"></td><td>'.$AssignedUser['userNameLong'].'</td><td>'.$AssignedUser['highest_bd_rank_kuerzel'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['dienstbelastung'].'</td><td>'.$AssignedUser['assignmentObject']['create_comment'].'</td></tr>';
         }
-
-        //Now remove Assigned Users from Candidate-List
-        $UpdatedCandidatesList = [];
-        foreach ($CandidatesList as $CandidateItem){
-            if(!in_array($CandidateItem['userID'], $IDsOfAssignedUsers)){
-                $UpdatedCandidatesList[] = $CandidateItem;
-            }
-        }
-
-        $CandidatesList = $UpdatedCandidatesList;
     }
 
     foreach ($CandidatesList as $CandidateItem){

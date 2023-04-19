@@ -300,7 +300,7 @@ function get_bd_type_infos_from_list($type, $AllBDTypes){
 
 }
 
-function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20){
+function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $Holidayweekend, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20){
 
     $Counter = 0;
 
@@ -316,7 +316,7 @@ function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $Us
             if(($Einteilung['day']>=$FirstDayToConcider) && ($Einteilung['day']<=$LastDayToConcider)){
 
                 //Check if Date is weekend or holiday
-                if(day_is_a_weekend_or_holiday($DateConcerned)){
+                if($Holidayweekend){
                     $Counter += $PenaltyWeekend;
                 } else {
                     $Counter += $PenaltyWeekDay;
@@ -329,9 +329,10 @@ function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $Us
 
 }
 
-function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes){
+function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend){
 
     $Answer = [];
+    $Assignments = [];
     $GoodCandidateCounter = 0;
     $InfosBDType = get_bd_type_infos_from_list($BDType, $AllBDTypes);
     $RankCurrentBDType = $InfosBDType['reihung'];
@@ -357,7 +358,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             $HRAssignments = get_users_highest_ranking_bd_assignments_on_certain_day($firstListOfCandidate['user'], $AllBDassignments, $AllBDTypes, $DateConcerned);
             $CandidateInfos['highest_bd_rank_kuerzel'] = $HRAssignments[0]['dienstgruppe'];
             $CandidateInfos['highest_bd_rank'] = $HRAssignments[0]['reihung'];
-            $CandidateInfos['dienstbelastung'] = calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $firstListOfCandidate['user'], $AllBDeinteilungen);
+            $CandidateInfos['dienstbelastung'] = calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $firstListOfCandidate['user'], $AllBDeinteilungen, $Holidayweekend);
             $NeedsRed = false;
             $NeedsGreen = false;
             $ReasonNeedsRed = '';
@@ -396,6 +397,18 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                     $NeedsRed = true;
                     $VerfuegbarkeitRed = "Nicht verfügbar";
                     $ReasonNeedsRed = "Mitarbeiter/in an diesem Tag bereits eingeteilt";
+
+                    //Don't show people in red list if they are planned for exactly this bd
+                    //Add them to a separate list instead for building modal links in table
+                    if($EinteilungenToday['bd_type']==$BDType){
+                        $NeedsRed = false;
+                        $Assignment['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'][0];
+                        $Assignment['userNameLong'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
+                        $Assignment['highest_bd_rank_kuerzel'] = $CandidateInfos['highest_bd_rank_kuerzel'];
+                        $Assignment['dienstbelastung'] = $CandidateInfos['dienstbelastung'];
+                        $Assignment['assignmentObject'] = $firstListOfCandidate;
+                        $Assignments[] = $Assignment;
+                    }
                 }
             }
 
@@ -426,7 +439,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                 if(sizeof($PositiveWishCheck)>0){
                     $PositiveWishCheck = $PositiveWishCheck[0];
                     $NeedsGreen = true;
-                    $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
+                    #$WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
                     $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
                 }
 
@@ -470,6 +483,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
 
     $CombinedList = array_merge($GreenList,$GreenListButTooHighBDrankList,$BlankList,$BlankButTooHighBDrankList,$RedList);
 
+    $Answer['assigned_candidates'] = $Assignments;
     $Answer['num_found_candidates'] = $GoodCandidateCounter;
     $Answer['candidates'] = $CombinedList;
     $Answer['bad_candidates'] = $RedList;
@@ -545,7 +559,7 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
         $DAUerr .= "Die maximale Anzahl an MitarbeiterInnen für diesen Bereitschaftsdiensttyp ist bereits erreicht!<br>";
     }
 
-    $ParsedCandidates = parse_bd_candidates_on_day_for_certain_bd_type($Dateconcerned, $BDtype, $AllBDEinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes);
+    $ParsedCandidates = parse_bd_candidates_on_day_for_certain_bd_type($Dateconcerned, $BDtype, $AllBDEinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, day_is_a_weekend_or_holiday($Dateconcerned));
     $UserInRedlist = false;
     $ReasonRedList = "";
     foreach ($ParsedCandidates['bad_candidates'] as $parsedCandidate){
