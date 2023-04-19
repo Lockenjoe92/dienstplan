@@ -27,7 +27,7 @@ function user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE){
                 // Only show edit buttons on applications, that haven't started yet
                 $DienstwunschType = get_dienstwunsch_type_data($mysqli,$Wunsch['type']);
                 $Department = get_department_infos($mysqli,$DienstwunschType['belongs_to_depmnt']);
-                if(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months'])<$Wunsch['date']){
+                if(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months'], $Wunsch['date'])<$Wunsch['date']){
                     return true;
                 } else {
                     return false;
