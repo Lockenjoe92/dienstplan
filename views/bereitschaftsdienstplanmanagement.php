@@ -24,7 +24,7 @@ function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year){
 
         $UserInfosFreigebender = get_user_infos_by_id_from_list($StatusMonat['freigegeben_von'], $AllUsers);
         $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
-        $FORMhtml .= "<div class='col'>Am ".date('d.m.Y, G:i', strtotime($StatusMonat['timestamp']))." Uhr von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben!</div>";
+        $FORMhtml .= "<div class='col'>Am ".date('d.m.Y', strtotime($StatusMonat['timestamp']))." von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben!</div>";
         $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-danger' value='Freigabe zurücknehmen' name='save_bd_month_freigabestatus_delete'></div>";
     }
     $FORMhtml .= "</div>";
@@ -54,7 +54,9 @@ function bereitschaftsdienstplan_funktionsbuttons_users($Month,$Year,$Freigaben=
     } else {
         $Freigaben = $Freigaben[0];
         $mysqli = connect_db();
-        $AllUsers = get_sorted_list_of_all_users($mysqli);
+        $SearchDate = $Year."-".$Month."-01";
+        $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
+        $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
         $UserInfosFreigebender = get_user_infos_by_id_from_list($Freigaben['freigegeben_von'], $AllUsers);
         $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
         $FORMhtml .= "<div class='col'>Am ".date('d.m.Y', strtotime($Freigaben['timestamp']))." von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben.</div>";

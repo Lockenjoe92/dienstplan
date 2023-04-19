@@ -250,6 +250,11 @@ function get_bereitschaftsdienst_einteilungen_on_day($day, $BDeinteilungen, $cer
     return $counter;
 }
 
+function compare_lastname($a, $b)
+{
+    return strnatcmp($a['surname'], $b['surname']);
+}
+
 function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes){
 
     $Answer = [];
@@ -270,6 +275,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
         $CandidatePersonalInfos = get_user_infos_by_id_from_list($firstListOfCandidate['user'], $AllUsers);
         if ($CandidatePersonalInfos != FALSE) {
             $CandidateInfos['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
+            $CandidateInfos['surname'] = $CandidatePersonalInfos['nachname'];
             $NeedsRed = false;
             $NeedsGreen = false;
             $ReasonNeedsRed = '';
@@ -334,7 +340,6 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             } else {
 
                 //Check for Green
-                //Check if User is unavailable due to wish
                 $PositiveWishCheck = get_positive_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
                 if(sizeof($PositiveWishCheck)>0){
                     $PositiveWishCheck = $PositiveWishCheck[0];
@@ -361,6 +366,10 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             }
         }
     }
+
+    //Sort Lists by highest BD Assignments & past assignments - Red only by Name
+    //Sort Red List
+    usort($RedList, 'compare_lastname');
 
     $CombinedList = array_merge($GreenList,$BlankList,$RedList);
 
