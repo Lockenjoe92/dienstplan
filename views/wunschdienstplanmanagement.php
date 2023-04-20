@@ -99,7 +99,7 @@ function table_wunschdienstplan_management($mysqli,$Nutzerrollen, $Month, $Year)
     $Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
     $SearchDate = $Year."-".$Month."-01";
     $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
-    $Users = get_sorted_list_of_all_users($mysqli, '', false, $LastDayOfConcideredMonth);
+    $Users = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
 
     if(isset($_POST['org_ue'])){
         $UE = $_POST['org_ue'];

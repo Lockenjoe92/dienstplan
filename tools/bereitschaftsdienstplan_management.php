@@ -209,13 +209,11 @@ function get_list_of_all_public_bd_plans($mysqli){
 }
 
 function get_bereitschaftsdiensttype_details_by_type_id($Wunschtypen, $WunschTypeID){
-
     foreach ($Wunschtypen as $wunschtyp){
         if($wunschtyp['id']==$WunschTypeID){
             return $wunschtyp;
         }
     }
-
 }
 
 function get_bereitschaftsdienstwuenschetype_details_by_type_id($Wunschtypen, $WunschTypeID){
@@ -516,11 +514,17 @@ function user_needs_fza_on_certain_date($userID, $AllBDeinteilungen, $AllBDTypes
     return $Antwort;
 }
 
-function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
+function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment='', $byAutomatik=false){
 
     $UserInfos = get_current_user_infos($mysqli, $User);
     $CurrentUserID = get_current_user_id();
     $Date = date('Y-m-d', $Dateconcerned);
+
+    if($byAutomatik){
+        $byAutomatik=1;
+    } else {
+        $byAutomatik=0;
+    }
 
     //Load Stuff
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
@@ -580,10 +584,10 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment=''){
 
     if($DAUcount==0){
         // Prepare statement & DB Access
-        $sql = "INSERT INTO bereitschaftsdienstplan (day, bd_type, user, create_user, create_comment) VALUES (?,?,?,?,?)";
+        $sql = "INSERT INTO bereitschaftsdienstplan (day, bd_type, user, create_user, create_comment, planned_by_auto_mode) VALUES (?,?,?,?,?,?)";
         if($stmt = $mysqli->prepare($sql)){
             // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("siiis", $Date, $BDtype, $User, $CurrentUserID, $comment);
+            $stmt->bind_param("siiisi", $Date, $BDtype, $User, $CurrentUserID, $comment, $byAutomatik);
 
             // Attempt to execute the prepared statement
             if($stmt->execute()){
@@ -778,5 +782,132 @@ function lade_bd_freigabestatus_monat($Month,$Year){
     }
 
     return $Answer;
+
+}
+
+function bd_automatik(){
+
+    $Antwort = [];
+
+    // First some DAU checks:
+    if(empty($_POST['automatik_dienstgruppe'])){
+        $Antwort['output'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Bitte die zu bearbeitende Dienstgruppe wählen!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        $Antwort['err'] = "Bitte die zu bearbeitende Dienstgruppe wählen!";
+        return $Antwort;
+    } elseif (empty($_POST['automatik_mode'])){
+        $Antwort['output'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Bitte den Automatikmodus wählen!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        return $Antwort;
+    } elseif(empty($_POST['automatik_start_date'])){
+        $Antwort['output'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Bitte den Zeitraum für die Automatik wählen!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        return $Antwort;
+    } elseif(empty($_POST['automatik_end_date'])){
+        $Antwort['output'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Bitte den Zeitraum für die Automatik wählen!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        return $Antwort;
+    } elseif($_POST['automatik_end_date']<$_POST['automatik_start_date']){
+        $Antwort['output'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Das Ende des zu bearbeitenden Zeitraums wurde vor dem Beginn gewählt!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        return $Antwort;
+    } else {
+
+        // Mode 1 - fullfill wishes as long as there is only one kandidate
+        if($_POST['automatik_mode']==1){
+            $mysqli = connect_db();
+
+            $StartDate = strtotime($_POST['automatik_start_date']);
+            $EndDate = strtotime($_POST['automatik_end_date']);
+            $AllAssignments = get_all_users_bd_assignments($mysqli);
+            $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+            $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
+            $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+            $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+            $AllBDTypes = get_list_of_all_bd_types($mysqli);
+            $AllUsers = get_sorted_list_of_all_users($mysqli);
+
+            $NumFulfilledWishes = 0;
+            $NumTotalWishes = 0;
+            $NumImpossibleWishes = 0;
+            $ConcernedDates = "";
+
+            for($a=0;$a<=90;$a++){
+                $Command = "+ ".$a." days";
+                $CurrentDay = strtotime($Command, $StartDate);
+                if($CurrentDay<=$EndDate){
+
+                    $UsersWithPositiveWishes = 0;
+                    $WishesArray = [];
+                    $UsersWithAssignments = get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($_POST['automatik_dienstgruppe'], $AllAssignments, $CurrentDay);
+                    foreach($UsersWithAssignments as $user){
+                        $Wuensche = get_positive_bd_wishes_user_on_certain_day($user['user'], $_POST['automatik_dienstgruppe'], $AllWishes, $AllWishTypes, $AllBDTypes, $CurrentDay);
+                        if(sizeof($Wuensche)>0){
+
+                            //Only concider this if user is really available on said date! -> he has a einteilung? dont concider him
+                            $AllEinteilungenToday = get_bereitschaftsdienst_einteilungen_on_day($CurrentDay, $AllBDeinteilungen, 0);
+                            $Count = 0;
+                            foreach ($AllEinteilungenToday as $EinteilungenToday){
+                                if($EinteilungenToday['user']==$user['user']){
+                                    $Count++;
+                                }
+                            }
+
+                            //Check if user already has a FZA today
+                            if(user_needs_fza_on_certain_date($user['user'], $AllBDeinteilungen, $AllBDTypes, $CurrentDay)){
+                                $Count++;
+                            }
+
+                            //Check if User is unavailable due to Abwesenheit
+                            $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($user['user'], $AllAbwesenheiten, $CurrentDay);
+                            if(sizeof($AbwesenheitCheck)>0){
+                                $Count++;
+                            }
+
+                            if($Count==0){
+                                $UsersWithPositiveWishes++;
+                                $WishesArray[] = $Wuensche;
+                            }
+                        }
+                    }
+
+                    // now check if there are colliding wishes -> Add to Error-Output
+                    if($UsersWithPositiveWishes>1){
+                        $NumImpossibleWishes ++;
+                        foreach ($WishesArray as $item) {
+                            $WishUser = get_user_infos_by_id_from_list($item[0]['user'], $AllUsers);
+                            $ConcernedDates .= date('d.m.Y',$CurrentDay)." ".$WishUser['nachname'].", ".$WishUser['vorname']."; ";
+                        }
+                        //Continue with fulfilling wish -> Add to success output
+                    } elseif($UsersWithPositiveWishes==1) {
+                        $DoShit = add_bd_entry($mysqli, $WishesArray[0][0]['user'], $CurrentDay, $_POST['automatik_dienstgruppe'], $WishesArray[0][0]['create_comment'], true);
+                        if($DoShit['success']){
+                            $NumFulfilledWishes++;
+                        }
+                    }
+
+                    $NumTotalWishes += $UsersWithPositiveWishes;
+                }
+            }
+
+        $answer = "";
+
+        if($NumImpossibleWishes>0){
+            $answer .= '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> '.$NumImpossibleWishes.' Wünsch(e) konnten nicht erfüllt werden, da sie mit anderen Wünschen kollidieren! Folgende Tage waren betroffen: '.$ConcernedDates.'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        }
+
+        if($NumFulfilledWishes>0){
+            $answer .= '<br><div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Erfolg!</strong> '.$NumFulfilledWishes.' Wünsch(e) von '.$NumTotalWishes.' konnten erfüllt werden!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        }
+
+        if(($NumImpossibleWishes+$NumFulfilledWishes)==0){
+            $answer .= '<br><div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Prozess abgeschlossen!</strong> Keine relevanten Dienstplanwünsche gefunden!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        }
+
+        $Antwort['output'] = $answer;
+        return $Antwort;
+
+            // Mode 2 - fill vacancies
+        } elseif ($_POST['automatik_mode']==2){
+
+            return null;
+        }
+
+    }
 
 }

@@ -8,11 +8,23 @@ include_once "./config/dependencies.php";
 // Prepare calendar View
 $Year = date('Y');
 $Month = date('m');
-$ParserOutput = '';
+$ParserOutput = $Err = '';
 $mysqli = connect_db();
 
 // Kalender parser
-if(isset($_POST['action_change_date'])){
+if(isset($_POST['activate_automatik'])){
+    $Role = "bereitschaftsdienstplan_1";
+    if(is_numeric($_POST['year'])){
+        $Year = $_POST['year'];
+    }
+    if(is_numeric($_POST['month'])){
+        $Month = $_POST['month'];
+    }
+
+    $Parser = bd_automatik();
+    $ParserOutput = $Parser['output'];
+
+} elseif(isset($_POST['action_change_date'])){
     $Role = "bereitschaftsdienstplan_1";
     if(is_numeric($_POST['year'])){
         $Year = $_POST['year'];
@@ -100,7 +112,7 @@ $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
 $monthName = datefmt_format($format, mktime(0, 0, 0, $Month));
 
 $HTML .= "<h1 class='align-self-center'>Bereitschaftsdienstplan ".$monthName." ".$Year."</h1>";
-$HTML .= bereitschaftsdienstplan_funktionsbuttons_management($Month, $Year);
+$HTML .= bereitschaftsdienstplan_funktionsbuttons_management($Month, $Year, $Err);
 $HTML .= $ParserOutput;
 $HTML .= bereitschaftsdienstplan_table_management($Month,$Year);
 

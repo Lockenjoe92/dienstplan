@@ -74,7 +74,10 @@ function form_group_input_password($Label, $name, $Value='', $HasFormControl=tru
 function form_group_input_date($Label, $name, $Value='', $HasFormControl=true, $FieldError='', $disbled=false) {
 
     $HTML = '<div class="form-group">';
-    $HTML .= '<label>'.$Label.'</label>';
+
+    if(!empty($Label)) {
+        $HTML .= '<label>' . $Label . '</label>';
+    }
 
     if($disbled){
         $disbledHTML = 'disabled';
@@ -539,7 +542,12 @@ function form_group_dropdown_unterabteilungen($Label, $name, $Value='',$HasFormC
 
 function form_group_dropdown_dienstgruppen($Label, $name, $Value='',$HasFormControl=true, $FieldError='', $disbled=false, $primaryName = ''){
 
-    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML = "";
+
+    if(!empty($Label)) {
+        $HTML .= '<label class="form-label" for="' . $name . '">' . $Label . '</label>';
+    }
+
     $HTML .= '<div class="form-group">';
 
     if($disbled){
@@ -650,7 +658,12 @@ function form_group_dropdown_sondereinteilungen_unterabteilungen($Label, $name, 
 
 function form_group_dropdown_dienstgruppenzugehörigkeiten($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
 
-    $HTML = '<label class="form-label" for="'.$name.'">'.$Label.'</label>';
+    $HTML = '';
+
+    if(!empty($Label)) {
+        $HTML .= '<label class="form-label" for="' . $name . '">' . $Label . '</label>';
+    }
+
     $HTML .= '<div class="form-group">';
 
     if($disbled){
@@ -921,6 +934,34 @@ function form_dropdown_years($Name, $Value){
     $HTML .= '<select class="form-select" name="'.$Name.'" id="'.$Name.'">';
     $HTML .= $OptionsHTML;
     $HTML .= '</select>';
+
+    return $HTML;
+}
+
+function form_dropdown_bd_automatik_mode($Name, $Value, $Label=''){
+
+    $OptionsHTML = $HTML = "";
+
+    $Months = [[1,'Wünsche erfüllen'],[2,'Auffüllen']];
+
+    // Render Month Options
+    foreach ($Months as $month){
+        if($Value==$month[0]){
+            $OptionsHTML .= '<option value="'.$month[0].'" selected>'.$month[1].'</option>';
+        } else {
+            $OptionsHTML .= '<option value="'.$month[0].'">'.$month[1].'</option>';
+        }
+    }
+
+    if(!empty($Label)){
+        $HTML .= '<label class="form-label" for="'.$Name.'">'.$Label.'</label>';
+    }
+
+    $HTML .= '<div class="form-group">';
+    $HTML .= '<select class="form-select" name="'.$Name.'" id="'.$Name.'">';
+    $HTML .= $OptionsHTML;
+    $HTML .= '</select>';
+    $HTML .= '</div>';
 
     return $HTML;
 }

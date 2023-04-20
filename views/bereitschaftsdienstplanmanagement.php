@@ -1,19 +1,44 @@
 <?php
 
-function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year){
+function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year,$dienstgruppeErr=""){
+
+    $placeholderStart = $placeholderEnd = $placeholderDienstgruppe = $placeholderMode = "";
+    if(isset($_POST['activate_automatik'])){
+        $placeholderStart = $_POST['automatik_start_date'];
+        $placeholderEnd = $_POST['automatik_end_date'];
+        $placeholderDienstgruppe = $_POST['automatik_dienstgruppe'];
+        $placeholderMode = $_POST['automatik_mode'];
+    }
 
     $FORMhtml = '<div class="container text-center">';
     $FORMhtml .= '<div class="row align-items-center">';
+    $FORMhtml .= "<div class='col'></div>";
     $FORMhtml .= "<div class='col'>".form_dropdown_months('month',$Month)."</div>";
     $FORMhtml .= "<div class='col'>".form_dropdown_years('year', $Year)."</div>";
+    $FORMhtml .= "<div class='col'></div>";
+    $FORMhtml .= "<div class='col'></div>";
     $FORMhtml .= "<div class='col'>".form_group_continue_return_buttons(true, 'Reset', 'reset_calendar', 'btn-primary', true, 'Zeitraum wählen', 'action_change_date', 'btn-primary')."</div>";
     $FORMhtml .= "</div>";
 
+    // Automatik
+    $FORMhtml .= '<div class="row align-items-center">';
+    $FORMhtml .= "<div class='col'><strong>Automatik</strong></div>";
+    $FORMhtml .= "<div class='col'>".form_group_input_date('', 'automatik_start_date', $placeholderStart, false, '')."</div>";
+    $FORMhtml .= "<div class='col'>".form_group_input_date('', 'automatik_end_date', $placeholderEnd, false, '')."</div>";
+    $FORMhtml .= "<div class='col'>".form_group_dropdown_dienstgruppen('', 'automatik_dienstgruppe', $placeholderDienstgruppe, false, $dienstgruppeErr, false, 'Dienstgruppe')."</div>";
+    $FORMhtml .= "<div class='col'>".form_dropdown_bd_automatik_mode('automatik_mode', $placeholderMode)."</div>";
+    $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-danger' value='Automatik starten' name='activate_automatik'></div>";
+    $FORMhtml .= "</div>";
+
+    // Freigabesystem
     $FORMhtml .= '<div class="row align-items-center">';
     $StatusMonat = lade_bd_freigabestatus_monat($Month, $Year);
     if(sizeof($StatusMonat)==0){
         $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
         $FORMhtml .= "<div class='col'>Dieser Monat wurde noch nicht freigegeben!</div>";
+        $FORMhtml .= "<div class='col'></div>";
+        $FORMhtml .= "<div class='col'></div>";
+        $FORMhtml .= "<div class='col'></div>";
         $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-primary' value='Freigeben' name='save_bd_month_freigabestatus_go'></div>";
     } else {
         $StatusMonat = $StatusMonat[0];
@@ -25,6 +50,9 @@ function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year){
         $UserInfosFreigebender = get_user_infos_by_id_from_list($StatusMonat['freigegeben_von'], $AllUsers);
         $FORMhtml .= "<div class='col'><strong>Freigabestatus:</strong></div>";
         $FORMhtml .= "<div class='col'>Am ".date('d.m.Y', strtotime($StatusMonat['timestamp']))." von ".$UserInfosFreigebender['vorname']." ".$UserInfosFreigebender['nachname']." freigegeben!</div>";
+        $FORMhtml .= "<div class='col'></div>";
+        $FORMhtml .= "<div class='col'></div>";
+        $FORMhtml .= "<div class='col'></div>";
         $FORMhtml .= "<div class='col'><input type='submit' class='btn btn-outline-danger' value='Freigabe zurücknehmen' name='save_bd_month_freigabestatus_delete'></div>";
     }
     $FORMhtml .= "</div>";

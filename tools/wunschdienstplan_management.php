@@ -324,11 +324,8 @@ function get_positive_bd_wishes_user_on_certain_day($user, $BDType, $Allwishes, 
                     //Check if wish-type corresponds to current BD-type
                     $DienstType = get_bereitschaftsdiensttype_details_by_type_id($AllBDTypes, $BDType);
                     $WishType = get_bereitschaftsdienstwuenschetype_details_by_type_id($AllWishTypes, $wish['type']);
-
                     if($WishType['type']==$DienstType['type']){
-
                         $return[] = $wish;
-
                     } elseif ($WishType['type']=='all_day'){
                         $return[] = $wish;
                     }
