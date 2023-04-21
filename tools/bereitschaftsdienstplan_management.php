@@ -910,8 +910,40 @@ function bd_automatik(){
 
             // Mode 2 - fill vacancies
         } elseif ($_POST['automatik_mode']==2){
-
+        // Mode 2 - autofill days with no explicite user wishes by load-balancing & random choice
             return null;
+        } elseif ($_POST['automatik_mode']==3){
+        // Mode 3 - simply delete all assignments in chosen timeframe & bd_dienstgruppe
+            $mysqli = connect_db();
+            $StartDate = date('Y-m-d G:i:s', strtotime($_POST['automatik_start_date']));
+            $EndDate = date('Y-m-d G:i:s', strtotime($_POST['automatik_end_date']));
+            $Dienstgruppe = $_POST['automatik_dienstgruppe'];
+            $currentUserID = get_current_user_id();
+            $time = date('Y-m-d G:i:s');
+            $comment = "Per Automatik gelöscht!";
+
+            $stmnt = "UPDATE bereitschaftsdienstplan SET delete_user = ?, delete_time = ?, delete_comment = ? WHERE day >= ? AND day <= ? AND bd_type = ? AND delete_user IS NULL";
+
+            if($stmt = $mysqli->prepare($stmnt)){
+                // Bind variables to the prepared statement as parameters
+                $stmt->bind_param("issssi", $currentUserID, $time, $comment, $StartDate, $EndDate, $Dienstgruppe);
+
+                // Attempt to execute the prepared statement
+                if($stmt->execute()){
+                    // Return success
+                    $Antwort['success']=true;
+                    $Antwort['output']='<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>Erfolg!</strong> Bereitschaftsdiensteinteilung(en) erfolgreich gelöscht!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                } else{
+                    $Antwort['success']=false;
+                    $Antwort['output']='<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> Fehler beim Datenbankzugriff!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                }
+
+                // Close statement
+                $stmt->close();
+            }
+
+
+            return $Antwort;
         }
 
     }
