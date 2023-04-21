@@ -359,6 +359,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             $CandidateInfos['dienstbelastung'] = calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $firstListOfCandidate['user'], $AllBDeinteilungen, $Holidayweekend);
             $NeedsRed = false;
             $NeedsGreen = false;
+            $HasExactlyThisAssignment = false;
             $ReasonNeedsRed = '';
             $ReasonNeedsGreen = '';
             $VerfuegbarkeitRed = '';
@@ -400,11 +401,14 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                     //Add them to a separate list instead for building modal links in table
                     if($EinteilungenToday['bd_type']==$BDType){
                         $NeedsRed = false;
+                        $HasExactlyThisAssignment = true;
+                        $GoodCandidateCounter++;
                         $Assignment['userName'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'][0];
                         $Assignment['userNameLong'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
                         $Assignment['highest_bd_rank_kuerzel'] = $CandidateInfos['highest_bd_rank_kuerzel'];
                         $Assignment['dienstbelastung'] = $CandidateInfos['dienstbelastung'];
                         $Assignment['assignmentObject'] = $firstListOfCandidate;
+                        $Assignment['reason'] = $EinteilungenToday['create_comment'];
                         $Assignments[] = $Assignment;
                     }
                 }
@@ -433,36 +437,38 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             } else {
 
                 //Check for Green
-                $PositiveWishCheck = get_positive_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
-                if(sizeof($PositiveWishCheck)>0){
-                    $PositiveWishCheck = $PositiveWishCheck[0];
-                    $NeedsGreen = true;
-                    #$WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
-                    $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
-                }
+                if(!$HasExactlyThisAssignment){
+                    $PositiveWishCheck = get_positive_bd_wishes_user_on_certain_day($firstListOfCandidate['user'], $BDType, $Allwishes, $AllWishTypes, $AllBDTypes, $DateConcerned);
+                    if(sizeof($PositiveWishCheck)>0){
+                        $PositiveWishCheck = $PositiveWishCheck[0];
+                        $NeedsGreen = true;
+                        #$WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
+                        $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
+                    }
 
-                if($NeedsGreen){
-                    $CandidateInfos['userID'] = $firstListOfCandidate['user'];
-                    $CandidateInfos['table-color'] = 'table-success';
-                    $CandidateInfos['reason'] = $ReasonNeedsGreen;
-                    $CandidateInfos['verfuegbarkeit'] = 'Gewünscht';
-                    if($CandidateInfos['highest_bd_rank']>$RankCurrentBDType){
-                        $GreenListButTooHighBDrankList[] = $CandidateInfos;
+                    if($NeedsGreen){
+                        $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+                        $CandidateInfos['table-color'] = 'table-success';
+                        $CandidateInfos['reason'] = $ReasonNeedsGreen;
+                        $CandidateInfos['verfuegbarkeit'] = 'Gewünscht';
+                        if($CandidateInfos['highest_bd_rank']>$RankCurrentBDType){
+                            $GreenListButTooHighBDrankList[] = $CandidateInfos;
+                        } else {
+                            $GreenList[] = $CandidateInfos;
+                        }
+                        $GoodCandidateCounter++;
                     } else {
-                        $GreenList[] = $CandidateInfos;
+                        $CandidateInfos['userID'] = $firstListOfCandidate['user'];
+                        $CandidateInfos['table-color'] = '';
+                        $CandidateInfos['reason'] = '';
+                        $CandidateInfos['verfuegbarkeit'] = 'Verfügbar';
+                        if($CandidateInfos['highest_bd_rank']<$RankCurrentBDType){
+                            $BlankButTooHighBDrankList[] = $CandidateInfos;
+                        } else {
+                            $BlankList[] = $CandidateInfos;
+                        }
+                        $GoodCandidateCounter++;
                     }
-                    $GoodCandidateCounter++;
-                } else {
-                    $CandidateInfos['userID'] = $firstListOfCandidate['user'];
-                    $CandidateInfos['table-color'] = '';
-                    $CandidateInfos['reason'] = '';
-                    $CandidateInfos['verfuegbarkeit'] = 'Verfügbar';
-                    if($CandidateInfos['highest_bd_rank']<$RankCurrentBDType){
-                        $BlankButTooHighBDrankList[] = $CandidateInfos;
-                    } else {
-                        $BlankList[] = $CandidateInfos;
-                    }
-                    $GoodCandidateCounter++;
                 }
             }
         }

@@ -447,7 +447,7 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
     //Edit mode firstly highlights already assigned users and removes them from the red list
     if($EditMode){
         foreach($UserAssignmentsOnDay as $AssignedUser){
-            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['assignmentObject']['user'].'"></td><td>'.$AssignedUser['userNameLong'].'</td><td>'.$AssignedUser['highest_bd_rank_kuerzel'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['dienstbelastung'].'</td><td>'.$AssignedUser['assignmentObject']['create_comment'].'</td></tr>';
+            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['assignmentObject']['user'].'"></td><td>'.$AssignedUser['userNameLong'].'</td><td>'.$AssignedUser['highest_bd_rank_kuerzel'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['dienstbelastung'].'</td><td>'.$AssignedUser['reason'].'</td></tr>';
         }
     }
 
