@@ -298,13 +298,19 @@ function get_bd_type_infos_from_list($type, $AllBDTypes){
 
 }
 
-function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $Holidayweekend, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20){
+function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $AllBDTypes, $Holidayweekend, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20, $MaxDienstePerMonth = 4, $MaxDienstePenalty = 200){
 
+    $Answer = [];
     $Counter = 0;
 
     //Calculate SearchDates
     $FirstDayToConcider = date('Y-m-d', strtotime('- '.$WeeksPast.' weeks', $DateConcerned));
     $LastDayToConcider = date('Y-m-d', strtotime('+ '.$WeeksFuture.' weeks', $DateConcerned));
+
+    //Calculate Month Limit Dates for Counting Dienste/Month
+    $NumDiensteToConciderThisMonth = 0;
+    $FirstDayOfConcideredMonth = date('Y-m-01', $DateConcerned);
+    $LastDayOfConcideredMonth = date('Y-m-t', $DateConcerned);
 
     //Now parse all Einteilungen
     foreach ($AllBDeinteilungen as $Einteilung){
@@ -320,10 +326,31 @@ function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $Us
                     $Counter += $PenaltyWeekDay;
                 }
             }
+
+            //Count Anzahl Dienste in general, so we can punish adding more than allowed by regulations/tarifs
+            if(($Einteilung['day']>=$FirstDayOfConcideredMonth) && ($Einteilung['day']<=$LastDayOfConcideredMonth)){
+                $BDTypeInfos = get_bd_type_infos_from_list($Einteilung['bd_type'], $AllBDTypes);
+                if($BDTypeInfos['req_fza']==1){
+                    $NumDiensteToConciderThisMonth++;
+                } else {
+                    //see if there still is a max number of Diensttypes
+                    if($BDTypeInfos['max_per_month']>0){
+                        $NumDiensteToConciderThisMonth++;
+                    }
+                }
+            }
         }
     }
 
-    return $Counter;
+    //now penalize user if they already have a maximum of assignments in this month
+    if($NumDiensteToConciderThisMonth>=$MaxDienstePerMonth){
+        $Counter += $MaxDienstePenalty;
+    }
+
+    $Answer['penalty_points'] = $Counter;
+    $Answer['num_dienste_this_month'] = $NumDiensteToConciderThisMonth;
+
+    return $Answer;
 
 }
 
@@ -356,7 +383,9 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             $HRAssignments = get_users_highest_ranking_bd_assignments_on_certain_day($firstListOfCandidate['user'], $AllBDassignments, $AllBDTypes, $DateConcerned);
             $CandidateInfos['highest_bd_rank_kuerzel'] = $HRAssignments[0]['dienstgruppe'];
             $CandidateInfos['highest_bd_rank'] = $HRAssignments[0]['reihung'];
-            $CandidateInfos['dienstbelastung'] = calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $firstListOfCandidate['user'], $AllBDeinteilungen, $Holidayweekend);
+            $Dienstbelastung = calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $firstListOfCandidate['user'], $AllBDeinteilungen, $AllBDTypes, $Holidayweekend);
+            $CandidateInfos['dienstbelastung'] = $Dienstbelastung['penalty_points'];
+            $CandidateInfos['anzahl_dienste_monat'] = $Dienstbelastung['num_dienste_this_month'];
             $NeedsRed = false;
             $NeedsGreen = false;
             $HasExactlyThisAssignment = false;
@@ -407,6 +436,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                         $Assignment['userNameLong'] = $CandidatePersonalInfos['nachname'].', '.$CandidatePersonalInfos['vorname'];
                         $Assignment['highest_bd_rank_kuerzel'] = $CandidateInfos['highest_bd_rank_kuerzel'];
                         $Assignment['dienstbelastung'] = $CandidateInfos['dienstbelastung'];
+                        $Assignment['anzahl_dienste_monat'] = $Dienstbelastung['num_dienste_this_month'];
                         $Assignment['assignmentObject'] = $firstListOfCandidate;
                         $Assignment['reason'] = $EinteilungenToday['create_comment'];
                         $Assignments[] = $Assignment;
@@ -862,6 +892,14 @@ function bd_automatik(){
                             //Check if User is unavailable due to Abwesenheit
                             $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($user['user'], $AllAbwesenheiten, $CurrentDay);
                             if(sizeof($AbwesenheitCheck)>0){
+                                $Count++;
+                            }
+
+                            //Check if User hay already reached max. amount of assignments this month!
+                            $Holidayweekend = day_is_a_weekend_or_holiday($CurrentDay);
+                            $Dienstbelastung = calculate_users_dienstbelastung_points_on_given_day($CurrentDay, $user['user'], $AllBDeinteilungen, $AllBDTypes, $Holidayweekend);
+                            $PenaltyPoints = $Dienstbelastung['penalty_points'];
+                            if($PenaltyPoints>=200){
                                 $Count++;
                             }
 

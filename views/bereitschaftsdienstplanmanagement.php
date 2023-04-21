@@ -441,18 +441,18 @@ function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList
     $buildPopupBody = '<!-- Modal body -->
       <div class="modal-body">
 		<table class="table">
-			<thead><th></th><th>Name</th><th>Dienstgruppe</th><th>Verfügbarkeit</th><th>Auslastung</th><th>Grund/Kommentar</th></thead>
+			<thead><th></th><th>Name</th><th>Dienstgruppe</th><th>Verfügbarkeit</th><th>Auslastungspunkte</th><th>Anzahl Bereitschaftsdienste diesen Monat</th><th>Grund/Kommentar</th></thead>
 			<tbody>';
 
     //Edit mode firstly highlights already assigned users and removes them from the red list
     if($EditMode){
         foreach($UserAssignmentsOnDay as $AssignedUser){
-            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['assignmentObject']['user'].'"></td><td>'.$AssignedUser['userNameLong'].'</td><td>'.$AssignedUser['highest_bd_rank_kuerzel'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['dienstbelastung'].'</td><td>'.$AssignedUser['reason'].'</td></tr>';
+            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['assignmentObject']['user'].'"></td><td>'.$AssignedUser['userNameLong'].'</td><td>'.$AssignedUser['highest_bd_rank_kuerzel'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['dienstbelastung'].'</td><td>'.$AssignedUser['anzahl_dienste_monat'].'</td><td>'.$AssignedUser['reason'].'</td></tr>';
         }
     }
 
     foreach ($CandidatesList as $CandidateItem){
-        $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['highest_bd_rank_kuerzel'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['dienstbelastung'].'</td><td>'.$CandidateItem['reason'].'<input type="hidden" name="comment_chosen_user_'.$CandidateItem['userID'].'" value="'.$CandidateItem['reason'].'"></input></td></tr>';
+        $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['highest_bd_rank_kuerzel'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['dienstbelastung'].'</td><td>'.$CandidateItem['anzahl_dienste_monat'].'</td><td>'.$CandidateItem['reason'].'<input type="hidden" name="comment_chosen_user_'.$CandidateItem['userID'].'" value="'.$CandidateItem['reason'].'"></input></td></tr>';
     }
 
     $buildPopupBody .= '</tbody>
