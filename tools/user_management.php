@@ -87,7 +87,7 @@ function edit_user($SelectedUser, $Vorname, $Nachname, $UEdefault, $Mitarbeitern
         if(empty($InactiveDate)){
             $stmt->bind_param("ssissssiisii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $SelectedUser);
         } else {
-            $stmt->bind_param("ssissssiisiisi", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $SelectedUser, $InactiveDate, $CurrentUserID);
+            $stmt->bind_param("ssissssiisisii", $Username, $Mail, $Mitarbeiternummer, $Vorname, $Nachname, $AbteilungRollen, $ToolRollen, $Vertrag, $Urlaubstage, $FreieTage, $UEdefault, $InactiveDate, $CurrentUserID, $SelectedUser);
         }
 
         // Attempt to execute the prepared statement

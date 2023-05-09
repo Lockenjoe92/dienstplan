@@ -146,3 +146,18 @@ function grid_gap_generator($HTML, $GapSize=2){
     return '<div class="d-grid gap-'.$GapSize.'">'.$HTML.'</div>';
 
 }
+
+function accordion_builder($HTML){
+
+    $Answer = '<div class="accordion">'.$HTML.'</div>';
+
+}
+
+function accordion_item_builder($Header, $ContentHTML, $AlwaysOpen=false){
+
+    $Answer = '<div class="accordion-item">';
+    $Answer .= '</div>';
+
+    $Answer .= '</div>';
+    return $Answer;
+}

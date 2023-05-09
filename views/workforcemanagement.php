@@ -345,7 +345,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $urlaubPlaceholder = trim($_POST['urlaub']);
             $RollenPlaceholder = $_POST['nutzergruppen'];
             $InactiveDatePlaceholder = $_POST['inaktive_date'];
-            $SondereinteilungenPlaceholder = $_POST['sondereinteilungen'];
+            #$SondereinteilungenPlaceholder = $_POST['sondereinteilungen'];
             if(isset($_POST['free_days'])){
                 $freieTagePlaceholder = $_POST['free_days'];
             }
@@ -397,10 +397,12 @@ function edit_user_workforce_management($mysqli, $admin=false){
                 $DAUcheck++;
             }
 
-            if(!$admin){
-                if(time()>strtotime($InactiveDatePlaceholder)){
-                    $inactiveErr = "Ein/e Mitarbeiter/in kann nicht nachträglich, sondern nur geplant inaktiviert werden! Bitte kontaktieren Sie den Administrator oder überprüfen die Eingabe.";
-                    $DAUcheck++;
+            if(strtotime($InactiveDatePlaceholder)!=strtotime('')){
+                if(!$admin){
+                    if(time()>strtotime($InactiveDatePlaceholder)){
+                        $inactiveErr = "Ein/e Mitarbeiter/in kann nicht nachträglich, sondern nur geplant inaktiviert werden! Bitte kontaktieren Sie den Administrator oder überprüfen die Eingabe.";
+                        $DAUcheck++;
+                    }
                 }
             }
 
@@ -484,7 +486,13 @@ function edit_user_workforce_management($mysqli, $admin=false){
                     $freieTagePlaceholder = implode(',',$freieTagePlaceholder);
                 }
 
-                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $uePlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder, );
+                if(strtotime($InactiveDatePlaceholder)==strtotime('')){
+                    $InactiveDatePlaceholder = '';
+                } else {
+                    $InactiveDatePlaceholder = $InactiveDatePlaceholder." 00:00:01";
+                }
+
+                $Result = edit_user($SelectedUserID, $vornamePlaceholder, $nachnamePlaceholder, $uePlaceholder, $mitarbeiternummerPlaceholder, $mailPlaceholder, $GruppePlaceholder, $RollenPlaceholder, $vertragPlaceholder, $urlaubPlaceholder, $freieTagePlaceholder, false, $InactiveDatePlaceholder);
                 if($Result['success']){
                     $ReturnMessage = "Nutzer/in ".$vornamePlaceholder." ".$nachnamePlaceholder." erfolgreich bearbeitet!";
                 } else {
@@ -514,7 +522,7 @@ function edit_user_workforce_management($mysqli, $admin=false){
             $FormHTML .= form_group_dropdown_unterabteilungen('Gehört primär zu Unterabteilung', 'ue', $uePlaceholder, true, $ueErr, false);
 
             // UE Sondereinteilung
-            $FormHTML .= form_group_dropdown_sondereinteilungen_unterabteilungen('Sondereinteilungen', 'sondereinteilungen', $SondereinteilungenPlaceholder, false, $sondereinteilungenErr, false);
+            $FormHTML .= form_group_dropdown_sondereinteilungen_unterabteilungen('Sondereinteilungen', 'sondereinteilungen[]', $SondereinteilungenPlaceholder, false, $sondereinteilungenErr, false);
             if(sizeof($SondereinteilungenPlaceholder)>0){
                 $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_sondereinteilung_action', 'btn-primary', true, 'Bearbeiten', 'edit_user_sondereinteilung_action', 'btn-primary', true, 'Löschen', 'delete_user_sondereinteilung_action', 'btn-danger');
             } else {
@@ -529,15 +537,19 @@ function edit_user_workforce_management($mysqli, $admin=false){
                 $FormHTML .= form_group_sondereinteilungen_buttons(true, 'Hinzufügen', 'add_user_dienstgruppe_action', 'btn-primary', false, 'Bearbeiten', 'edit_user_dienstgruppe_action', 'btn-primary', false, 'Löschen', 'delete_user_dienstgruppe_action', 'btn-danger');
             }
 
+            // User Inactivation
             $FormHTML .= form_hidden_input_generator('user_id', $SelectedUserID);
             $FormHTML .= form_group_input_date('Mitarbeiterin inaktiv ab', 'inaktive_date', $InactiveDatePlaceholder, true, $inactiveErr);
 
+            // Admin Mode Controls
             if($admin) {
                 $FormHTML .= form_group_dropdown_toolrollen('Tool-Rollen', 'nutzergruppen[]', $RollenPlaceholder, false, $rollenErr, false);
             } else {
                 $RollenPlaceholder = implode(',',$RollenPlaceholder);
                 $FormHTML .= form_hidden_input_generator('nutzergruppen[]', $RollenPlaceholder);
             }
+
+            // Action Buttons
             $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_user_action', 'btn-primary', true, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
             $FormHTML .= form_group_continue_return_buttons(true, 'Passwort zurücksetzen', 'reset_user_password_action', 'btn-danger', false, 'Zurück', 'workforcemanagement_go_back', 'btn-primary');
 
