@@ -162,7 +162,7 @@ function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, 
     $Counter = 0;
     foreach ($FoundRelevantEventsOnSelectedDay as $RelevantItems) {
         $Numerator = $Counter + 1;
-        $ItemInfos = "(".$Numerator.") ".$RelevantItems['name'].": ".$RelevantItems['details'];
+        $ItemInfos = "(".$Numerator.") ".htmlspecialchars($RelevantItems['name']).": ".htmlspecialchars($RelevantItems['details']);
         if($Counter > 0){
             $TooltipContent .= '  ---  ';
         }
@@ -195,10 +195,10 @@ function add_department_event_management($mysqli){
 
     # Populate Placeholders if action is clicked
     if(isset($_POST['add_department_event_action_action'])){
-        $namePlaceholder = $_POST['name'];
+        $namePlaceholder = htmlspecialchars($_POST['name']);
         $beginPlaceholder = $_POST['begin'];
         $endPlaceholder = $_POST['end'];
-        $detailPlaceholder = $_POST['details'];
+        $detailPlaceholder = htmlspecialchars($_POST['details']);
 
         # Do some checks
         if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
@@ -283,19 +283,19 @@ function edit_department_event_management($mysqli, $selectedID=0){
     $DAUcount = 0;
     $ShowReturn = false;
     $ReturnMessage = '';
-    $namePlaceholder = $EventInfos['name'];
+    $namePlaceholder = htmlspecialchars($EventInfos['name']);
     $beginPlaceholder = $EventInfos['begin'];
     $endPlaceholder = $EventInfos['end'];
-    $detailPlaceholder = $EventInfos['details'];
+    $detailPlaceholder = htmlspecialchars($EventInfos['details']);
     $beginErr = $endErr = $nameErr = "";
 
     # Populate Placeholders if action is clicked
     if(isset($_POST['edit_department_event_action_action'])){
 
-        $namePlaceholder = $_POST['name'];
+        $namePlaceholder = htmlspecialchars($_POST['name']);
         $beginPlaceholder = $_POST['begin'];
         $endPlaceholder = $_POST['end'];
-        $detailPlaceholder = $_POST['details'];
+        $detailPlaceholder = htmlspecialchars($_POST['details']);
 
         # Do some checks
         if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
@@ -382,16 +382,16 @@ function delete_department_event_management($mysqli, $selectedID=0){
     $DAUcount = 0;
     $ShowReturn = false;
     $ReturnMessage = '';
-    $namePlaceholder = $EventInfos['name'];
+    $namePlaceholder = htmlspecialchars($EventInfos['name']);
     $beginPlaceholder = $EventInfos['begin'];
     $endPlaceholder = $EventInfos['end'];
-    $detailPlaceholder = $EventInfos['details'];
+    $detailPlaceholder = htmlspecialchars($EventInfos['details']);
     $deleteCommentPlaceholder = $beginErr = $endErr = $nameErr = "";
 
     # Populate Placeholders if action is clicked
     if(isset($_POST['delete_department_event_action_action'])){
 
-        $deleteCommentPlaceholder = $_POST['delete_comment'];
+        $deleteCommentPlaceholder = htmlspecialchars($_POST['delete_comment']);
 
         if($DAUcount==0){
             # edit entry in db

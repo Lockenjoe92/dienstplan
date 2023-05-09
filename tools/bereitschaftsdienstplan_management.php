@@ -399,7 +399,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
             if(sizeof($AbwesenheitCheck)>0){
                 $NeedsRed = true;
                 $VerfuegbarkeitRed = $AbwesenheitCheck['type'];
-                $ReasonNeedsRed = $AbwesenheitCheck['create_comment'];
+                $ReasonNeedsRed = htmlspecialchars($AbwesenheitCheck['create_comment']);
             }
 
             //Check for Teilzeitfrei
@@ -417,7 +417,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                 $NeedsRed = true;
                 $WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $NegativeWishCheck['type']);
                 $VerfuegbarkeitRed = $WishTypeDetails['name'];
-                $ReasonNeedsRed = $NegativeWishCheck['create_comment'];
+                $ReasonNeedsRed = htmlspecialchars($NegativeWishCheck['create_comment']);
             }
 
             //Check if user already has a FZA today
@@ -447,7 +447,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                         $Assignment['dienstbelastung'] = $CandidateInfos['dienstbelastung'];
                         $Assignment['anzahl_dienste_monat'] = $Dienstbelastung['num_dienste_this_month'];
                         $Assignment['assignmentObject'] = $firstListOfCandidate;
-                        $Assignment['reason'] = $EinteilungenToday['create_comment'];
+                        $Assignment['reason'] = htmlspecialchars($EinteilungenToday['create_comment']);
                         $Assignments[] = $Assignment;
                     }
                 }
@@ -482,7 +482,7 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
                         $PositiveWishCheck = $PositiveWishCheck[0];
                         $NeedsGreen = true;
                         #$WishTypeDetails = get_wunschtype_details_by_type_id($AllWishTypes, $PositiveWishCheck['type']);
-                        $ReasonNeedsGreen = $PositiveWishCheck['create_comment'];
+                        $ReasonNeedsGreen = htmlspecialchars($PositiveWishCheck['create_comment']);
                     }
 
                     if($NeedsGreen){
@@ -692,7 +692,7 @@ function parse_add_bd_entry($mysqli){
 
     $Date = $_POST['date_concerned'];
     $BDtype = $_POST['bd_type'];
-    $comment = $_POST['comment'];
+    $comment = htmlspecialchars($_POST['comment']);
     $User = 0;
 
     for($a=1;$a<=1000;$a++){
@@ -704,7 +704,7 @@ function parse_add_bd_entry($mysqli){
     }
 
     if(empty($comment)){
-        $comment = $_POST['comment_chosen_user_'.$User];
+        $comment = htmlspecialchars($_POST['comment_chosen_user_'.$User]);
     }
 
     $Parser = add_bd_entry($mysqli, $User, $Date, $BDtype, $comment);
@@ -729,7 +729,7 @@ function parse_delete_bd_entry($mysqli){
 
     $Date = $_POST['date_concerned'];
     $BDtype = $_POST['bd_type'];
-    $comment = $_POST['comment'];
+    $comment = htmlspecialchars($_POST['comment']);
     $User = 0;
 
     for($a=1;$a<=1000;$a++){
@@ -770,7 +770,7 @@ function parse_edit_bd_entry($mysqli){
 
     $Date = $_POST['date_concerned'];
     $BDtype = $_POST['bd_type'];
-    $comment = $_POST['comment'];
+    $comment = htmlspecialchars($_POST['comment']);
     $User = $OldUser = 0;
 
     for($a=1;$a<=1000;$a++){
@@ -794,7 +794,7 @@ function parse_edit_bd_entry($mysqli){
             $Parser = delete_bd_entry($mysqli, $OldUser, $Date, $BDtype, $comment);
             if($Parser['success']){
                 if(empty($comment)){
-                    $comment = $_POST['comment_chosen_user_'.$User];
+                    $comment = htmlspecialchars($_POST['comment_chosen_user_'.$User]);
                 }
                 $Parser2 = add_bd_entry($mysqli, $User, $Date,  $BDtype, $comment);
                 if($Parser2['success']){

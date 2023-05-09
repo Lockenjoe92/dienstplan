@@ -102,9 +102,9 @@ function add_user_workforce_management($mysqli){
     // Parser
     if(isset($_POST['add_user_action'])){
 
-        $vornamePlaceholder = trim($_POST['vorname']);
-        $nachnamePlaceholder = trim($_POST['nachname']);
-        $mitarbeiternummerPlaceholder = trim($_POST['mitarbeiternummer']);
+        $vornamePlaceholder = htmlspecialchars(trim($_POST['vorname']));
+        $nachnamePlaceholder = htmlspecialchars(trim($_POST['nachname']));
+        $mitarbeiternummerPlaceholder = htmlspecialchars(trim($_POST['mitarbeiternummer']));
         $mailPlaceholder = trim($_POST['mail']);
         #$edvPlaceholder = trim($_POST['edv']);
         $GruppePlaceholder = trim($_POST['gruppe']);
@@ -334,9 +334,9 @@ function edit_user_workforce_management($mysqli, $admin=false){
         // Parser
         if(isset($_POST['edit_user_action'])){
 
-            $vornamePlaceholder = trim($_POST['vorname']);
-            $nachnamePlaceholder = trim($_POST['nachname']);
-            $mitarbeiternummerPlaceholder = trim($_POST['mitarbeiternummer']);
+            $vornamePlaceholder = htmlspecialchars(trim($_POST['vorname']));
+            $nachnamePlaceholder = htmlspecialchars(trim($_POST['nachname']));
+            $mitarbeiternummerPlaceholder = htmlspecialchars(trim($_POST['mitarbeiternummer']));
             $mailPlaceholder = trim($_POST['mail']);
             #$edvPlaceholder = trim($_POST['edv']);
             $uePlaceholder = trim($_POST['ue']);
@@ -667,7 +667,7 @@ function add_user_sondereinteilung_management($mysqli){
         $uePlaceholder = $_POST['ue_chosen'];
         $beginPlaceholder = $_POST['begin'];
         $endPlaceholder = $_POST['end'];
-        $commentPlaceholder = $_POST['comment'];
+        $commentPlaceholder = htmlspecialchars($_POST['comment']);
 
 		# Do some checks
 		if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
@@ -750,7 +750,7 @@ function edit_user_sondereinteilung_management($mysqli){
     $uePlaceholder = $AssignmentInfos['department'];
     $beginPlaceholder = $AssignmentInfos['begin'];
     $endPlaceholder = $AssignmentInfos['end'];
-    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $commentPlaceholder = htmlspecialchars($AssignmentInfos['create_comment']);
     $ueErr = $beginErr = $endErr = '';
     $DAUcount = 0;
     $ShowReturn = false;
@@ -759,7 +759,7 @@ function edit_user_sondereinteilung_management($mysqli){
         $uePlaceholder = $_POST['ue_chosen'];
         $beginPlaceholder = $_POST['begin'];
         $endPlaceholder = $_POST['end'];
-        $commentPlaceholder = $_POST['comment'];
+        $commentPlaceholder = htmlspecialchars($_POST['comment']);
 
         # Do some checks
         if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
@@ -841,7 +841,7 @@ function delete_user_sondereinteilung_management($mysqli){
     $uePlaceholder = $AssignmentInfos['department'];
     $beginPlaceholder = $AssignmentInfos['begin'];
     $endPlaceholder = $AssignmentInfos['end'];
-    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $commentPlaceholder = htmlspecialchars($AssignmentInfos['create_comment']);
     $ueErr = $beginErr = $endErr = "";
     $DAUcount = 0;
     $ShowReturn = false;
@@ -908,7 +908,7 @@ function add_user_dienstgruppe_management($mysqli){
         if(empty($endPlaceholder)){
             $endPlaceholder = "2099-12-31";
         }
-        $commentPlaceholder = $_POST['comment'];
+        $commentPlaceholder = htmlspecialchars($_POST['comment']);
 
         # Do some checks
         if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
@@ -979,7 +979,7 @@ function edit_user_dienstgruppe_management($mysqli){
     $bdPlaceholder = $AssignmentInfos['bd_type'];
     $beginPlaceholder = $AssignmentInfos['begin'];
     $endPlaceholder = $AssignmentInfos['end'];
-    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $commentPlaceholder = htmlspecialchars($AssignmentInfos['create_comment']);
     $bdErr = $beginErr = $endErr = '';
     $DAUcount = 0;
     $ShowReturn = false;
@@ -988,7 +988,7 @@ function edit_user_dienstgruppe_management($mysqli){
         $bdPlaceholder = $_POST['bd_chosen'];
         $beginPlaceholder = $_POST['begin'];
         $endPlaceholder = $_POST['end'];
-        $commentPlaceholder = $_POST['comment'];
+        $commentPlaceholder = htmlspecialchars($_POST['comment']);
 
         # Do some checks
         if(strtotime($endPlaceholder)<strtotime($beginPlaceholder)){
@@ -1058,7 +1058,7 @@ function delete_user_dienstgruppe_management($mysqli){
     $bdPlaceholder = $AssignmentInfos['bd_type'];
     $beginPlaceholder = $AssignmentInfos['begin'];
     $endPlaceholder = $AssignmentInfos['end'];
-    $commentPlaceholder = $AssignmentInfos['create_comment'];
+    $commentPlaceholder = htmlspecialchars($AssignmentInfos['create_comment']);
     $DeleteCommentPlaceholder = "";
     $ueErr = $beginErr = $endErr = "";
     $DAUcount = 0;
@@ -1067,7 +1067,7 @@ function delete_user_dienstgruppe_management($mysqli){
     if(isset($_POST['delete_user_dienstgruppe_action_action'])){
 
         $bdPlaceholder = $_POST['bd_chosen'];
-        $DeleteCommentPlaceholder = $_POST['delete_comment'];
+        $DeleteCommentPlaceholder = htmlspecialchars($_POST['delete_comment']);
 
         if($DAUcount==0){
             $ReturnVals = delete_user_dienstgruppe_zugehoerigkeit($mysqli, $AssignmentID, $DeleteCommentPlaceholder);

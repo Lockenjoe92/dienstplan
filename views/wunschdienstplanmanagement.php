@@ -171,14 +171,14 @@ data-show-multi-sort="true"
                 $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Wunsch['date'].'</td>';
                 $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
                 $HTML .= '<td>'.$WunschType['name'].'</td>';
-                $HTML .= '<td>'.$Wunsch['create_comment'].'</td>';
+                $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
                 $HTML .= '<td>'.date('Y-m-d',strtotime($Wunsch['create_time'])).'</td>';
                 $HTML .= '<td> '.$Options.'</td>';
             } else {
                 $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Wunsch['date'].'</td>';
                 $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
                 $HTML .= '<td>'.$WunschType['name'].'</td>';
-                $HTML .= '<td>'.$Wunsch['create_comment'].'</td>';
+                $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
                 $HTML .= '<td>'.date('Y-m-d',strtotime($Wunsch['create_time'])).'</td>';
                 $HTML .= '<td> '.$Options.'</td>';
             }
@@ -416,7 +416,7 @@ function add_dienstwunsch_user($mysqli){
         // Load Form content
         $DatePlaceholder = trim($_POST['date']);
         $typePlaceholder = trim($_POST['type']);
-        $commentPlaceholder = trim($_POST['comment_user']);
+        $commentPlaceholder = htmlspecialchars(trim($_POST['comment_user']));
 
         // Do some DAU-Checks here
         // Check fucked up date entries
@@ -465,7 +465,7 @@ function add_dienstwunsch_user($mysqli){
         }
 
         // Don't permit users to submit wishes x Months in advance
-        $DateLastPossibleEntry = get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths);
+        $DateLastPossibleEntry = get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths, $DatePlaceholder);
         if($DateLastPossibleEntry>$DatePlaceholder){
             $DAUcheck++;
             // Make Pretty Month Name
@@ -539,7 +539,7 @@ function add_dienstwunsch_management($mysqli){
         $DatePlaceholder = trim($_POST['date']);
         $ApplicationDatePlaceholder = trim($_POST['application_date']);
         $typePlaceholder = trim($_POST['type']);
-        $commentPlaceholder = trim($_POST['comment_user']);
+        $commentPlaceholder = htmlspecialchars(trim($_POST['comment_user']));
 
         // Do some DAU-Checks here
         // Check fucked up date entries
@@ -630,13 +630,13 @@ function delete_dienstwunsch_user($mysqli, $dienstwunsch){
     $ReturnMessage = "";
     $DatePlaceholder = $dienstwunsch['date'];
     $typePlaceholder =  $dienstwunsch['type'];
-    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $commentPlaceholder = htmlspecialchars($dienstwunsch['create_comment']);
     $DateErr = "";
 
     // Do stuff
     if(isset($_POST['delete_dienstwunsch_action'])){
 
-        // Do some DAU-Checks here
+        // Do some DAU-Checks here´
         if($DAUcheck==0){
 
             $DeleteComment = "Von MitarbeiterIn gelöscht";
@@ -682,7 +682,7 @@ function delete_dienstwunsch_management($mysqli, $dienstwunsch){
     $UserPlaceholder = $dienstwunsch['user'];
     $DatePlaceholder = $dienstwunsch['date'];
     $typePlaceholder =  $dienstwunsch['type'];
-    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $commentPlaceholder = htmlspecialchars($dienstwunsch['create_comment']);
     $DateErr = $DeleteCommentErr = "";
 
     // Implement multi OrgUE Sites
@@ -695,7 +695,7 @@ function delete_dienstwunsch_management($mysqli, $dienstwunsch){
     // Do stuff
     if(isset($_POST['delete_dienstwunsch_action'])){
 
-        $DeleteComment = trim($_POST['delete_comment']);
+        $DeleteComment = htmlspecialchars(trim($_POST['delete_comment']));
 
         if(empty($DeleteComment)){
             $DAUcheck++;
@@ -751,13 +751,13 @@ function edit_dienstwunsch_user($mysqli, $dienstwunsch){
     $ReturnMessage = "";
     $DatePlaceholder = $dienstwunsch['date'];
     $typePlaceholder =  $dienstwunsch['type'];
-    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $commentPlaceholder = htmlspecialchars($dienstwunsch['create_comment']);
     $DateErr = "";
 
     // Do stuff
     if(isset($_POST['edit_dienstwunsch_action'])){
 
-        $commentPlaceholder = trim($_POST['comment_user']);
+        $commentPlaceholder = htmlspecialchars(trim($_POST['comment_user']));
 
         // Do some DAU-Checks here
         if($DAUcheck==0){
@@ -806,7 +806,7 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch){
     $DatePlaceholder = $dienstwunsch['date'];
     $userIDPlaceholder = $dienstwunsch['user'];
     $typePlaceholder =  $dienstwunsch['type'];
-    $commentPlaceholder =  $dienstwunsch['create_comment'];
+    $commentPlaceholder = htmlspecialchars($dienstwunsch['create_comment']);
     $DateErr = $TypeErr = $CommentErr = "";
 
     // Implement multi OrgUE Sites
@@ -820,7 +820,7 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch){
     if(isset($_POST['edit_dienstwunsch_action'])){
 
         $typePlaceholder = trim($_POST['type']);
-        $commentPlaceholder = trim($_POST['comment_user']);
+        $commentPlaceholder = htmlspecialchars(trim($_POST['comment_user']));
 
         if(strlen($dienstwunsch['create_comment'])>strlen($commentPlaceholder)){
             $DAUcheck++;
@@ -973,7 +973,7 @@ function populate_day_wuup_tabelle_management($Day,$User,$AllAbwesenheiten,$AllW
 
                         // Generate Tooltip if Wish has a comment
                         if($wish['create_comment']!=''){
-                            $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$wish['create_comment'].'">'.$wishType['name_short'].'</a>';
+                            $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($wish['create_comment']).'">'.$wishType['name_short'].'</a>';
                         } else {
                             $Content = $wishType['name_short'];
                         }

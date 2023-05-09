@@ -401,7 +401,7 @@ function populate_day_urlaubsplan_tabelle_management($Day,$User,$AllAbwesenheite
 
                 // Generate Tooltip if Antrag has a comment
                 if($Abwesenheit['create_comment']!=''){
-                    $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'">'.$Kuerzel.'</a>';
+                    $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'">'.$Kuerzel.'</a>';
                 } else {
                     $Content = $Kuerzel;
                 }
@@ -487,7 +487,7 @@ function populate_day_urlaubsplan_tabelle_user($Day,$UserID,$AllAbwesenheiten,$R
 
                 // Generate Tooltip if Antrag has a comment
                 if($Abwesenheit['create_comment']!=''){
-                    $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'">'.$Kuerzel.'</a>';
+                    $Content = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'">'.$Kuerzel.'</a>';
                 } else {
                     $Content = $Kuerzel;
                 }

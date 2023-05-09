@@ -59,7 +59,7 @@ function bereitschaftsdienstplan_funktionsbuttons_management($Month,$Year,$diens
     }
     $FORMhtmlFreigabe .= "</div>";
 
-
+    $FORMhtml = $FORMhtmlDate.$FORMhtmlAutomatik.$FORMhtmlFreigabe;
 
     $HTML = container_builder(form_builder($FORMhtml, 'self', 'POST'));
 

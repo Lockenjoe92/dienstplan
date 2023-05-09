@@ -119,7 +119,7 @@ data-show-multi-sort="true"
 
         // Optionally show comments
         if($Abwesenheit['create_comment']!=''){
-            $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'"><i class="bi bi-megaphone-fill"></i></a>';
+            $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'"><i class="bi bi-megaphone-fill"></i></a>';
         } else {
             $Comment = '';
         }
@@ -132,7 +132,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-            $HTML .= '<td>'.$Options.$Comment.'</td>';
+            $HTML .= '<td>'.$Options.htmlspecialchars($Comment).'</td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Abwesenheit['status_bearbeitung'].'</td>';
             $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
@@ -141,7 +141,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-            $HTML .= '<td>'.$Options.$Comment.'</td>';
+            $HTML .= '<td>'.$Options.htmlspecialchars($Comment).'</td>';
         }
 
         // close row and count up
@@ -260,7 +260,7 @@ data-show-multi-sort="true"
 
             // Optionally show comments
             if($Abwesenheit['create_comment']!=''){
-                $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Abwesenheit['create_comment'].'"><i class="bi bi-megaphone-fill"></i></a>';
+                $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'"><i class="bi bi-megaphone-fill"></i></a>';
             } else {
                 $Comment = '';
             }
