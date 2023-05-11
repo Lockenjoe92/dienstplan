@@ -2,44 +2,43 @@
 
 function session_manager($requiredRole='nutzer'){
 
-    // Initialize stuff
-    session_start();
-    $mysqli = connect_db();
-    $Validated = session_valid($mysqli, $_SESSION['user'], $_SESSION['secret']);
+        // Initialize stuff
+        session_start();
+        $mysqli = connect_db();
+        $Validated = session_valid($mysqli, $_SESSION['user'], $_SESSION['secret']);
 
-    if(!$Validated){
-        // Session could not be verified
-        session_destroy();
-        header("location: login.php?err_mode=1");
-        exit;
-    } else {
-
-        // Check TTL
-        if(strtotime($Validated) < time()){
-
-            // Session has timed out
+        if(!$Validated){
+            // Session could not be verified
             session_destroy();
-            header("location: login.php?err_mode=2");
+            header("location: welcome.php?mode=unvalidated");
             exit;
-
         } else {
 
-            // Session is valid an has not timed out - now check if user has necessary privileges
-            $Nutzergruppen = load_user_usergroups($mysqli, $_SESSION['user']);
-            if(in_array($requiredRole,explode(',', $Nutzergruppen))){
-                // Renew Session TTL and then return Nutzergruppen for NavBar generation purposes
-                session_renew($mysqli, $_SESSION['user'], $_SESSION['secret']);
-                return $Nutzergruppen;
-            } else {
+            // Check TTL
+            if(strtotime($Validated) < time()){
 
-                // User is logged in and in a valid session, but lacks permissions -> send them back to dashboard
-                header("location: dashboard.php");
+                // Session has timed out
+                session_destroy();
+                header("location: login.php?mode=timeout");
                 exit;
 
+            } else {
+
+                // Session is valid an has not timed out - now check if user has necessary privileges
+                $Nutzergruppen = load_user_usergroups($mysqli, $_SESSION['user']);
+                if(in_array($requiredRole,explode(',', $Nutzergruppen))){
+                    // Renew Session TTL and then return Nutzergruppen for NavBar generation purposes
+                    session_renew($mysqli, $_SESSION['user'], $_SESSION['secret']);
+                    return $Nutzergruppen;
+                } else {
+
+                    // User is logged in and in a valid session, but lacks permissions -> send them back to dashboard
+                    header("location: dashboard.php");
+                    exit;
+
+                }
             }
         }
-
-    }
 }
 
 function session_valid($mysqli, $User, $Secret){

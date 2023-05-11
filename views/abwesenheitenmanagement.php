@@ -132,7 +132,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-            $HTML .= '<td>'.$Options.htmlspecialchars($Comment).'</td>';
+            $HTML .= '<td>'.$Options.$Comment.'</td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Abwesenheit['status_bearbeitung'].'</td>';
             $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
@@ -141,7 +141,7 @@ data-show-multi-sort="true"
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
             $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-            $HTML .= '<td>'.$Options.htmlspecialchars($Comment).'</td>';
+            $HTML .= '<td>'.$Options.$Comment.'</td>';
         }
 
         // close row and count up

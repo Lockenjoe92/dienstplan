@@ -502,9 +502,9 @@ function table_bereitschaftsdienstplan_user($mysqli,$CurrentUser,$SelectedMonth=
 
     if(sizeof($BDFreigaben)==1){
         if(($SelectedMonth=='') && ($SelectedYear=='')){
-            $BeginDate = "01-".date('m-Y');
+            $BeginDate = date('Y-m-01');
         } else {
-            $BeginDate = "01-".$SelectedMonth."-".$SelectedYear;
+            $BeginDate = $SelectedYear."-".$SelectedMonth."-01";
         }
         $EndDate = date("Y-m-t", strtotime($BeginDate));
 

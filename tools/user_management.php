@@ -150,8 +150,8 @@ function reset_user_password($mysqli, $UserObj, $SendMail=true){
 }
 
 function get_current_user_id(){
-    session_start();
-    return $_SESSION['user'];
+        session_start();
+        return $_SESSION['user'];
 }
 
 function get_sorted_list_of_all_users($mysqli, $orderBy='nachname ASC', $includeInactive=false, $MinDate='2050-12-31 23:59:59'){

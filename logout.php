@@ -1,14 +1,29 @@
 <?php
-// Initialize the session
-session_start();
+// Include config file
+include_once "./config/dependencies.php";
+require __DIR__ . '/jumbojett/vendor/autoload.php';
+use Jumbojett\OpenIDConnectClient;
+
+if(LOGINMODE=='OIDC'){
+
+    // Initialize the session
+    session_start();
+    session_destroy();
+    header("location: welcome.php?mode=logout");
+
+} else {
+    // Initialize the session
+    session_start();
 
 // Unset all of the session variables
-$_SESSION = array();
+    $_SESSION = array();
 
 // Destroy the session.
-session_destroy();
+    session_destroy();
 
 // Redirect to login page
-header("location: login.php");
-exit;
+    header("location: login.php");
+    exit;
+}
+
 ?>
