@@ -1,6 +1,11 @@
 <?php
 include_once "config/dependencies.php";
 
+// Prevent PSWD-Change when OIDC is activated
+if(LOGINMODE=='OIDC'){
+    header('location: dashboard.php');
+}
+
 // Build content
 $HTML = "<h1 class='align-content-center'>Passwort ändern</h1>";
 

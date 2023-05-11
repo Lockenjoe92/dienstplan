@@ -172,7 +172,7 @@ function bereitschaftsdienstplan_table_users($Month,$Year,$Freigaben=[]){
     $mysqli = connect_db();
     $SearchDate = $Year."-".$Month."-01";
     $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
-    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', true, $LastDayOfConcideredMonth);
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
     $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
@@ -497,6 +497,7 @@ function table_bereitschaftsdienstplan_user($mysqli,$CurrentUser,$SelectedMonth=
     $Einteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
     $BDtypen = get_list_of_all_bd_types($mysqli);
     $BDFreigaben = lade_bd_freigabestatus_monat(date('m'), date('Y'));
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'nachname ASC', true);
     #$Wuensche = get_sorted_list_of_all_dienstplanwünsche($mysqli, false);
     #$Wunschtypen = get_list_of_all_dienstplanwunsch_types($mysqli);
 
@@ -521,7 +522,7 @@ data-show-columns="true"
                 <tr class="tr-class-1">
                     <th data-field="day" data-sortable="true">Tag</th>
                     <th data-field="type" data-sortable="true">Diensttyp</th>
-                    <th>Optionen</th>
+                    <th>Team</th>
                 </tr>
               </thead>';
 
@@ -540,19 +541,24 @@ data-show-columns="true"
                     }
 
 
-                    // Build edit/delete Buttons
+                    // Build Team Information
                     $Options = '';
+                    $GetTeamOnDay = get_bd_colleagues_on_assignment_day($Einteilungen, $BDtypen, $AllUsers, $Einteilung['day'], $CurrentUser);
+                    foreach ($GetTeamOnDay as $teamMember){
+                        $Options .= ''.$teamMember['bd_type_kuerzel'].': '.$teamMember['user_name'].' ';
+                    }
+                    $Team = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$Options.'"><i class="bi bi-people-fill"></i></a>';
 
                     $DienstType = get_bereitschaftsdiensttype_details_by_type_id($BDtypen, $Einteilung['bd_type']);
 
                     if($counter==1){
                         $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Einteilung['day'].'</td>';
                         $HTML .= '<td>'.$DienstType['name'].'</td>';
-                        $HTML .= '<td> '.$Options.'</td>';
+                        $HTML .= '<td> '.$Team.'</td>';
                     } else {
                         $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Einteilung['day'].'</td>';
                         $HTML .= '<td>'.$DienstType['name'].'</td>';
-                        $HTML .= '<td> '.$Options.'</td>';
+                        $HTML .= '<td> '.$Team.'</td>';
                     }
 
                     // close row and count up
@@ -570,4 +576,38 @@ data-show-columns="true"
 
     return $HTML;
 
+}
+
+function get_bd_colleagues_on_assignment_day($Einteilungen, $BDtypen, $AllUsers, $Day, $ExcludeUser){
+
+    $Others = array();
+    foreach ($Einteilungen as $einteilung){
+
+        // Only on selected Day
+        if($einteilung['day']==$Day){
+
+            //Only get other users than current User
+            if($einteilung['user']!=$ExcludeUser){
+
+                // Get User Infos
+                $CurrentUserInfos = get_user_infos_by_id_from_list($einteilung['user'], $AllUsers);
+
+                // Get BD Type Infos
+                $BDtypeInfos = get_bereitschaftsdiensttype_details_by_type_id($BDtypen, $einteilung['bd_type']);
+
+                //Build entry item
+                $Entry['bd_type_kuerzel'] = $BDtypeInfos['kuerzel'];
+                $Entry['bd_type_rank'] = $BDtypeInfos['reihung'];
+                $Entry['user_name'] = $CurrentUserInfos['nachname'].', '.$CurrentUserInfos['vorname'];
+
+                $Others[] = $Entry;
+            }
+        }
+    }
+
+    //Sort by rank
+    $columns = array_column($Others, 'bd_type_rank');
+    array_multisort($columns, SORT_ASC, $Others);
+
+    return $Others;
 }

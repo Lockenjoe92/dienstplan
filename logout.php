@@ -8,6 +8,11 @@ if(LOGINMODE=='OIDC'){
 
     // Initialize the session
     session_start();
+    #$oidc = new Jumbojett\OpenIDConnectClient(OIDCURL, OIDCCLIENTID, OIDCCLIENTSECRET);
+    #$oidc->signOut($_SESSION['tokenID'], null);
+
+    // Kill the session
+    $_SESSION = array();
     session_destroy();
     header("location: welcome.php?mode=logout");
 

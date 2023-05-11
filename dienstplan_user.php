@@ -19,51 +19,51 @@ if(isset($_POST['action_change_date'])){
 
 // Start dem outputs
 
-$HTMLstandard = "<div class='p-3'></div>";
-$HTMLstandard .= '<div class="row row-cols-1 row-cols-md-2 g-4">';
+$HTML = "<div class='p-3'></div>";
+$HTMLstandard = '<div class="row row-cols-1 row-cols-md-2 g-4">';
 $HTMLstandard .= card_builder('Meine Dienstwünsche', '', table_wunschdienstplan_user($mysqli,$Nutzergruppen), true, 'card h-100 text-center');
 $HTMLstandard .= dashboard_view_bereitschaftsdienstplan_user($mysqli, $userID, true);
 $HTMLstandard .= '</div>';
 
 if(isset($_POST['wunschdienst_go_back'])){
-    $HTML = $HTMLstandard;
+    $HTML .= $HTMLstandard;
 } elseif(isset($_POST['add_dienstwunsch_action'])){
-    $HTML = add_dienstwunsch_user($mysqli);
+    $HTML .= add_dienstwunsch_user($mysqli);
 } elseif (isset($_POST['delete_dienstwunsch_action'])) {
     $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
     $Diensttyp = get_dienstwunsch_type_data($mysqli, $dienstwunschObj['type']);
     $OrgUE = $Diensttyp['belongs_to_depmnt'];
     if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj,$OrgUE)){
-        $HTML = delete_dienstwunsch_user($mysqli, $dienstwunschObj);
+        $HTML .= delete_dienstwunsch_user($mysqli, $dienstwunschObj);
     } else {
-        $HTML = $HTMLstandard;
+        $HTML .= $HTMLstandard;
     }
 } elseif (isset($_POST['edit_dienstwunsch_action'])) {
     $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_POST['dienstwunsch_id']));
     $Diensttyp = get_dienstwunsch_type_data($mysqli, $dienstwunschObj['type']);
     $OrgUE = $Diensttyp['belongs_to_depmnt'];
     if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj, $OrgUE)){
-        $HTML = edit_dienstwunsch_user($mysqli, $dienstwunschObj);
+        $HTML .= edit_dienstwunsch_user($mysqli, $dienstwunschObj);
     } else {
-        $HTML = $HTMLstandard;
+        $HTML .= $HTMLstandard;
     }
 } else {
     if(empty($_GET['mode'])){
-        $HTML = $HTMLstandard;
+        $HTML .= $HTMLstandard;
     } elseif ($_GET['mode']=='add_dienstwunsch'){
-        $HTML = add_dienstwunsch_user($mysqli);
+        $HTML .= add_dienstwunsch_user($mysqli);
     } elseif ($_GET['mode']=='delete_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
             $dienstwunschObj = get_dienstwunsch_data($mysqli,intval($_GET['dienstwunsch_id']));
             $Diensttyp = get_dienstwunsch_type_data($mysqli, $dienstwunschObj['type']);
             $OrgUE = $Diensttyp['belongs_to_depmnt'];
             if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj,$OrgUE)){
-                $HTML = delete_dienstwunsch_user($mysqli, $dienstwunschObj);
+                $HTML .= delete_dienstwunsch_user($mysqli, $dienstwunschObj);
             } else {
-                $HTML = $HTMLstandard;
+                $HTML .= $HTMLstandard;
             }
         } else {
-            $HTML = $HTMLstandard;
+            $HTML .= $HTMLstandard;
         }
     } elseif ($_GET['mode']=='edit_dienstwunsch'){
         if(is_numeric($_GET['dienstwunsch_id'])){
@@ -71,15 +71,15 @@ if(isset($_POST['wunschdienst_go_back'])){
             $Diensttyp = get_dienstwunsch_type_data($mysqli, $dienstwunschObj['type']);
             $OrgUE = $Diensttyp['belongs_to_depmnt'];
             if(user_can_edit_dienstwunsch($mysqli, $Nutzergruppen, $dienstwunschObj,$OrgUE)){
-                $HTML = edit_dienstwunsch_user($mysqli, $dienstwunschObj);
+                $HTML .= edit_dienstwunsch_user($mysqli, $dienstwunschObj);
             } else {
-                $HTML = $HTMLstandard;
+                $HTML .= $HTMLstandard;
             }
         } else {
-            $HTML = $HTMLstandard;
+            $HTML .= $HTMLstandard;
         }
     } else {
-        $HTML = $HTMLstandard;
+        $HTML .= $HTMLstandard;
     }
 }
 

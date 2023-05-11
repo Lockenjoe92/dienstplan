@@ -3,7 +3,7 @@
 function dashboard_view_abwesenheiten_user($mysqli, $userID, $Nutzergruppen){
 
     $AbwesenheitenTable = table_abwesenheiten_user($mysqli, $Nutzergruppen, $DashboardMode=true);
-    return card_builder('Abwesenheiten dieses Jahr', '', $AbwesenheitenTable, true, 'h-100 text-center');
+    return card_builder('Genehmigte Abwesenheiten dieses Jahr', '', $AbwesenheitenTable, true, 'h-100 text-center');
 
 }
 

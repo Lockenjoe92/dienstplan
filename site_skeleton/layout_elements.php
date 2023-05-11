@@ -70,21 +70,29 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
             $PersonalwesenLinks = '';
         }
 
-
+        $UserSettingsCounter = 0;
         $UserSettingsLinks = '<li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Einstellungen
           </a>
           <ul class="dropdown-menu">';
-
         if(in_array('department_settings_view', $UserRoles)){
             $UserSettingsLinks .= '<li><a class="dropdown-item" href="department_settings.php">Abteilungseinstellungen</a></li>';
-            $UserSettingsLinks .= '<li><hr class="dropdown-divider"></li>';
+            if(LOGINMODE!='OIDC') {
+                $UserSettingsLinks .= '<li><hr class="dropdown-divider"></li>';
+            }
+            $UserSettingsCounter++;
         }
+        if(LOGINMODE!='OIDC'){
+            $UserSettingsLinks .= '<li><a class="dropdown-item" href="change_password_user.php">Passwort ändern</a></li>';
+            $UserSettingsCounter++;
+        }
+        $UserSettingsLinks .= '</ul></li>';
 
-        $UserSettingsLinks .= '<li><a class="dropdown-item" href="change_password_user.php">Passwort ändern</a></li>
-          </ul>
-        </li>';
+        // Dont show item when empty
+        if($UserSettingsCounter==0){
+            $UserSettingsLinks = '';
+        }
 
         $response = '<nav class="navbar sticky-top navbar-expand-lg bg-light">
                 <div class="container-fluid">
