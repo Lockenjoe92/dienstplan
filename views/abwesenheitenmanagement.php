@@ -127,19 +127,19 @@ data-show-multi-sort="true"
         if($counter==1){
             $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['status_bearbeitung'].'</td>';
             $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
-            $HTML .= '<td>'.$Abwesenheit['begin'].'</td>';
-            $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
+            $HTML .= '<td>'.date('d.m.Y', strtotime($Abwesenheit['begin'])).'</td>';
+            $HTML .= '<td>'.date('d.m.Y', strtotime($Abwesenheit['end'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
-            $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
+            $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
             $HTML .= '<td>'.$Options.$Comment.'</td>';
         } else {
             $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Abwesenheit['status_bearbeitung'].'</td>';
             $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
-            $HTML .= '<td>'.$Abwesenheit['begin'].'</td>';
-            $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
+            $HTML .= '<td>'.date('d.m.Y', strtotime($Abwesenheit['begin'])).'</td>';
+            $HTML .= '<td>'.date('d.m.Y', strtotime($Abwesenheit['end'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
-            $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
+            $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['create_date'])).'</td>';
             $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
             $HTML .= '<td>'.$Options.$Comment.'</td>';
         }
@@ -158,7 +158,7 @@ function table_abwesenheiten_user($mysqli, $Nutzerrollen, $DashboardMode=false){
 
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
-    $Abwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $Abwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli, false, 'begin ASC');
     $CurrentUser = get_current_user_id();
 
     // Setup Toolbar
@@ -268,34 +268,34 @@ data-show-multi-sort="true"
             if($counter==1){
                 if($DashboardMode){
                     if($Abwesenheit['status_bearbeitung']=='Genehmigt'){
-                        $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['begin'].'</td>';
-                        $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
+                        $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.date('d.m.Y',strtotime($Abwesenheit['begin'])).'</td>';
+                        $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['end'])).'</td>';
                         $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
                         $HTML .= '<td> '.$Options.$Comment.'</td>';
                     }
                 } else {
                     $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Abwesenheit['status_bearbeitung'].'</td>';
-                    $HTML .= '<td>'.$Abwesenheit['begin'].'</td>';
-                    $HTML .= '<td>'.$Abwesenheit['end'].'</td>';
+                    $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['begin'])).'</td>';
+                    $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['end'])).'</td>';
                     $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
-                    $HTML .= '<td>'.date('Y-m-d',strtotime($Abwesenheit['create_date'])).'</td>';
+                    $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['create_date'])).'</td>';
                     $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
                     $HTML .= '<td> '.$Options.$Comment.'</td>';
                 }
             } else {
                 if($DashboardMode){
                     if($Abwesenheit['status_bearbeitung']=='Genehmigt') {
-                        $HTML .= '<td id="td-id-' . $counter . '" class="td-class-' . $counter . '"">' . $Abwesenheit['begin'] . '</td>';
-                        $HTML .= '<td>' . $Abwesenheit['end'] . '</td>';
+                        $HTML .= '<td id="td-id-' . $counter . '" class="td-class-' . $counter . '"">' . date('d.m.Y',strtotime($Abwesenheit['begin'])) . '</td>';
+                        $HTML .= '<td>' . date('d.m.Y',strtotime($Abwesenheit['end'])) . '</td>';
                         $HTML .= '<td>' . $Abwesenheit['type'] . '</td>';
                         $HTML .= '<td> ' . $Options . $Comment . '</td>';
                     }
                 } else {
                     $HTML .= '<td id="td-id-' . $counter . '" class="td-class-' . $counter . '"">' . $Abwesenheit['status_bearbeitung'] . '</td>';
-                    $HTML .= '<td>' . $Abwesenheit['begin'] . '</td>';
-                    $HTML .= '<td>' . $Abwesenheit['end'] . '</td>';
+                    $HTML .= '<td>' . date('d.m.Y',strtotime($Abwesenheit['begin'])) . '</td>';
+                    $HTML .= '<td>' . date('d.m.Y',strtotime($Abwesenheit['end'])) . '</td>';
                     $HTML .= '<td>' . $Abwesenheit['type'] . '</td>';
-                    $HTML .= '<td>' . date('Y-m-d', strtotime($Abwesenheit['create_date'])) . '</td>';
+                    $HTML .= '<td>' . date('d.m.Y', strtotime($Abwesenheit['create_date'])) . '</td>';
                     $HTML .= '<td>' . $Abwesenheit['urgency'] . '</td>';
                     $HTML .= '<td> ' . $Options . $Comment . '</td>';
                 }

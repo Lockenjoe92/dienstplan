@@ -552,11 +552,11 @@ data-show-columns="true"
                     $DienstType = get_bereitschaftsdiensttype_details_by_type_id($BDtypen, $Einteilung['bd_type']);
 
                     if($counter==1){
-                        $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Einteilung['day'].'</td>';
+                        $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.date('d.m.Y', strtotime($Einteilung['day'])).'</td>';
                         $HTML .= '<td>'.$DienstType['name'].'</td>';
                         $HTML .= '<td> '.$Team.'</td>';
                     } else {
-                        $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Einteilung['day'].'</td>';
+                        $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.date('d.m.Y', strtotime($Einteilung['day'])).'</td>';
                         $HTML .= '<td>'.$DienstType['name'].'</td>';
                         $HTML .= '<td> '.$Team.'</td>';
                     }

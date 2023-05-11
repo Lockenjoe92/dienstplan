@@ -65,16 +65,16 @@ data-show-multi-sort="true"
             $WunschType = get_wunschtype_details_by_type_id($Wunschtypen, $Wunsch['type']);
 
             if($counter==1){
-                $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Wunsch['date'].'</td>';
+                $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
                 $HTML .= '<td>'.$WunschType['name'].'</td>';
-                $HTML .= '<td>'.$Wunsch['create_comment'].'</td>';
-                $HTML .= '<td>'.date('Y-m-d',strtotime($Wunsch['create_time'])).'</td>';
+                $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
+                $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
                 $HTML .= '<td> '.$Options.'</td>';
             } else {
-                $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Wunsch['date'].'</td>';
+                $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
                 $HTML .= '<td>'.$WunschType['name'].'</td>';
-                $HTML .= '<td>'.$Wunsch['create_comment'].'</td>';
-                $HTML .= '<td>'.date('Y-m-d',strtotime($Wunsch['create_time'])).'</td>';
+                $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
+                $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
                 $HTML .= '<td> '.$Options.'</td>';
             }
 
@@ -168,18 +168,18 @@ data-show-multi-sort="true"
             $WunschType = get_wunschtype_details_by_type_id($Wunschtypen, $Wunsch['type']);
 
             if($counter==1){
-                $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.$Wunsch['date'].'</td>';
+                $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
                 $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
                 $HTML .= '<td>'.$WunschType['name'].'</td>';
                 $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
-                $HTML .= '<td>'.date('Y-m-d',strtotime($Wunsch['create_time'])).'</td>';
+                $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
                 $HTML .= '<td> '.$Options.'</td>';
             } else {
-                $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.$Wunsch['date'].'</td>';
+                $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
                 $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
                 $HTML .= '<td>'.$WunschType['name'].'</td>';
                 $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
-                $HTML .= '<td>'.date('Y-m-d',strtotime($Wunsch['create_time'])).'</td>';
+                $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
                 $HTML .= '<td> '.$Options.'</td>';
             }
 

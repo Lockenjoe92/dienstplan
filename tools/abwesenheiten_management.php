@@ -1,12 +1,12 @@
 <?php
 
-function get_sorted_list_of_all_abwesenheiten($mysqli, $ShowDeleted=false){
+function get_sorted_list_of_all_abwesenheiten($mysqli, $ShowDeleted=false, $OrderBy = 'create_date ASC'){
     $Users = [];
 
     if($ShowDeleted){
-        $sql = "SELECT * FROM abwesenheitsantraege ORDER BY create_date ASC";
+        $sql = "SELECT * FROM abwesenheitsantraege ORDER BY ".$OrderBy;
     }else{
-        $sql = "SELECT * FROM abwesenheitsantraege WHERE deleted_by IS NULL ORDER BY create_date ASC";
+        $sql = "SELECT * FROM abwesenheitsantraege WHERE deleted_by IS NULL ORDER BY ".$OrderBy;
     }
 
     if($stmt = $mysqli->query($sql)){
