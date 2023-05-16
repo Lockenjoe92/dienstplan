@@ -6,7 +6,7 @@ function table_abwesenheiten_management($mysqli, $Nutzerrollen,$UE=1){
     $bla = '"{"key": "value"}"';
     $AbwesenheitenAll = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllAssignments = get_all_user_depmnt_assignments($mysqli);
-    $Users = get_sorted_list_of_all_users($mysqli);
+    $Users = get_sorted_list_of_all_users($mysqli, 'nachname ASC', true, date('Y-m-d'));
 
     $ShowGenehmigt = false;
     if(isset($_GET['show_genehmigt'])){
@@ -119,7 +119,7 @@ data-show-multi-sort="true"
 
         // Optionally show comments
         if($Abwesenheit['create_comment']!=''){
-            $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'"><i class="bi bi-megaphone-fill"></i></a>';
+            $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'"><i class="bi bi-chat-dots-fill"></i></a>';
         } else {
             $Comment = '';
         }
@@ -260,9 +260,18 @@ data-show-multi-sort="true"
 
             // Optionally show comments
             if($Abwesenheit['create_comment']!=''){
-                $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'"><i class="bi bi-megaphone-fill"></i></a>';
+                $Comment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['create_comment']).'"><i class="bi bi-chat-dots-fill"></i></a> ';
             } else {
                 $Comment = '';
+            }
+
+            // Optionally show decline comments
+            if(($Abwesenheit['delete_comment']!='') && ($Abwesenheit['status_bearbeitung']=='Genehmigt')){
+                $DelComment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['delete_comment']).'"><i class="bi bi-hand-thumbs-up-fill"></i></a>';
+            } elseif(($Abwesenheit['delete_comment']!='') && ($Abwesenheit['status_bearbeitung']=='Abgelehnt')){
+                $DelComment = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.htmlspecialchars($Abwesenheit['delete_comment']).'"><i class="bi bi-hand-thumbs-down-fill"></i></a>';
+            } else {
+                $DelComment = '';
             }
 
             if($counter==1){
@@ -280,7 +289,7 @@ data-show-multi-sort="true"
                     $HTML .= '<td>'.$Abwesenheit['type'].'</td>';
                     $HTML .= '<td>'.date('d.m.Y',strtotime($Abwesenheit['create_date'])).'</td>';
                     $HTML .= '<td>'.$Abwesenheit['urgency'].'</td>';
-                    $HTML .= '<td> '.$Options.$Comment.'</td>';
+                    $HTML .= '<td> '.$Options.$Comment.$DelComment.'</td>';
                 }
             } else {
                 if($DashboardMode){
@@ -297,7 +306,7 @@ data-show-multi-sort="true"
                     $HTML .= '<td>' . $Abwesenheit['type'] . '</td>';
                     $HTML .= '<td>' . date('d.m.Y', strtotime($Abwesenheit['create_date'])) . '</td>';
                     $HTML .= '<td>' . $Abwesenheit['urgency'] . '</td>';
-                    $HTML .= '<td> ' . $Options . $Comment . '</td>';
+                    $HTML .= '<td> ' . $Options . $Comment . $DelComment . '</td>';
                 }
             }
 

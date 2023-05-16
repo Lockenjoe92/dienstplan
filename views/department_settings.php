@@ -171,7 +171,7 @@ function calculate_department_events_table_cell($ThisDay, $AllDepartmentEvents, 
     }
 
     if($Counter > 0){
-        $ToolTip = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$TooltipContent.'"><i class="bi bi-megaphone-fill bi-xs"></i></a>';
+        $ToolTip = '<a href="#" data-bs-toggle="tooltip" data-bs-html="true" title="'.$TooltipContent.'"><i class="bi bi-calendar3 bi-xs"></i></a>';
     } else {
         $ToolTip = "";
     }

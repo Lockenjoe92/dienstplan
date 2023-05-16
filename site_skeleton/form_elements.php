@@ -853,7 +853,7 @@ function form_group_dropdown_all_users($Label, $name, $Value='', $HasFormControl
 
     //Build Options List
     $OptionsHTML = "";
-    $AllUsers = get_sorted_list_of_all_users(connect_db());
+    $AllUsers = get_sorted_list_of_all_users(connect_db(), 'nachname ASC', true, date('Y-m-d'));
     foreach($AllUsers as $User){
 
         if($User['id'] == $Value){

@@ -298,10 +298,11 @@ function get_bd_type_infos_from_list($type, $AllBDTypes){
 
 }
 
-function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $AllBDTypes, $Holidayweekend, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20, $MaxDienstePerMonth = 4, $MaxDienstePenalty = 200){
+function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $AllBDTypes, $Holidayweekend, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20, $MaxDienstePerMonth = 4, $MaxPlannedWeekendsPerMonth = 2, $MaxWeekendHolidayPenalty = 100, $MaxDienstePenalty = 200){
 
     $Answer = [];
     $Counter = 0;
+    $FoundWeekends = array();
 
     //Calculate SearchDates
     $FirstDayToConcider = date('Y-m-d', strtotime('- '.$WeeksPast.' weeks', $DateConcerned));
@@ -321,6 +322,14 @@ function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $Us
 
                 //Check if Date is weekend or holiday
                 if($Holidayweekend){
+
+                    //Count num "Used" weekends
+                    $date = new DateTime($Einteilung['day']);
+                    $week = $date->format("W");
+                    if(!in_array($week, $FoundWeekends)){
+                        $FoundWeekends[] = $week;
+                    }
+
                     $Counter += $PenaltyWeekend;
                 } else {
                     $Counter += $PenaltyWeekDay;
@@ -345,6 +354,11 @@ function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $Us
     //now penalize user if they already have a maximum of assignments in this month
     if($NumDiensteToConciderThisMonth>=$MaxDienstePerMonth){
         $Counter += $MaxDienstePenalty;
+    }
+
+    //penalize user if they already have maxed out the number of assigned weekend shifts
+    if(sizeof($FoundWeekends)>=$MaxPlannedWeekendsPerMonth){
+        $Counter += $MaxWeekendHolidayPenalty;
     }
 
     $Answer['penalty_points'] = $Counter;
@@ -868,7 +882,7 @@ function bd_automatik(){
             $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
             $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
             $AllBDTypes = get_list_of_all_bd_types($mysqli);
-            $AllUsers = get_sorted_list_of_all_users($mysqli);
+            $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', true, $_POST['automatik_end_date']);
 
             $NumFulfilledWishes = 0;
             $NumTotalWishes = 0;
@@ -981,7 +995,7 @@ function bd_automatik(){
             $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
             $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
             $AllBDTypes = get_list_of_all_bd_types($mysqli);
-            $AllUsers = get_sorted_list_of_all_users($mysqli);
+            $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', false, $_POST['automatik_end_date']);
 
             // Load BD-Type Infos
             $BDTypeInfos = get_bd_type_infos_from_list($_POST['automatik_dienstgruppe'], $AllBDTypes);
