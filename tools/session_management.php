@@ -18,11 +18,15 @@ function session_manager($requiredRole='nutzer'){
             if(strtotime($Validated) < time()){
 
                 // Session has timed out
+                $_SESSION = array();
                 session_destroy();
-                header("location: login.php?mode=timeout");
+                header("location: welcome.php?mode=timeout");
                 exit;
 
             } else {
+
+                // Now refresh Token
+
 
                 // Session is valid an has not timed out - now check if user has necessary privileges
                 $Nutzergruppen = load_user_usergroups($mysqli, $_SESSION['user']);

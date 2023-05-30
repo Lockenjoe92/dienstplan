@@ -109,11 +109,7 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
     $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
-    $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
-    $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
     $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
-    $AllBDassignments = get_all_users_bd_assignments($mysqli);
-    $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $FirstDayOfSelectedMonthString = $Year."-".$Month."-01";
     $FirstDayOfSelectedMonth = strtotime($FirstDayOfSelectedMonthString);
 
@@ -135,7 +131,7 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
         $CommandDate = "+" . $a . " days";
         $DateConcerned = strtotime($CommandDate, $FirstDayOfSelectedMonth);
         if(date("m", $DateConcerned)==$Month) {
-            $Populate = populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $Tabindex);
+            $Populate = populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllUsers, $Tabindex);
             $Tabindex = $Populate['tabindex'];
             $TableRows .= $Populate['HTML'];
         }
@@ -148,19 +144,22 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
     $Table .= $TableHeader;
     $Table .= $TableBody;
     $Table .= "</table>";
-    $Table .= "<script>
-  $(function () {
-    $('.popper').popover({
-        placement: 'bottom',
-        container: 'body',
-        html: true,
-        content: function () {
-            return $(this).next('.popper-content').html();
-        }
-    })
-})
-
-  </script>";
+    #$Table .= "<script>
+  #$(function () {
+    #$('.popper').popover({
+        #placement: 'bottom',
+        #container: 'body',
+       # html: true,
+      #  content: function () {
+     #       return $(this).next('.popper-content').html();
+    #    }
+   # });
+    
+ ##   $('#dynamic_content').html(make_bd_modal_loader());
+#}
+#)
+#
+  ##</script>";
 
     return $Table;
 
@@ -233,7 +232,7 @@ function bereitschaftsdienstplan_table_users($Month,$Year,$Freigaben=[]){
 
 }
 
-function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $Tabindex){
+function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllUsers, $Tabindex){
 
     if(day_is_a_weekend_or_holiday($DateConcerned)){
         $Holidayweekend = true;
@@ -272,26 +271,38 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                     $Row .= "<td class='text-center align-middle table-secondary'></td>";
                 } else {
                     //1. check if this item already has been planned
-                    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend);
-                    $EinteilungenHeute = $ParserResults['assigned_candidates'];
-
-                    if(sizeof($EinteilungenHeute)==0){
+                    #$ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType['id'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend);
+                    #$EinteilungenHeute = $ParserResults['assigned_candidates'];
+                    $Einteilung = get_bereitschaftsdienst_einteilungen_on_day($DateConcerned, $AllBDeinteilungen, $BDType['id']);
+                    if(sizeof($Einteilung)==0){
                         //2. no entries -> parse wishlist
                         if(time()>$DateConcerned){
-                            $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
+                            #$Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-danger'>".build_bd_edit_link('nachbesetzen', $DateConcerned, $BDType['id'])."</td>";
                         } else {
-                            if($ParserResults['num_found_candidates']>0){
-                                $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
-                            } else {
-                                $Row .= "<td class='text-center align-middle table-danger'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
-                            }
+                            #$Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], [], $AllBDTypes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-warning'>".build_bd_edit_link('besetzen', $DateConcerned, $BDType['id'])."</td>";
                         }
 
                     } else {
-                        if(sizeof($EinteilungenHeute)==$BDType['req_employees_per_day']){
-                            $Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $EinteilungenHeute, $AllBDTypes)."</td>";
+                        $counter = 0;
+                        $RowContent = "";
+                        foreach($Einteilung as $User){
+                            if($counter>0){
+                                $RowContent .= "<br>";
+                            }
+                            // Build User Name String
+                         $CurrentUserInfos = get_user_infos_by_id_from_list($User['user'], $AllUsers);
+                         $RowContent .= $CurrentUserInfos['nachname'].", ".$CurrentUserInfos['vorname'][0].".";
+                         $counter++;
+                        }
+
+                        if(sizeof($Einteilung)==$BDType['req_employees_per_day']){
+                            #$Row .= "<td class='text-center align-middle table-success'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $EinteilungenHeute, $AllBDTypes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-success'>".build_bd_edit_link($RowContent, $DateConcerned, $BDType['id'])."</td>";
                         } else {
-                            $Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $EinteilungenHeute, $AllBDTypes)."</td>";
+                            #$Row .= "<td class='text-center align-middle table-warning'>".build_modal_popup_bd_planung($Tabindex, $DateConcerned, $ParserResults['candidates'], $BDType['id'], $EinteilungenHeute, $AllBDTypes)."</td>";
+                            $Row .= "<td class='text-center align-middle table-warning'>".build_bd_edit_link($RowContent, $DateConcerned, $BDType['id'])."</td>";
                         }
                     }
                     $Tabindex++;
@@ -306,6 +317,12 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
     $ReturnVals['tabindex'] = $Tabindex;
 
     return $ReturnVals;
+}
+
+function build_bd_edit_link($StringAitem, $DateConcerned, $BDType){
+
+    return "<a href='https://dienstplan.marcsprojects.de/bereitschaftsdienstplan_anaesthesie.php?action=edit_bd&concerneddate=".$DateConcerned."&type=".$BDType."'>".$StringAitem."</a>";
+
 }
 
 function populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes, $AllBDeinteilungen, $AllUsers, $Freigegeben, $Tabindex){
@@ -381,6 +398,99 @@ function populate_day_bd_plan_users($DateConcerned, $AllBDTypes, $AllBDmatrixes,
     $ReturnVals['tabindex'] = $Tabindex;
 
     return $ReturnVals;
+}
+
+function build_modal_popup_bd_planung_with_loader($Tabindex, $DateConcerned, $AssignedUserHTML, $BDtype, $AllBDTypes){
+
+    $DateString = date('d.m.Y', $DateConcerned);
+    $BDtypeInfos = get_bd_type_infos_from_list($BDtype, $AllBDTypes);
+
+    $buildPopup = '<a class="" data-bs-toggle="modal" data-bs-target="#myModal'.$Tabindex.'">'.$AssignedUserHTML.'</a>';
+    $buildPopup .= '<!-- The Modal -->
+    <div class="modal fade" id="myModal'.$Tabindex.'">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">';
+    $buildPopup .= '<h4 class="modal-title">'.$BDtypeInfos['kuerzel'].' am '.$DateString.' - Besetzung ändern</h4>';
+    $buildPopup .= '<button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>';
+
+    //Build the Popup Body
+    $buildPopup .= '<!-- Modal body --><div class="modal-body">';
+    $buildPopup .= '<iframe src="https://dienstplan.marcsprojects.de/bd_plan_details.php?date='.$DateConcerned.'&bd_type='.$BDtype.'"></iframe>';
+    $buildPopup .= '</div>';
+    $buildPopup .= '</div>';
+    $buildPopup .= '</div>';
+
+    return $buildPopup;
+
+}
+
+function build_table_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype, $UserAssignmentsOnDay=[], $AllBDTypes=[]){
+
+    $BDtypeInfos = get_bd_type_infos_from_list($BDtype, $AllBDTypes);
+    $DateString = date('d.m.Y', $DateConcerned);
+
+    $buildPopup = "";
+    if(sizeof($UserAssignmentsOnDay)==0){
+        //Edit mode firstly highlights already assigned users and removes them from the red list
+        $EditMode = false;
+        if (time()>$DateConcerned) {
+            $buildPopup .= '<h4 class="modal-title">'.$BDtypeInfos['kuerzel'].' am '.$DateString.' - Besetzung nachtragen</h4>';
+        } else {
+            $buildPopup .= '<h4 class="modal-title">'.$BDtypeInfos['kuerzel'].' am '.$DateString.' - Dienst besetzen</h4>';
+        }
+    } else {
+        $EditMode = true;
+        $buildPopup .= '<h4 class="modal-title">'.$BDtypeInfos['kuerzel'].' am '.$DateString.' - Besetzung ändern</h4>';
+    }
+
+    $buildPopupBody = '<!-- Table body -->
+		<table class="table">
+			<thead><th></th><th>Name</th><th>Dienstgruppe</th><th>Verfügbarkeit</th><th>Auslastungspunkte</th><th>Anzahl Bereitschaftsdienste diesen Monat</th><th>Grund/Kommentar</th></thead>
+			<tbody>';
+
+    //Edit mode firstly highlights already assigned users and removes them from the red list
+    if($EditMode){
+        foreach($UserAssignmentsOnDay as $AssignedUser){
+            $buildPopupBody .= '<tr class="table-info"><td><input type="checkbox" class="form-check-input" name="assigned_user_'.$AssignedUser['assignmentObject']['user'].'"></td><td>'.$AssignedUser['userNameLong'].'</td><td>'.$AssignedUser['highest_bd_rank_kuerzel'].'</td><td>Eingeteilt</td><td>'.$AssignedUser['dienstbelastung'].'</td><td>'.$AssignedUser['anzahl_dienste_monat'].'</td><td>'.$AssignedUser['reason'].'</td></tr>';
+        }
+    }
+
+    foreach ($CandidatesList as $CandidateItem){
+        $buildPopupBody .= '<tr class="'.$CandidateItem['table-color'].'"><td><input type="checkbox" class="form-check-input" name="chosen_user_'.$CandidateItem['userID'].'"></td><td>'.$CandidateItem['userName'].'</td><td>'.$CandidateItem['highest_bd_rank_kuerzel'].'</td><td>'.$CandidateItem['verfuegbarkeit'].'</td><td>'.$CandidateItem['dienstbelastung'].'</td><td>'.$CandidateItem['anzahl_dienste_monat'].'</td><td>'.$CandidateItem['reason'].'<input type="hidden" name="comment_chosen_user_'.$CandidateItem['userID'].'" value="'.$CandidateItem['reason'].'"></input></td></tr>';
+    }
+
+    $buildPopupBody .= '</tbody>
+		</table>
+		'.form_group_input_text("Kommentar (optional)", "comment", "", false);
+
+    if($EditMode){
+        $buildPopupBody .= '<!-- Modal footer -->
+      <div>
+	  	<input type="submit" class="btn btn-outline-primary" value="Zuteilung ändern" name="action_edit_bd_zuteilung"></input>
+        <input type="submit" class="btn btn-outline-danger" value="Zuteilung löschen" name="action_delete_bd_zuteilung"></input>
+        <input type="submit" class="btn btn-danger" value="Zurück" name="action_abort_bd_zuteilung"></input>
+      </div>';
+    } else {
+        $buildPopupBody .= '<!-- Modal footer -->
+      <div>
+	  	<input type="submit" class="btn btn-primary" value="Zuteilen" name="action_add_bd_zuteilung"></input>
+        <input type="submit" class="btn btn-danger" value="Zurück" name="action_abort_bd_zuteilung"></input>
+      </div>';
+    }
+
+    $buildPopupBody .= form_hidden_input_generator('date_concerned', $DateConcerned);
+    $buildPopupBody .= form_hidden_input_generator('bd_type', $BDtype);
+
+    $buildPopup .= form_builder($buildPopupBody, 'bereitschaftsdienstplan_anaesthesie.php?action=return');
+
+    $buildPopup .='</div>
+  </div>
+</div>';
+
+    return $buildPopup;
+
 }
 
 function build_modal_popup_bd_planung($Tabindex, $DateConcerned, $CandidatesList, $BDtype, $UserAssignmentsOnDay=[], $AllBDTypes=[]){

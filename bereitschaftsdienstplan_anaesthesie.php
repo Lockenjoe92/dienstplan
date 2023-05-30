@@ -52,7 +52,14 @@ if(isset($_POST['activate_automatik'])){
     $ParserOutput = parse_delete_bd_entry($mysqli);
 
     $Role = "bereitschaftsdienstplan_1";
-}  elseif (isset($_POST['action_edit_bd_zuteilung'])){
+} elseif (isset($_POST['action_abort_bd_zuteilung'])){
+    if(is_numeric($_POST['date_concerned'])){
+        $DateSelected = $_POST['date_concerned'];
+        $Year = date('Y', $DateSelected);
+        $Month = date('m', $DateSelected);
+    }
+    $Role = "bereitschaftsdienstplan_1";
+} elseif (isset($_POST['action_edit_bd_zuteilung'])){
     if(is_numeric($_POST['date_concerned'])){
         $DateSelected = $_POST['date_concerned'];
         $Year = date('Y', $DateSelected);
@@ -106,15 +113,45 @@ $mysqli = connect_db();
 // Start dem outputs
 $HTML = '';
 
+// Catch start Action from link
+$ShowEditMode = false;
+if(isset($_GET['action'])){
+    if($_GET['action']=='edit_bd'){
+        $ShowEditMode = true;
+        $Month = date('m', $_GET['concerneddate']);
+        $Year = date('Y', $_GET['concerneddate']);
+    }
+}
+
 // Make Pretty Month Name
 $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
     IntlDateFormatter::NONE, NULL, NULL, "MMM");
 $monthName = datefmt_format($format, mktime(0, 0, 0, $Month));
-
 $HTML .= "<h1 class='align-self-center'>Bereitschaftsdienstplan ".$monthName." ".$Year."</h1>";
-$HTML .= bereitschaftsdienstplan_funktionsbuttons_management($Month, $Year, $Err);
-$HTML .= $ParserOutput;
-$HTML .= bereitschaftsdienstplan_table_management($Month,$Year);
+
+if($ShowEditMode){
+    $LastDayOfConcideredMonth = date('Y-m-t', $_GET['concerneddate']);
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
+    $AllBDTypes = get_list_of_all_bd_types($mysqli);
+    $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
+    $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
+    $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+    $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
+    $AllBDassignments = get_all_users_bd_assignments($mysqli);
+    $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
+    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($_GET['concerneddate'], $_GET['type'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, day_is_a_weekend_or_holiday($_GET['concerneddate']));
+    $EinteilungenHeute = $ParserResults['assigned_candidates'];
+    if(sizeof($EinteilungenHeute)==0){
+        $HTML .= container_builder(build_table_bd_planung(0, $_GET['concerneddate'], $ParserResults['candidates'], $_GET['type'], [], $AllBDTypes));
+    } else {
+        $HTML .= container_builder(build_table_bd_planung(0, $_GET['concerneddate'], $ParserResults['candidates'], $_GET['type'], $EinteilungenHeute, $AllBDTypes));
+    }
+
+} else {
+    $HTML .= bereitschaftsdienstplan_funktionsbuttons_management($Month, $Year, $Err);
+    $HTML .= $ParserOutput;
+    $HTML .= bereitschaftsdienstplan_table_management($Month,$Year);
+}
 
 $HTML = grid_gap_generator($HTML);
 

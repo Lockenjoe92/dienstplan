@@ -1,49 +1,157 @@
 <?php
 // Include config file
 include_once "./config/dependencies.php";
-require __DIR__ . '/jumbojett/vendor/autoload.php';
-use Jumbojett\OpenIDConnectClient;
+require __DIR__ . '/vendor/autoload.php';
 
 if(LOGINMODE=='OIDC'){
 
-    $oidc = new Jumbojett\OpenIDConnectClient(OIDCURL, OIDCCLIENTID, OIDCCLIENTSECRET);
-    $oidc->addScope(array('email'));
-    $oidc->authenticate();
-    $Mail = $oidc->requestUserInfo('email');
-    $TokenID = $oidc->getIdToken();
+    $provider = new League\OAuth2\Client\Provider\GenericProvider([
+        'clientId'                => OIDCCLIENTID,    // The client ID assigned to you by the provider
+        'clientSecret'            => OIDCCLIENTSECRET,    // The client password assigned to you by the provider
+        'redirectUri'             => 'https://dienstplan.marcsprojects.de/login.php',
+        'scopes' => ['openid groups'],
+        'urlAuthorize'            => OIDCURLAUTHORIZE,
+        'urlAccessToken'          => OIDCURLTOKEN,
+        'urlResourceOwnerDetails' => OIDCURLRESOURCE]);
 
-    // Get local User ID
-    $mysqli = connect_db();
-    $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', true);
-    $FoundCounter = 0;
-    foreach ($AllUsers as $user){
-        if($user['mail']==$Mail){
-            $FoundCounter++;
+    // If we don't have an authorization code then get one
+    session_start();
+    if (!isset($_GET['code'])) {
 
-            // Create local session
-            session_start();
+        // Fetch the authorization URL from the provider; this returns the
+        // urlAuthorize option and generates and applies any necessary parameters
+        // (e.g. state).
+        $authorizationUrl = $provider->getAuthorizationUrl();
 
-            // create a new session in database
-            $DBSession = create_session($user['id']);
-            if($DBSession['success']){
+        // Get the state generated for you and store it to the session.
+        $_SESSION['oauth2state'] = $provider->getState();
 
-                // Store data in session variables
-                $_SESSION["loggedin"] = true;
-                $_SESSION['tokenID'] = $TokenID;
-                $_SESSION["secret"] = $DBSession['secret'];
-                $_SESSION["user"] = $user['id'];
+        // Optional, only required when PKCE is enabled.
+        // Get the PKCE code generated for you and store it to the session.
+        $_SESSION['oauth2pkceCode'] = $provider->getPkceCode();
 
-                // Redirect user to dashboard page
-                header("location: ./dashboard.php");
+        // Redirect the user to the authorization URL.
+        header('Location: ' . $authorizationUrl);
+        exit;
+
+// Check given state against previously stored one to mitigate CSRF attack
+    } elseif (empty($_GET['state']) || empty($_SESSION['oauth2state']) || $_GET['state'] !== $_SESSION['oauth2state']) {
+
+            if (isset($_SESSION['oauth2state'])) {
+                unset($_SESSION['oauth2state']);
+            }
+
+        // Redirect the user to the Welcome Page with Error-Info.
+        header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err');
+        exit;
+
+    } else {
+
+        try {
+
+            // Optional, only required when PKCE is enabled.
+            // Restore the PKCE code stored in the session.
+            $provider->setPkceCode($_SESSION['oauth2pkceCode']);
+
+            // Try to get an access token using the authorization code grant.
+            $accessToken = $provider->getAccessToken('authorization_code', [
+                'code' => $_GET['code']
+            ]);
+
+            // We have an access token, which we may use in authenticated
+            // requests against the service provider's API.
+            // Now double-check if it has expired
+            if ($accessToken->hasExpired()) {
+                header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=timeout');
+                exit;
             } else {
-                header("Location: ./welcome.php?mode=sess_err");
+
+                // Now let's load user mail as ID and assigned User privileges
+                $resourceOwnerArray = $provider->getResourceOwner($accessToken)->toArray();
+                $UserMail = strtolower($resourceOwnerArray['sub']);
+                #$UserGroups = explode(',', $resourceOwnerArray['groups']);
+
+                // Prepare a select statement
+                // Connect DB
+                $mysqli = connect_db();
+                $sql = "SELECT id, inaktiv_seit FROM users WHERE mail = ?";
+
+                if ($stmt = $mysqli->prepare($sql)) {
+                    // Bind variables to the prepared statement as parameters
+                    $stmt->bind_param("s", $param_usermail);
+
+                    // Set parameters
+                    $param_usermail = $UserMail;
+
+                    // Attempt to execute the prepared statement
+                    if ($stmt->execute()) {
+
+                        // Store result
+                        $stmt->store_result();
+
+                        // Check if username exists, if yes then verify password
+                        if ($stmt->num_rows == 1) {
+// Bind result variables
+                            $stmt->bind_result($Userid, $InactiveDate);
+
+                            if ($stmt->fetch()) {
+
+                                $Continue = false;
+                                if ($InactiveDate == null) {
+                                    $Continue = true;
+                                } else {
+                                    if (time() < strtotime($InactiveDate)) {
+                                        $Continue = true;
+                                    }
+                                }
+
+                                if ($Continue) {
+                                    // Password is correct, so start a new session object
+                                    // create a new session in database
+                                    $DBSession = create_session($Userid);
+                                    if ($DBSession['success']) {
+
+                                        // Store data in session variables
+                                        $_SESSION["loggedin"] = true;
+                                        $_SESSION["secret"] = $DBSession['secret'];
+                                        $_SESSION["accessTokenOauth"] = $accessToken;
+                                        $_SESSION["user"] = $Userid;
+
+                                        // Redirect user to welcome page
+                                        header("location: https://dienstplan.marcsprojects.de/dashboard.php");
+                                        exit;
+                                    } else {
+                                        $login_err = "Fehler beim Initiieren der Sitzung.";
+                                    }
+
+                                } else {
+                                    // Password is not valid, display a generic error message
+                                    $login_err = "Nutzername oder Passwort falsch.";
+                                }
+                            }
+                        } else {
+                            // Username doesn't exist, display a generic error message
+                            $login_err = "Nutzer nicht im System angelegt.";
+                        }
+                    } else {
+                        $login_err = "Oops! Da ist etwas schief gegangen. Bitte versuche es später noch einmal.";
+                    }
+
+                    if (!empty($login_err)) {
+                        header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err');
+                        exit;
+                    }
+                }
+
             }
         }
-    }
-
-    if($FoundCounter==0){
-        // Catch unidentified user
-        header("Location: ./welcome.php?mode=unidentified&mail=".$Mail."");
+        catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+            // Failed to get the access token or user details.
+            // Redirect the user to the Welcome Page with Error-Info.
+            header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err');
+            exit;
+            #exit($e->getMessage());
+        }
     }
 
 } else {

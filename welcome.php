@@ -1,11 +1,6 @@
 <?php
 include_once "./config/dependencies.php";
-
-if(LOGINMODE=='OIDC'){
-    $Message='ACHTUNG!!! Aktuell wird die TEIS-Implementierung getestet! Einloggen momentan nicht möglich!<br>';
-} else {
-    $Message='';
-}
+$Message = "";
 
 if(isset($_GET['mode'])){
     if($_GET['mode']=='logout'){
