@@ -1,5 +1,6 @@
 {
   "require": {
-    "league/oauth2-client": "^2.7"
+    "league/oauth2-client": "^2.7",
+    "jumbojett/openid-connect-php": "v0.9.10"
   }
 }

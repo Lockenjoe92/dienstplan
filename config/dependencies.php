@@ -17,6 +17,7 @@ include_once "./tools/mail_management.php";
 include_once "./tools/protocol_management.php";
 include_once "./tools/bereitschaftsdienstplan_management.php";
 include_once "./tools/department_events.php";
+include_once "./tools/time_tools.php";
 
 // Website Skeleton Functions
 include_once "./site_skeleton/site_skeleton.php";

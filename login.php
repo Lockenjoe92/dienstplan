@@ -148,11 +148,21 @@ if(LOGINMODE=='OIDC'){
         catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             // Failed to get the access token or user details.
             // Redirect the user to the Welcome Page with Error-Info.
-            header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err');
+            header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err&oidc='.$e->getMessage().'');
             exit;
             #exit($e->getMessage());
         }
     }
+
+} elseif(LOGINMODE=='OIDC2'){
+
+    require_once('./auth.php');
+    $auth->login();
+
+    $user = $auth->getUser();
+    var_dump($user);
+    #header('Location: dashboard.php');
+    #die();
 
 } else {
     // Check if the user is already logged in, if yes then redirect him to welcome page

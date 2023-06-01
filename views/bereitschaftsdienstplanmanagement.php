@@ -104,9 +104,7 @@ function bereitschaftsdienstplan_table_management($Month,$Year){
 
     //Initialze & fetch stuff
     $mysqli = connect_db();
-    $SearchDate = $Year."-".$Month."-01";
-    $LastDayOfConcideredMonth = date('Y-m-t', strtotime($SearchDate));
-    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', false, $LastDayOfConcideredMonth);
+    $AllUsers = get_sorted_list_of_all_users($mysqli, 'abteilungsrollen DESC, nachname ASC', true, '');
     $AllBDTypes = get_list_of_all_bd_types($mysqli);
     $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
     $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
@@ -293,7 +291,10 @@ function populate_day_bd_plan_management($DateConcerned, $AllBDTypes, $AllBDmatr
                             }
                             // Build User Name String
                          $CurrentUserInfos = get_user_infos_by_id_from_list($User['user'], $AllUsers);
-                         $RowContent .= $CurrentUserInfos['nachname'].", ".$CurrentUserInfos['vorname'][0].".";
+                            if(!$CurrentUserInfos){
+                                var_dump($User['user'], date('d.m.Y', $DateConcerned));
+                            }
+                            $RowContent .= $CurrentUserInfos['nachname'].", ".$CurrentUserInfos['vorname'].".";
                          $counter++;
                         }
 
@@ -617,7 +618,7 @@ function table_bereitschaftsdienstplan_user($mysqli,$CurrentUser,$SelectedMonth=
         } else {
             $BeginDate = $SelectedYear."-".$SelectedMonth."-01";
         }
-        $EndDate = date("Y-m-t", strtotime($BeginDate));
+        $EndDate = date("Y-m-t", strtotime('+2 months', strtotime($BeginDate)));
 
         // Initialize Table
         $HTML = '<table data-toggle="table" 

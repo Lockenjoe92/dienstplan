@@ -870,10 +870,9 @@ function bd_automatik(){
         return $Antwort;
     } else {
 
-        // Mode 1 - fullfill wishes as long as there is only one kandidate
+        // Mode 1 - fullfill wishes as long as there is only one candidate
         if($_POST['automatik_mode']==1){
             $mysqli = connect_db();
-
             $StartDate = strtotime($_POST['automatik_start_date']);
             $EndDate = strtotime($_POST['automatik_end_date']);
             $AllAssignments = get_all_users_bd_assignments($mysqli);
@@ -882,80 +881,36 @@ function bd_automatik(){
             $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
             $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
             $AllBDTypes = get_list_of_all_bd_types($mysqli);
-            $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', true, $_POST['automatik_end_date']);
+            $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', false, $_POST['automatik_end_date']);
+
+            foreach ($AllUsers as $User){
+                if($User['id']==177){
+                    var_dump($User['id'], $User['inaktiv_seit'], $_POST['automatik_end_date']);
+                }
+            }
 
             $NumFulfilledWishes = 0;
             $NumTotalWishes = 0;
             $NumImpossibleWishes = 0;
             $ConcernedDates = "";
+            $OnlyHolidayWeekends = true;
 
-            for($a=0;$a<=90;$a++){
-                $Command = "+ ".$a." days";
-                $CurrentDay = strtotime($Command, $StartDate);
-                if($CurrentDay<=$EndDate){
+            //First run only do weekends as these are more important and give more penalty points
+            $Run1 = bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers);
+            $NumImpossibleWishes += $Run1['impossible'];
+            $NumFulfilledWishes += $Run1['fulfilled'];
+            $NumTotalWishes += $Run1['total'];
+            $ConcernedDates .= $Run1['concerned_dates'];
 
-                    $UsersWithPositiveWishes = 0;
-                    $WishesArray = [];
-                    $UsersWithAssignments = get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($_POST['automatik_dienstgruppe'], $AllAssignments, $CurrentDay);
-                    foreach($UsersWithAssignments as $user){
-                        $Wuensche = get_positive_bd_wishes_user_on_certain_day($user['user'], $_POST['automatik_dienstgruppe'], $AllWishes, $AllWishTypes, $AllBDTypes, $CurrentDay);
-                        if(sizeof($Wuensche)>0){
+            // Now run on normal weekdays
+            $OnlyHolidayWeekends = false;
+            $Run2 = bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers);
+            $NumImpossibleWishes += $Run2['impossible'];
+            $NumFulfilledWishes += $Run2['fulfilled'];
+            $NumTotalWishes += $Run2['total'];
+            $ConcernedDates .= $Run2['concerned_dates'];
 
-                            //Only concider this if user is really available on said date! -> he has a einteilung? dont concider him
-                            $AllEinteilungenToday = get_bereitschaftsdienst_einteilungen_on_day($CurrentDay, $AllBDeinteilungen, 0);
-                            $Count = 0;
-                            foreach ($AllEinteilungenToday as $EinteilungenToday){
-                                if($EinteilungenToday['user']==$user['user']){
-                                    $Count++;
-                                }
-                            }
-
-                            //Check if user already has a FZA today
-                            if(user_needs_fza_on_certain_date($user['user'], $AllBDeinteilungen, $AllBDTypes, $CurrentDay)){
-                                $Count++;
-                            }
-
-                            //Check if User is unavailable due to Abwesenheit
-                            $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($user['user'], $AllAbwesenheiten, $CurrentDay);
-                            if(sizeof($AbwesenheitCheck)>0){
-                                $Count++;
-                            }
-
-                            //Check if User hay already reached max. amount of assignments this month!
-                            $Holidayweekend = day_is_a_weekend_or_holiday($CurrentDay);
-                            $Dienstbelastung = calculate_users_dienstbelastung_points_on_given_day($CurrentDay, $user['user'], $AllBDeinteilungen, $AllBDTypes, $Holidayweekend);
-                            $PenaltyPoints = $Dienstbelastung['penalty_points'];
-                            if($PenaltyPoints>=200){
-                                $Count++;
-                            }
-
-                            if($Count==0){
-                                $UsersWithPositiveWishes++;
-                                $WishesArray[] = $Wuensche;
-                            }
-                        }
-                    }
-
-                    // now check if there are colliding wishes -> Add to Error-Output
-                    if($UsersWithPositiveWishes>1){
-                        $NumImpossibleWishes ++;
-                        foreach ($WishesArray as $item) {
-                            $WishUser = get_user_infos_by_id_from_list($item[0]['user'], $AllUsers);
-                            $ConcernedDates .= date('d.m.Y',$CurrentDay)." ".$WishUser['nachname'].", ".$WishUser['vorname']."; ";
-                        }
-                        //Continue with fulfilling wish -> Add to success output
-                    } elseif($UsersWithPositiveWishes==1) {
-                        $DoShit = add_bd_entry($mysqli, $WishesArray[0][0]['user'], $CurrentDay, $_POST['automatik_dienstgruppe'], $WishesArray[0][0]['create_comment'], true);
-                        if($DoShit['success']){
-                            $NumFulfilledWishes++;
-                        }
-                    }
-
-                    $NumTotalWishes += $UsersWithPositiveWishes;
-                }
-            }
-
-        $answer = "";
+            $answer = "";
 
         if($NumImpossibleWishes>0){
             $answer .= '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Fehler!</strong> '.$NumImpossibleWishes.' Wünsch(e) konnten nicht erfüllt werden, da sie mit anderen Wünschen kollidieren! Folgende Tage waren betroffen: '.$ConcernedDates.'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
@@ -1160,4 +1115,107 @@ function bd_automatik(){
 
     }
 
+}
+
+function bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers){
+    $NumImpossibleWishes = $NumFulfilledWishes = $NumTotalWishes = 0;
+    $ConcernedDates = "";
+    $CurrentBDTypeInfos = get_bd_type_infos_from_list($_POST['automatik_dienstgruppe'], $AllBDTypes);
+
+    for($a=0;$a<=tage_differenz_berechnen(date('Y-m-d',$StartDate), date('Y-m-d',$EndDate));$a++){
+        $Command = "+ ".$a." days";
+        $CurrentDay = strtotime($Command, $StartDate);
+        if(day_is_a_weekend_or_holiday($CurrentDay)==$OnlyHolidayWeekends){
+            $UsersWithPositiveWishes = 0;
+            $WishesArray = [];
+            $UsersWithAssignments = get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($_POST['automatik_dienstgruppe'], $AllAssignments, $CurrentDay);
+            foreach($UsersWithAssignments as $user){
+
+                //Check if User is actually still active
+                $UserIsActive = false;
+                foreach ($AllUsers as $UserInfos){
+                    if($user['user'] == $UserInfos['id']){
+                        $UserIsActive = true;
+                    }
+                }
+
+                if($UserIsActive){
+                    $Wuensche = get_positive_bd_wishes_user_on_certain_day($user['user'], $_POST['automatik_dienstgruppe'], $AllWishes, $AllWishTypes, $AllBDTypes, $CurrentDay);
+                    if(sizeof($Wuensche)>0){
+
+                        // Count dat wish
+                        $NumTotalWishes++;
+
+                        //Only concider this if user is really available on said date! -> he has a einteilung? dont concider him
+                        $AllEinteilungenToday = get_bereitschaftsdienst_einteilungen_on_day($CurrentDay, $AllBDeinteilungen, 0);
+                        $Count = 0;
+                        foreach ($AllEinteilungenToday as $EinteilungenToday){
+                            if($EinteilungenToday['user']==$user['user']){
+                                $Count++;
+                            }
+                        }
+
+                        //Check if user already has a FZA today
+                        if(user_needs_fza_on_certain_date($user['user'], $AllBDeinteilungen, $AllBDTypes, $CurrentDay)){
+                            $Count++;
+                        }
+
+                        //Check if User is unavailable due to Abwesenheit
+                        $AbwesenheitCheck = get_abwesenheit_existing_for_user_on_given_day($user['user'], $AllAbwesenheiten, $CurrentDay);
+                        if(sizeof($AbwesenheitCheck)>0){
+                            $Count++;
+                        }
+
+                        //Check if User hay already reached max. amount of assignments this month!
+                        $Holidayweekend = day_is_a_weekend_or_holiday($CurrentDay);
+                        $Dienstbelastung = calculate_users_dienstbelastung_points_on_given_day($CurrentDay, $user['user'], $AllBDeinteilungen, $AllBDTypes, $Holidayweekend);
+                        $PenaltyPoints = $Dienstbelastung['penalty_points'];
+                        if($PenaltyPoints>=200){
+                            $Count++;
+                        }
+
+                        if($Count==0){
+                            $UsersWithPositiveWishes++;
+                            $WishesArray[] = $Wuensche;
+                        } else {
+                            $UsersWithPositiveWishes++;
+                            $NumImpossibleWishes++;
+                            $WishUser = get_user_infos_by_id_from_list($user['user'], $AllUsers);
+                            $ConcernedDates .= date('d.m.Y',$CurrentDay)." ".$WishUser['nachname'].", ".$WishUser['vorname']." - Erfüllt Kriterien nicht; ";
+                        }
+                    }
+                }
+            }
+
+            // now check if there are colliding wishes -> Add to Error-Output
+            if($UsersWithPositiveWishes>$CurrentBDTypeInfos['req_employees_per_day']){
+                foreach ($WishesArray as $item) {
+                    $NumImpossibleWishes ++;
+                    $WishUser = get_user_infos_by_id_from_list($item[0]['user'], $AllUsers);
+                    $ConcernedDates .= date('d.m.Y',$CurrentDay)." ".$WishUser['nachname'].", ".$WishUser['vorname']."; ";
+                }
+                //Continue with fulfilling wishes -> Add to success output
+            } else {
+                foreach ($WishesArray as $item){
+                    $DoShit = add_bd_entry($mysqli, $item[0]['user'], $CurrentDay, $_POST['automatik_dienstgruppe'], $item[0]['create_comment'], true);
+                    if($DoShit['success']){
+                        $NumFulfilledWishes++;
+                    } else {
+                        $NumImpossibleWishes ++;
+                        $WishUser = get_user_infos_by_id_from_list($item[0]['user'], $AllUsers);
+                        $ConcernedDates .= date('d.m.Y',$CurrentDay)." ".$WishUser['nachname'].", ".$WishUser['vorname']." - ".$DoShit['meldung']."; ";
+                    }
+                }
+            }
+        }
+    }
+
+    var_dump($NumTotalWishes, $NumFulfilledWishes);
+
+    $Answer['impossible'] = $NumImpossibleWishes;
+    $Answer['fulfilled'] = $NumFulfilledWishes;
+    $Answer['total'] = $NumTotalWishes;
+    $Answer['concerned_dates'] = $ConcernedDates;
+
+    return $Answer;
 }
