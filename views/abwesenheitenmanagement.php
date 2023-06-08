@@ -411,7 +411,7 @@ function add_entry_abwesenheiten_management($mysqli,$UE=1){
         $FormHTML .= form_group_input_date('Bearbeitet am', 'approval-date', $approvalDatePlaceholder, true, $approvalDateErr, false);
         $FormHTML .= form_group_dropdown_bearbeitungsstati('Bearbeitungsstatus', 'status', $statusPlaceholder, false, $approvalDateErr, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_management.php?org_ue='.$UE);
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -491,7 +491,7 @@ function add_entry_abwesenheiten_user($mysqli){
         $FormHTML .= form_hidden_input_generator('plchldr3', '3');
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_user.php');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -601,7 +601,7 @@ function edit_entry_abwesenheiten_management($mysqli, $AbwesenheitObj,$UE=1){
         $FormHTML .= form_group_dropdown_bearbeitungsstati('Bearbeitungsstatus', 'status', $statusPlaceholder, false, $approvalDateErr, false);
         $FormHTML .= form_group_input_text('Kommentar(e) zur Bearbeitung', 'comment_approve', $commentApprovePlaceholder, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_management.php?org_ue='.$UE);
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -689,7 +689,7 @@ function edit_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
         $FormHTML .= form_hidden_input_generator('abwesenheit_id', $AbwesenheitObj['id']);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_abwesenheit_action', 'btn-primary', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_user.php');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -749,7 +749,7 @@ function delete_entry_abwesenheiten_management($mysqli, $AbwesenheitObj,$UE=1){
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
         $FormHTML .= "<br>";
         $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang', 'delete_comment', $deleteCommentPlaceholder, false, $deleteErr, false);
-        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_management.php?org_ue='.$UE);
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -806,7 +806,7 @@ function delete_entry_abwesenheiten_user($mysqli, $AbwesenheitObj){
         $FormHTML .= form_hidden_input_generator('plchldr3', '3');
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_user.php');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -875,9 +875,9 @@ function allow_abwesenheiten_management($mysqli, $AbwesenheitObj, $Mode='accept'
         $FormHTML .= form_group_input_text('Kommentar zum Bearbeitungsvorgang', 'delete_comment', $deleteCommentPlaceholder, false, $deleteErr, false);
 
         if($Mode=='accept'){
-            $FormHTML .= form_group_continue_return_buttons(true, 'Freigeben', 'accept_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+            $FormHTML .= form_group_continue_return_buttons(true, 'Freigeben', 'accept_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_management.php?org_ue='.$UE);
         } elseif($Mode=='decline'){
-            $FormHTML .= form_group_continue_return_buttons(true, 'Ablehnen', 'decline_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary');
+            $FormHTML .= form_group_continue_return_buttons(true, 'Ablehnen', 'decline_abwesenheit_action', 'btn-danger', true, 'Zurück', 'abwesenheitmanagement_go_back', 'btn-primary', true, './abwesenheiten_management.php?org_ue='.$UE);
         }
 
         // Gap it

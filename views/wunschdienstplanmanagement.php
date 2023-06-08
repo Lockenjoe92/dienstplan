@@ -142,6 +142,7 @@ data-show-multi-sort="true"
     $counter = 1;
     foreach ($Wuensche as $Wunsch){
 
+        // Check if Dienstwunsch is in selected Month
         if(check_if_dienstwunsch_is_in_selected_month($Wunsch, $Month, $Year)){
 
             $User = [];
@@ -151,41 +152,46 @@ data-show-multi-sort="true"
                 }
             }
 
-            // Build rows
-            if($counter==1){
-                $HTML .= '<tr id="tr-id-1" class="tr-class-1" data-title="bootstrap table" data-object='.$bla.'>';
-            } else {
-                $HTML .= '<tr id="tr-id-'.$counter.'" class="tr-class-'.$counter.'">';
+            //Check if User is still active this month
+            if($User!=false){
+// Build rows
+                $WunschType = get_wunschtype_details_by_type_id($Wunschtypen, $Wunsch['type']);
+                //Only show wishes from selected UE
+                if($WunschType['belongs_to_depmnt']==$UE){
+                    if($counter==1){
+                        $HTML .= '<tr id="tr-id-1" class="tr-class-1" data-title="bootstrap table" data-object='.$bla.'>';
+                    } else {
+                        $HTML .= '<tr id="tr-id-'.$counter.'" class="tr-class-'.$counter.'">';
+                    }
+
+                    // Build edit/delete Buttons
+                    if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE)){
+                        $Options = '<a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=edit_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=delete_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
+                    }else{
+                        $Options = '';
+                    }
+
+                    if($counter==1){
+                        $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
+                        $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
+                        $HTML .= '<td>'.$WunschType['name'].'</td>';
+                        $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
+                        $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
+                        $HTML .= '<td> '.$Options.'</td>';
+                    } else {
+                        $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
+                        $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
+                        $HTML .= '<td>'.$WunschType['name'].'</td>';
+                        $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
+                        $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
+                        $HTML .= '<td> '.$Options.'</td>';
+                    }
+
+                    // close row and count up
+                    $HTML .= "</tr>";
+                    $counter++;
+                }
             }
-
-            // Build edit/delete Buttons
-            if(user_can_edit_dienstwunsch($mysqli, $Nutzerrollen, $Wunsch, $UE)){
-                $Options = '<a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=edit_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-pencil-fill"></i></a> <a href="dienstwuensche_management.php?org_ue='.$UE.'&mode=delete_dienstwunsch&dienstwunsch_id='.$Wunsch['id'].'"><i class="bi bi-trash3-fill"></i></a> ';
-            }else{
-                $Options = '';
-            }
-
-            $WunschType = get_wunschtype_details_by_type_id($Wunschtypen, $Wunsch['type']);
-
-            if($counter==1){
-                $HTML .= '<td id="td-id-1" class="td-class-1" data-title="bootstrap table">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
-                $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
-                $HTML .= '<td>'.$WunschType['name'].'</td>';
-                $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
-                $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
-                $HTML .= '<td> '.$Options.'</td>';
-            } else {
-                $HTML .= '<td id="td-id-'.$counter.'" class="td-class-'.$counter.'"">'.date('d.m.Y', strtotime($Wunsch['date'])).'</td>';
-                $HTML .= '<td>'.$User['nachname'].', '.$User['vorname'].'</td>';
-                $HTML .= '<td>'.$WunschType['name'].'</td>';
-                $HTML .= '<td>'.htmlspecialchars($Wunsch['create_comment']).'</td>';
-                $HTML .= '<td>'.date('d.m.Y',strtotime($Wunsch['create_time'])).'</td>';
-                $HTML .= '<td> '.$Options.'</td>';
-            }
-
-            // close row and count up
-            $HTML .= "</tr>";
-            $counter++;
         }
 
     }
@@ -403,7 +409,7 @@ function add_dienstwunsch_user($mysqli){
     $UE = get_user_assigned_department_at_date($mysqli, $UserInfos, date('Y-m-d'));
     $Department = get_department_infos($mysqli, $UE);
     $entryDatePlaceholder = date('Y-m-d');
-    $DatePlaceholder = date('Y-m-d', strtotime('+1 day', strtotime(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months']))));
+    $DatePlaceholder = date('Y-m-d', strtotime('+1 day', strtotime(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months'], date('Y-m-d')))));
     $ReturnMessage = $typePlaceholder = $commentPlaceholder = "";
     $DateErr = $TypeErr = "";
 
@@ -495,7 +501,7 @@ function add_dienstwunsch_user($mysqli){
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary', true, './dienstplan_user.php');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -607,7 +613,7 @@ function add_dienstwunsch_management($mysqli){
         $FormHTML .= "<br>";
         $FormHTML .= form_group_input_date('Antragsdatum', 'application_date', $ApplicationDatePlaceholder, true, $ApplicationDateErr, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary', true, './dienstwuensche_management.php?org_ue='.$UE);
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -658,7 +664,7 @@ function delete_dienstwunsch_user($mysqli, $dienstwunsch){
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', true);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_dienstwunsch_action', 'btn-danger', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_dienstwunsch_action', 'btn-danger', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary', true, './dienstplan_user.php');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -727,7 +733,7 @@ function delete_dienstwunsch_management($mysqli, $dienstwunsch){
         $FormHTML .= "<br>";
         $FormHTML .= form_group_input_text('Kommentar zum Löschvorgang', 'delete_comment', $DeleteComment, true, $DeleteCommentErr, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_dienstwunsch_action', 'btn-danger', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_dienstwunsch_action', 'btn-danger', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary', true, './dienstplan_user.php?org_ue='.$UE);
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -782,7 +788,7 @@ function edit_dienstwunsch_user($mysqli, $dienstwunsch){
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, '', true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, false, '', false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary', true, './dienstplan_user.php');
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
@@ -858,7 +864,7 @@ function edit_dienstwunsch_management($mysqli, $dienstwunsch){
         $FormHTML .= form_group_dropdown_dienstwunschtypen($mysqli, 'Dienstwunsch', 'type', $typePlaceholder, true, $TypeErr, false, true);
         $FormHTML .= form_group_input_text('Kommentar des/der Antragstellers/in', 'comment_user', $commentPlaceholder, true, $CommentErr, false);
         $FormHTML .= "<br>";
-        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary');
+        $FormHTML .= form_group_continue_return_buttons(true, 'Bearbeiten', 'edit_dienstwunsch_action', 'btn-primary', true, 'Zurück', 'wunschdienst_go_back', 'btn-primary', true, './dienstplan_user.php?org_ue='.$UE);
 
         // Gap it
         $FormHTML = grid_gap_generator($FormHTML);
