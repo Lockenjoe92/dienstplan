@@ -298,7 +298,7 @@ function get_bd_type_infos_from_list($type, $AllBDTypes){
 
 }
 
-function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $AllBDTypes, $Holidayweekend, $WeeksPast=3, $WeeksFuture=3, $PenaltyWeekDay = 10, $PenaltyWeekend = 20, $MaxDienstePerMonth = 4, $MaxPlannedWeekendsPerMonth = 2, $MaxWeekendHolidayPenalty = 100, $MaxDienstePenalty = 200){
+function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $UserConcerned, $AllBDeinteilungen, $AllBDTypes, $Holidayweekend, $WeeksPast=4, $WeeksFuture=4, $PenaltyWeekDay = 10, $PenaltyWeekend = 20, $MaxDienstePerMonth = 4, $MaxPlannedWeekendsPerMonth = 2, $MaxWeekendHolidayPenalty = 100, $MaxDienstePenalty = 200){
 
     $Answer = [];
     $Counter = 0;
@@ -368,7 +368,7 @@ function calculate_users_dienstbelastung_points_on_given_day($DateConcerned, $Us
 
 }
 
-function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend){
+function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType, $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend, $AllUserDeptAssignments){
 
     $Answer = [];
     $Assignments = [];
@@ -378,6 +378,18 @@ function parse_bd_candidates_on_day_for_certain_bd_type($DateConcerned, $BDType,
 
     //1. Get Candidates based on assigned BD Group
     $firstListOfCandidates = get_list_of_users_bd_assignments_with_active_bd_type_on_certain_day($BDType, $AllBDassignments, $DateConcerned);
+
+    //1.2 - Remove Candidates if they are not assigned to UE 1 on current date
+    $prunedFirstListOfCandidates = array();
+    foreach ($firstListOfCandidates as $candidate){
+        $CandidatePersonalInfos = get_user_infos_by_id_from_list($candidate['user'], $AllUsers);
+        if($CandidatePersonalInfos!=false){
+            if(get_user_assigned_department_at_date(null, $CandidatePersonalInfos, $DateConcerned, $AllUserDeptAssignments)==1){
+                $prunedFirstListOfCandidates[] = $candidate;
+            }
+        }
+    }
+    $firstListOfCandidates = $prunedFirstListOfCandidates;
 
     //2. Build 3 sublists based on abwesenheiten, wishes and prior assignments
     // Array is built as follows: 'userID', 'userName', 'table-color', 'reason'
@@ -596,6 +608,7 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment='', $byA
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
     $AllUsers = get_sorted_list_of_all_users($mysqli);
     $Einteilungen = get_bereitschaftsdienst_einteilungen_on_day($Dateconcerned, $AllBDEinteilungen, $BDtype);
+    $AllUserDeptAssignments = get_all_user_depmnt_assignments($mysqli);
 
     $Antwort = [];
     $DAUcount = 0;
@@ -624,7 +637,7 @@ function add_bd_entry($mysqli, $User, $Dateconcerned, $BDtype, $comment='', $byA
         $DAUerr .= "Die maximale Anzahl an MitarbeiterInnen für diesen Bereitschaftsdiensttyp ist bereits erreicht!<br>";
     }
 
-    $ParsedCandidates = parse_bd_candidates_on_day_for_certain_bd_type($Dateconcerned, $BDtype, $AllBDEinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, day_is_a_weekend_or_holiday($Dateconcerned));
+    $ParsedCandidates = parse_bd_candidates_on_day_for_certain_bd_type($Dateconcerned, $BDtype, $AllBDEinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, day_is_a_weekend_or_holiday($Dateconcerned),$AllUserDeptAssignments);
     $UserInRedlist = false;
     $ReasonRedList = "";
     foreach ($ParsedCandidates['bad_candidates'] as $parsedCandidate){
@@ -880,14 +893,9 @@ function bd_automatik(){
             $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
             $AllWishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
             $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+            $AllUserDeptAssignments = get_all_user_depmnt_assignments($mysqli);
             $AllBDTypes = get_list_of_all_bd_types($mysqli);
             $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', false, $_POST['automatik_end_date']);
-
-            foreach ($AllUsers as $User){
-                if($User['id']==177){
-                    var_dump($User['id'], $User['inaktiv_seit'], $_POST['automatik_end_date']);
-                }
-            }
 
             $NumFulfilledWishes = 0;
             $NumTotalWishes = 0;
@@ -896,7 +904,7 @@ function bd_automatik(){
             $OnlyHolidayWeekends = true;
 
             //First run only do weekends as these are more important and give more penalty points
-            $Run1 = bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers);
+            $Run1 = bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers, $AllUserDeptAssignments);
             $NumImpossibleWishes += $Run1['impossible'];
             $NumFulfilledWishes += $Run1['fulfilled'];
             $NumTotalWishes += $Run1['total'];
@@ -904,7 +912,7 @@ function bd_automatik(){
 
             // Now run on normal weekdays
             $OnlyHolidayWeekends = false;
-            $Run2 = bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers);
+            $Run2 = bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers, $AllUserDeptAssignments);
             $NumImpossibleWishes += $Run2['impossible'];
             $NumFulfilledWishes += $Run2['fulfilled'];
             $NumTotalWishes += $Run2['total'];
@@ -949,6 +957,7 @@ function bd_automatik(){
             $AllBDmatrixes = get_list_of_all_bd_matrixes($mysqli);
             $Allwishes = get_sorted_list_of_all_dienstplanwünsche($mysqli);
             $AllWishTypes = get_list_of_all_dienstplanwunsch_types($mysqli);
+            $AllUserDeptAssignments = get_all_user_depmnt_assignments($mysqli);
             $AllBDTypes = get_list_of_all_bd_types($mysqli);
             $AllUsers = get_sorted_list_of_all_users($mysqli, 'id ASC', false, $_POST['automatik_end_date']);
 
@@ -964,97 +973,25 @@ function bd_automatik(){
             $ConcernedDatesIncomplete = "";
             $OtherErrors = "";
 
-            for($a=0;$a<=90;$a++){
-                $Command = "+ ".$a." days";
-                $CurrentDay = strtotime($Command, $StartDate);
-                if($CurrentDay<=$EndDate){
+            //Run Weekend-Loop
+            $Results = bd_automatik_for_loop_3($mysqli, true, $StartDate, $EndDate, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishTypes, $AllBDTypes, $AllUsers, $AllBDmatrixes, $BDTypeInfos, $AllUserDeptAssignments);
+            $NumFilledDays += $Results['num_filled_days'];
+            $NumTotalAssignedUsers += $Results['num_total_assigned_users'];
+            $NumImpossibleDays += $Results['num_inpossible_days'];
+            $NumIncompleteDays += $Results['num_incomplete_days'];
+            $ConcernedDatesImpossible .= $Results['concerned_dates_impossible'];
+            $ConcernedDatesIncomplete .= $Results['concerned_dates_incomplete'];
+            $OtherErrors .= $Results['other_errors'];
 
-                    if(day_is_a_weekend_or_holiday($CurrentDay)){
-                        $Holidayweekend = true;
-                        $searchedDayType = 'weekend';
-                    } else {
-                        $Holidayweekend = false;
-                        $searchedDayType = 'normal';
-                    }
-
-                    // Load correct BD Matrix
-                    $Matrix = [];
-                    foreach ($AllBDmatrixes as $BDmatrix){
-                        if($BDmatrix['type_of_day']==$searchedDayType){
-                            $Matrix = $BDmatrix;
-                        }
-                    }
-
-                    //Deconstruct BD Matrix
-                    $MatrixUnpacked = explode(',', $Matrix['matrix']);
-
-                    foreach ($MatrixUnpacked as $item) {
-
-                        $Exploded = explode(':', $item);
-
-                        if ($Exploded[0] == $_POST['automatik_dienstgruppe']) {
-
-                            //Only continue operation if Dienstgruppe should be active on this day
-                            if ($Exploded[1] > 0) {
-
-                                $Einteilungen = get_bereitschaftsdienst_einteilungen_on_day($CurrentDay, $AllBDeinteilungen, $_POST['automatik_dienstgruppe']);
-
-                                //Firstly: only fill unfilled days!
-                                if(sizeof($Einteilungen)<$BDTypeInfos['req_employees_per_day']){
-                                    $Diff = $Diffwork = $BDTypeInfos['req_employees_per_day']-sizeof($Einteilungen);
-                                    $SavedUser = 0;
-                                    for($b=0;$b<$Diff;$b++){
-                                        //Now build list of identically able candidates (i.e. run the list from the top down until the amount of penalty points start to increase)
-                                        $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
-                                        $Candidates = parse_bd_candidates_on_day_for_certain_bd_type($CurrentDay, $_POST['automatik_dienstgruppe'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend);
-
-                                        $InitialScore = 0;
-                                        $IdenticalCandidates = [];
-                                        $Count = 0;
-                                        foreach ($Candidates['good_for_automatik_list'] as $Candidate){
-                                            if($Candidate['userID']!=$SavedUser){
-                                                if($Count==0){
-                                                    $IdenticalCandidates[] = $Candidate;
-                                                    $InitialScore = $Candidate['dienstbelastung'];
-                                                } else {
-                                                    if($Candidate['dienstbelastung']<=$InitialScore){
-                                                        $IdenticalCandidates[] = $Candidate;
-                                                    }
-                                                }
-                                                $Count++;
-                                            }
-                                        }
-
-                                        if(sizeof($IdenticalCandidates)==0){
-                                            $NumImpossibleDays++;
-                                            $ConcernedDatesImpossible .= date('d.m.Y', $CurrentDay).", ";
-                                        } else {
-                                            //Now lets randomly choose from said List
-                                            $RandomChoice = random_int(1, sizeof($IdenticalCandidates))-1;
-                                            $EinteilungAnswer = add_bd_entry($mysqli, $IdenticalCandidates[$RandomChoice]['userID'], $CurrentDay, $_POST['automatik_dienstgruppe'], '', true);
-                                            if($EinteilungAnswer['success']){
-                                                $NumTotalAssignedUsers++;
-                                                $SavedUser = $IdenticalCandidates[$RandomChoice]['userID'];
-                                                $Diffwork = $Diffwork-1;
-                                            } else {
-                                                $OtherErrors .= $EinteilungAnswer['meldung']."<br>";
-                                            }
-                                        }
-                                    }
-
-                                    //Now lets check if we filled all items in day
-                                    if($Diffwork==0){
-                                        $NumFilledDays++;
-                                    } else {
-                                        $ConcernedDatesIncomplete .= date('d.m.Y', $CurrentDay).", ";
-                                        $NumIncompleteDays++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            //Run Non-Weekend-Loop
+            $Results2 = bd_automatik_for_loop_3($mysqli, false, $StartDate, $EndDate, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishTypes, $AllBDTypes, $AllUsers, $AllBDmatrixes, $BDTypeInfos, $AllUserDeptAssignments);
+            $NumFilledDays += $Results2['num_filled_days'];
+            $NumTotalAssignedUsers += $Results2['num_total_assigned_users'];
+            $NumImpossibleDays += $Results2['num_inpossible_days'];
+            $NumIncompleteDays += $Results2['num_incomplete_days'];
+            $ConcernedDatesImpossible .= $Results2['concerned_dates_impossible'];
+            $ConcernedDatesIncomplete .= $Results2['concerned_dates_incomplete'];
+            $OtherErrors .= $Results2['other_errors'];
 
             // Okay, so now lets build some feedback for the users and then were done:)
             if(!empty($OtherErrors)){
@@ -1117,7 +1054,7 @@ function bd_automatik(){
 
 }
 
-function bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers){
+function bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $AllAssignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishes, $AllWishTypes, $AllBDTypes, $AllUsers, $AllUserDeptAssignments){
     $NumImpossibleWishes = $NumFulfilledWishes = $NumTotalWishes = 0;
     $ConcernedDates = "";
     $CurrentBDTypeInfos = get_bd_type_infos_from_list($_POST['automatik_dienstgruppe'], $AllBDTypes);
@@ -1210,12 +1147,126 @@ function bd_automatik_for_loop_1($mysqli, $OnlyHolidayWeekends, $StartDate, $End
         }
     }
 
-    var_dump($NumTotalWishes, $NumFulfilledWishes);
-
     $Answer['impossible'] = $NumImpossibleWishes;
     $Answer['fulfilled'] = $NumFulfilledWishes;
     $Answer['total'] = $NumTotalWishes;
     $Answer['concerned_dates'] = $ConcernedDates;
+
+    return $Answer;
+}
+
+function bd_automatik_for_loop_3($mysqli, $OnlyHolidayWeekends, $StartDate, $EndDate, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllBDeinteilungen, $AllWishTypes, $AllBDTypes, $AllUsers, $AllBDmatrixes, $BDTypeInfos, $AllUserDeptAssignments){
+
+    $NumFilledDays = 0;
+    $NumTotalAssignedUsers = 0;
+    $NumImpossibleDays = 0;
+    $NumIncompleteDays = 0;
+    $ConcernedDatesImpossible = "";
+    $ConcernedDatesIncomplete = "";
+    $OtherErrors = "";
+    $Answer = [];
+
+    for($a=0;$a<=90;$a++){
+        $Command = "+ ".$a." days";
+        $CurrentDay = strtotime($Command, $StartDate);
+        if(day_is_a_weekend_or_holiday($CurrentDay)){
+            $Holidayweekend = true;
+            $searchedDayType = 'weekend';
+        } else {
+            $Holidayweekend = false;
+            $searchedDayType = 'normal';
+        }
+
+        if($Holidayweekend==$OnlyHolidayWeekends){
+            if($CurrentDay<=$EndDate){
+
+                // Load correct BD Matrix
+                $Matrix = [];
+                foreach ($AllBDmatrixes as $BDmatrix){
+                    if($BDmatrix['type_of_day']==$searchedDayType){
+                        $Matrix = $BDmatrix;
+                    }
+                }
+
+                //Deconstruct BD Matrix
+                $MatrixUnpacked = explode(',', $Matrix['matrix']);
+
+                foreach ($MatrixUnpacked as $item) {
+
+                    $Exploded = explode(':', $item);
+
+                    if ($Exploded[0] == $_POST['automatik_dienstgruppe']) {
+
+                        //Only continue operation if Dienstgruppe should be active on this day
+                        if ($Exploded[1] > 0) {
+
+                            $Einteilungen = get_bereitschaftsdienst_einteilungen_on_day($CurrentDay, $AllBDeinteilungen, $_POST['automatik_dienstgruppe']);
+
+                            //Firstly: only fill unfilled days!
+                            if(sizeof($Einteilungen)<$BDTypeInfos['req_employees_per_day']){
+                                $Diff = $Diffwork = $BDTypeInfos['req_employees_per_day']-sizeof($Einteilungen);
+                                $SavedUser = 0;
+                                for($b=0;$b<$Diff;$b++){
+                                    //Now build list of identically able candidates (i.e. run the list from the top down until the amount of penalty points start to increase)
+                                    $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
+                                    $Candidates = parse_bd_candidates_on_day_for_certain_bd_type($CurrentDay, $_POST['automatik_dienstgruppe'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, $Holidayweekend, $AllUserDeptAssignments);
+
+                                    $InitialScore = 0;
+                                    $IdenticalCandidates = [];
+                                    $Count = 0;
+                                    foreach ($Candidates['good_for_automatik_list'] as $Candidate){
+                                        if($Candidate['userID']!=$SavedUser){
+                                            if($Count==0){
+                                                $IdenticalCandidates[] = $Candidate;
+                                                $InitialScore = $Candidate['dienstbelastung'];
+                                            } else {
+                                                if($Candidate['dienstbelastung']<=$InitialScore){
+                                                    $IdenticalCandidates[] = $Candidate;
+                                                }
+                                            }
+                                            $Count++;
+                                        }
+                                    }
+
+                                    if(sizeof($IdenticalCandidates)==0){
+                                        $NumImpossibleDays++;
+                                        $ConcernedDatesImpossible .= date('d.m.Y', $CurrentDay).", ";
+                                    } else {
+                                        //Now lets randomly choose from said List
+                                        $RandomChoice = random_int(1, sizeof($IdenticalCandidates))-1;
+                                        $EinteilungAnswer = add_bd_entry($mysqli, $IdenticalCandidates[$RandomChoice]['userID'], $CurrentDay, $_POST['automatik_dienstgruppe'], '', true);
+                                        if($EinteilungAnswer['success']){
+                                            $NumTotalAssignedUsers++;
+                                            $SavedUser = $IdenticalCandidates[$RandomChoice]['userID'];
+                                            $Diffwork = $Diffwork-1;
+                                        } else {
+                                            $OtherErrors .= $EinteilungAnswer['meldung']."<br>";
+                                        }
+                                    }
+                                }
+
+                                //Now lets check if we filled all items in day
+                                if($Diffwork==0){
+                                    $NumFilledDays++;
+                                } else {
+                                    $ConcernedDatesIncomplete .= date('d.m.Y', $CurrentDay).", ";
+                                    $NumIncompleteDays++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    $Answer['num_filled_days'] = $NumFilledDays;
+    $Answer['num_total_assigned_users'] = $NumTotalAssignedUsers;
+    $Answer['num_inpossible_days'] = $NumImpossibleDays;
+    $Answer['num_incomplete_days'] = $NumIncompleteDays;
+    $Answer['concerned_dates_impossible'] = $ConcernedDatesImpossible;
+    $Answer['concerned_dates_incomplete'] = $ConcernedDatesIncomplete;
+    $Answer['other_errors'] = $OtherErrors;
 
     return $Answer;
 }

@@ -139,7 +139,8 @@ if($ShowEditMode){
     $AllBDeinteilungen = get_sorted_list_of_all_bd_einteilungen($mysqli);
     $AllBDassignments = get_all_users_bd_assignments($mysqli);
     $AllAbwesenheiten = get_sorted_list_of_all_abwesenheiten($mysqli);
-    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($_GET['concerneddate'], $_GET['type'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, day_is_a_weekend_or_holiday($_GET['concerneddate']));
+    $AllUserDeptAssignments = get_all_user_depmnt_assignments($mysqli);
+    $ParserResults = parse_bd_candidates_on_day_for_certain_bd_type($_GET['concerneddate'], $_GET['type'], $AllBDeinteilungen, $Allwishes, $AllBDassignments, $AllAbwesenheiten, $AllWishTypes, $AllUsers, $AllBDTypes, day_is_a_weekend_or_holiday($_GET['concerneddate']),$AllUserDeptAssignments);
     $EinteilungenHeute = $ParserResults['assigned_candidates'];
     if(sizeof($EinteilungenHeute)==0){
         $HTML .= container_builder(build_table_bd_planung(0, $_GET['concerneddate'], $ParserResults['candidates'], $_GET['type'], [], $AllBDTypes));
