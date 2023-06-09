@@ -942,7 +942,8 @@ function form_dropdown_bd_automatik_mode($Name, $Value, $Label=''){
 
     $OptionsHTML = $HTML = "";
 
-    $Months = [[1,'Wünsche erfüllen'],[2,'Sonderbedingungen erfüllen'],[3,'Auffüllen'],[4,'Auswahl Löschen']];
+    #$Months = [[1,'Wünsche erfüllen'],[2,'Sonderbedingungen erfüllen'],[3,'Auffüllen'],[4,'Auswahl Löschen']];
+    $Months = [[1,'Wünsche erfüllen'],[3,'Auffüllen'],[4,'Auswahl Löschen']];
 
     // Render Month Options
     foreach ($Months as $month){
