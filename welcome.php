@@ -19,9 +19,12 @@ if(isset($_GET['mode'])){
     }
 }
 
+// Initialize the session
 session_start();
-var_dump($_SESSION);
-var_dump($_COOKIE);
+// Unset all of the session variables
+$_SESSION = array();
+// Destroy the session.
+session_destroy();
 
 $Content = login_card_oidc_mode($Message);
 echo site_body('Login', $Content);
