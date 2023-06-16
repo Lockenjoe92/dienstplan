@@ -18,13 +18,12 @@ if(LOGINMODE=='OIDC2'){
     $logoutUrl = 'https://auth-dev.medizin.uni-tuebingen.de/oidc/logout';
     // Redirect the user to the logout endpoint
     $authorizationUrl = $provider->getAuthorizationUrl(['logout' => $logoutUrl, 'post_logout_redirect_uri'=>'https://dienstplan.marcsprojects.de/welcome.php']);
-
-    header('Location: ' . $authorizationUrl);
-    exit();
+    var_dump($authorizationUrl);
 
 } else {
     // Initialize the session
     session_start();
+    $accessToken = $_SESSION['accessTokenOauth'];
 
     // Unset all of the session variables
     $_SESSION = array();
@@ -38,7 +37,7 @@ if(LOGINMODE=='OIDC2'){
     }
 
     // Redirect to login page
-    $logoutUrl = 'https://auth-dev.medizin.uni-tuebingen.de/oidc/logout';
+    $logoutUrl = 'https://auth-dev.medizin.uni-tuebingen.de/oidc/logout?id_token_hint='.$accessToken.'&post_logout_redirect_uri=https%3A%2F%2Fdienstplan.marcsprojects.de%2Fwelcome.php';
     header("location: ".$logoutUrl);
     exit;
 }
