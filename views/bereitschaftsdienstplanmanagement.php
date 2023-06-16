@@ -644,6 +644,7 @@ data-show-columns="true"
 
             if($Einteilung['user'] == $CurrentUser){
                 if(($Einteilung['day']>=$BeginDate) && ($Einteilung['day']<=$EndDate)){
+
                     // Build rows
                     if($counter==1){
                         $HTML .= '<tr id="tr-id-1" class="tr-class-1" data-title="bootstrap table" data-object='.$bla.'>';

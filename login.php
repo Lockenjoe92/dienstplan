@@ -156,13 +156,30 @@ if(LOGINMODE=='OIDC'){
 
 } elseif(LOGINMODE=='OIDC2'){
 
-    require_once('./auth.php');
-    $auth->login();
+    $provider = new League\OAuth2\Client\Provider\GenericProvider([
+        'clientId'                => OIDCCLIENTID,    // The client ID assigned to you by the provider
+        'clientSecret'            => OIDCCLIENTSECRET,    // The client password assigned to you by the provider
+        'redirectUri'             => 'https://dienstplan.marcsprojects.de/login.php',
+        'scopes' => ['openid groups'],
+        'urlAuthorize'            => OIDCURLAUTHORIZE,
+        'urlAccessToken'          => OIDCURLTOKEN,
+        'urlResourceOwnerDetails' => OIDCURLRESOURCE]);
 
-    $user = $auth->getUser();
-    var_dump($user);
-    #header('Location: dashboard.php');
-    #die();
+    // Prepare the token request parameters
+    $options = [
+        'grant_type' => 'password',
+        'username'   => 'anhaefm1',
+        'password'   => 'Stocherkahn196',
+    ];
+
+    // Get the access token
+    $accessToken = $provider->getAccessToken('password', $options);
+
+    // Now let's load user mail as ID and assigned User privileges
+    $resourceOwnerArray = $provider->getResourceOwner($accessToken)->toArray();
+    $UserMail = strtolower($resourceOwnerArray['sub']);
+
+    var_dump($UserMail);
 
 } else {
     // Check if the user is already logged in, if yes then redirect him to welcome page

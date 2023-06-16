@@ -365,3 +365,55 @@ function get_abwesenheit_existing_for_user_on_given_day($UserID,$AllItems,$Day){
 
     return $Found;
 }
+
+function parse_add_spx_entry($mysqli, $AbwesenheitID){
+
+    $Answer = array();
+    $Answer['success'] = NULL;
+
+    if(isset($_POST['add_spx_action'])){
+
+        if($AbwesenheitID<=0){
+            $Answer['success'] = FALSE;
+            $Answer['meldung'] = 'Technischer Fehler! Bitte nochmals versuchen!';
+        } else {
+            $Answer = update_spx_status_abwesenheitsantrag($mysqli, $AbwesenheitID, true);
+        }
+    }
+
+    return $Answer;
+
+}
+
+function update_spx_status_abwesenheitsantrag($mysqli, $AbwesenheitID, $yaynay){
+
+    // Prepare statement & DB Access
+    if($yaynay){
+        $Timestamp = date('Y-m-d G:i:s');
+        $CurrentUser = get_current_user_id();
+    } else {
+        $Timestamp = '0000-00-00 00:00:00';
+        $CurrentUser = NULL;
+    }
+
+
+        $sql = "UPDATE abwesenheitsantraege SET spx_entry_date = ?, spx_entry_user = ? WHERE id = ?";
+        if($stmt = $mysqli->prepare($sql)){
+            // Bind variables to the prepared statement as parameters
+            $stmt->bind_param("sii", $Timestamp,$CurrentUser, $AbwesenheitID);
+
+            // Attempt to execute the prepared statement
+            if($stmt->execute()){
+                $Antwort['success']=true;
+                $Antwort['meldung']="Eintrag erfolgreich festgehalten!";
+            } else {
+                $Antwort['success']=false;
+                $Antwort['meldung']="Fehler beim Datenbankzugriff!";
+            }
+
+            // Close statement
+            $stmt->close();
+        }
+
+    return $Antwort;
+}
