@@ -9,8 +9,7 @@ function session_manager($requiredRole='nutzer'){
 
         if(!$Validated){
             // Session could not be verified
-            session_destroy();
-            header("location: welcome.php?mode=unvalidated");
+            header("location: logout.php");
             exit;
         } else {
 
@@ -18,15 +17,10 @@ function session_manager($requiredRole='nutzer'){
             if(strtotime($Validated) < time()){
 
                 // Session has timed out
-                $_SESSION = array();
-                session_destroy();
-                header("location: welcome.php?mode=timeout");
+                header("location: logout.php");
                 exit;
 
             } else {
-
-                // Now refresh Token
-
 
                 // Session is valid an has not timed out - now check if user has necessary privileges
                 $Nutzergruppen = load_user_usergroups($mysqli, $_SESSION['user']);

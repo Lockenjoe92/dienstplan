@@ -656,6 +656,120 @@ function form_group_dropdown_sondereinteilungen_unterabteilungen($Label, $name, 
 
 }
 
+function form_group_dropdown_gesetzte_dw_grenztage($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '';
+
+    if(!empty($Label)) {
+        $HTML .= '<label class="form-label" for="' . $name . '">' . $Label . '</label>';
+    }
+
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+
+    //Load all Feiertage
+    if(!empty(LISTEGESONDERTEREINGABEFRISTENBDPLAN)){
+        $Tage = explode(',',LISTEGESONDERTEREINGABEFRISTENBDPLAN);
+    } else {
+        $Tage = array();
+    }
+
+    if (sizeof($Tage)==0){
+        $OptionsHTML .= '<option value="">Bislang keine Grenztage erfasst!</option>';
+    } else {
+        foreach ($Tage as $tag) {
+
+            $OptionsHTML .= '<option value="'.$tag.'">'.date('d.m.Y', strtotime($tag)).'</option>';
+
+        }
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
+function form_group_dropdown_gesetzte_feiertage($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
+
+    $HTML = '';
+
+    if(!empty($Label)) {
+        $HTML .= '<label class="form-label" for="' . $name . '">' . $Label . '</label>';
+    }
+
+    $HTML .= '<div class="form-group">';
+
+    if($disbled){
+        $disbledHTML = 'disabled';
+    } else {
+        $disbledHTML = '';
+    }
+
+    //Build Options List
+    $OptionsHTML = "";
+
+    //Load all Feiertage
+    if(!empty(LISTEFEIERTAGE)) {
+        $Tage = explode(',', LISTEFEIERTAGE);
+    } else {
+        $Tage = array();
+    }
+
+    if (sizeof($Tage)==0){
+        $OptionsHTML .= '<option value="">Bislang keine Feiertage erfasst!</option>';
+    } else {
+        foreach ($Tage as $tag) {
+
+            $OptionsHTML .= '<option value="'.$tag.'">'.date('d.m.Y', strtotime($tag)).'</option>';
+
+        }
+    }
+
+    if($HasFormControl) {
+        if (!empty($FieldError)) {
+            $InValid = "is-invalid";
+        } else {
+            $InValid = "";
+        }
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$InValid.' '.$disbledHTML.' required>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+        $HTML .= '<div class="invalid-feedback">'.$FieldError.'</div>';
+    } else {
+        $HTML .= '<select class="form-select" name="'.$name.'" id="'.$name.'" '.$disbledHTML.'>';
+        $HTML .= $OptionsHTML;
+        $HTML .= '</select>';
+    }
+
+    $HTML .= '</div>';
+    return $HTML;
+
+}
+
 function form_group_dropdown_dienstgruppenzugehörigkeiten($Label, $name, $Values='',$HasFormControl=true, $FieldError='', $disbled=false){
 
     $HTML = '';

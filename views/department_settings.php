@@ -5,7 +5,7 @@ function table_management_department_events($mysqli){
     // deal with stupid "" and '' problems
     $bla = '"{"key": "value"}"';
     $Events = get_sorted_list_of_all_department_events($mysqli);
-    $userList = get_sorted_list_of_all_users($mysqli);
+    $userList = get_sorted_list_of_all_users($mysqli, 'id ASC', true);
 
     //Sort into Active and Passed Events
     $ActiveEvents = [];
@@ -430,4 +430,304 @@ function delete_department_event_management($mysqli, $selectedID=0){
 
         return card_builder('Veranstaltung '.$namePlaceholder.' löschen','Möchten Sie die Veranstaltung '.$namePlaceholder.' wirklich löschen?', $FORM);
     }
+}
+
+function add_department_feiertag_management(){
+
+    if(!empty(LISTEFEIERTAGE)) {
+        $Tage = explode(',', LISTEFEIERTAGE);
+    } else {
+        $Tage = array();
+    }
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $dayPlaceholder = $dayErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['add_department_feiertag_action_action'])){
+        $dayPlaceholder = htmlspecialchars($_POST['date']);
+
+        # Do some checks
+        if(empty($dayPlaceholder)){
+            $DAUcount++;
+            $dayErr .= "Bitte ein Datum auswählen!";
+        } else {
+            if(in_array($dayPlaceholder, $Tage)){
+                $DAUcount++;
+                $dayErr .= "Es ist bereits ein Feiertag an diesem Datum erfasst!";
+            }
+
+            if(strtotime($dayPlaceholder)<time()){
+                $DAUcount++;
+                $dayErr = "Es können keine Feiertage in der Vergangenheit angelegt werden!";
+            }
+        }
+
+        if($DAUcount==0){
+            # Add entry to xml after sorting
+            $Tage[] = $dayPlaceholder;
+            usort($Tage, "compareByTimeStamp");
+            update_xml_einstellung('defined_feiertage_dates', implode(',', $Tage));
+
+            $ShowReturn = true;
+            $ReturnMessage = "Feiertag erfolgreich angelegt!";
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Feiertag angelegen',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_group_input_date('Datum', 'date', $dayPlaceholder, true, $dayErr, false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_department_feiertag_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Feiertag angelegen','', $FORM);
+    }
+
+}
+
+function add_department_dw_grenztag_management(){
+
+    if(!empty(LISTEGESONDERTEREINGABEFRISTENBDPLAN)) {
+        $Tage = explode(',', LISTEGESONDERTEREINGABEFRISTENBDPLAN);
+    } else {
+        $Tage = array();
+    }
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $dayPlaceholder = $dayErr = "";
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['add_department_dw_grenztag_action_action'])){
+        $dayPlaceholder = htmlspecialchars($_POST['date']);
+
+        # Do some checks
+        if(empty($dayPlaceholder)){
+            $DAUcount++;
+            $dayErr .= "Bitte ein Datum auswählen!";
+        } else {
+            if(in_array($dayPlaceholder, $Tage)){
+                $DAUcount++;
+                $dayErr .= "Es ist bereits ein Dienstwunsch-Grenztag an diesem Datum erfasst!";
+            }
+
+            if(strtotime($dayPlaceholder)<time()){
+                $DAUcount++;
+                $dayErr = "Es können keine Dienstwunsch-Grenztage in der Vergangenheit angelegt werden!";
+            }
+
+            //Only allow one entry per month
+            $MOnthComparator = date('Y-m', strtotime($dayPlaceholder));
+            foreach($Tage as $tag){
+                if(date('Y-m', strtotime($tag))==$MOnthComparator){
+                    $DAUcount++;
+                    $dayErr = "Es kann pro Monat nur ein Dienstwunsch-Grenztag angelegt werden!";
+                }
+            }
+        }
+
+        if($DAUcount==0){
+            # Add entry to xml after sorting
+            $Tage[] = $dayPlaceholder;
+            usort($Tage, "compareByTimeStamp");
+            update_xml_einstellung('defined_last_dienstwunsch_dates', implode(',', $Tage));
+
+            $ShowReturn = true;
+            $ReturnMessage = "Dienstwunsch-Grenztag erfolgreich angelegt!";
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+        // Gap it
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch-Grenztag angelegen',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        $FormHTML = form_group_input_date('Datum', 'date', $dayPlaceholder, true, $dayErr, false);
+        $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_department_dw_grenztag_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        return card_builder('Dienstwunsch-Grenztag angelegen','', $FORM);
+    }
+
+}
+
+function delete_department_feiertag_management(){
+
+    if(!empty(LISTEFEIERTAGE)) {
+        $Tage = explode(',', LISTEFEIERTAGE);
+    } else {
+        $Tage = array();
+    }
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $dayPlaceholder = $dayErr = "";
+
+    if(empty($_POST['feiertage'])){
+        $ShowReturn = false;
+        $dayErr = 'Keinen Feiertag ausgewählt! Bitte erneut versuchen!';
+    }
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['delete_department_feiertag_action_action'])){
+        $dayPlaceholder = htmlspecialchars($_POST['feiertage']);
+
+        # Do some checks
+        if(empty($dayPlaceholder)){
+            $DAUcount++;
+            $dayErr .= "Bitte ein zu löschendes Datum auswählen!";
+        } else {
+            if(!in_array($dayPlaceholder, $Tage)){
+                $DAUcount++;
+                $dayErr .= "Das ausgewählte Datum scheint nicht mehr in der Liste zu sein!";
+            }
+        }
+
+        if($DAUcount==0){
+            # Update entry to xml after removing from array
+            if (($key = array_search($dayPlaceholder, $Tage)) !== false) {
+                unset($Tage[$key]);
+            }
+            //Restore array index
+            $Tage = array_values($Tage);
+
+            update_xml_einstellung('defined_feiertage_dates', implode(',', $Tage));
+
+            $ShowReturn = true;
+            $ReturnMessage = "Feiertag erfolgreich gelöscht! Bitte beachten Sie, dass etwaige (Bereitschafts-)dienstplanungen nun ggf. überarbeitet werden müssen, da sich das erforderliche Mitarbeiterkontingent geändert haben könnte!";
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Feiertag löschen',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        if(!empty($dayErr)){
+            $FormHTML = alert_builder($dayErr);
+            $FormHTML .= form_hidden_input_generator('feiertage', $_POST['feiertage']);
+            $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_department_feiertag_action_action', 'btn btn-danger', true, 'Abbrechen', 'abort_department_event_action', 'btn btn-primary');
+        } else {
+            $FormHTML = form_hidden_input_generator('feiertage', $_POST['feiertage']);
+            $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_department_feiertag_action_action', 'btn btn-danger', true, 'Abbrechen', 'abort_department_event_action', 'btn btn-primary');
+        }
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        if(!empty($_POST['feiertage'])){
+            $Promt = "Feiertag am ".date('d.m.Y', strtotime($_POST['feiertage']))." löschen";
+        } else {
+            $Promt = "";
+        }
+
+        return card_builder('Feiertag löschen',$Promt, $FORM);
+    }
+
+}
+
+function delete_department_dw_grenztag_management(){
+
+    if(!empty(LISTEGESONDERTEREINGABEFRISTENBDPLAN)) {
+        $Tage = explode(',', LISTEGESONDERTEREINGABEFRISTENBDPLAN);
+    } else {
+        $Tage = array();
+    }
+
+    #Initialize Placeholders & DAU handling
+    $DAUcount = 0;
+    $ShowReturn = false;
+    $ReturnMessage = '';
+    $dayPlaceholder = $dayErr = "";
+
+    if(empty($_POST['dw_grenztage'])){
+        $ShowReturn = false;
+        $dayErr = 'Keinen Dienstwunsch-Grenztag ausgewählt! Bitte erneut versuchen!';
+    }
+
+    # Populate Placeholders if action is clicked
+    if(isset($_POST['delete_department_dw_grenztag_action_action'])){
+        $dayPlaceholder = htmlspecialchars($_POST['dw_grenztage']);
+
+        # Do some checks
+        if(empty($dayPlaceholder)){
+            $DAUcount++;
+            $dayErr .= "Bitte ein zu löschendes Datum auswählen!";
+        } else {
+            if(!in_array($dayPlaceholder, $Tage)){
+                $DAUcount++;
+                $dayErr .= "Das ausgewählte Datum scheint nicht mehr in der Liste zu sein!";
+            }
+        }
+
+        if($DAUcount==0){
+            # Update entry to xml after removing from array
+            if (($key = array_search($dayPlaceholder, $Tage)) !== false) {
+                unset($Tage[$key]);
+            }
+
+            //Restore array index
+            $Tage = array_values($Tage);
+
+            update_xml_einstellung('defined_last_dienstwunsch_dates', implode(',', $Tage));
+
+            $ShowReturn = true;
+            $ReturnMessage = "Dienstwunsch-Grenztag erfolgreich gelöscht!";
+        }
+    }
+
+    if($ShowReturn){
+        $FormHTML = form_group_continue_return_buttons(false, '', '', '', true, 'Zurück', 'abort_user_sondereinteilung_action', 'btn-primary');
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+        return card_builder('Dienstwunsch-Grenztag löschen',$ReturnMessage, $FORM);
+    }else{
+        #Build the form
+        if(!empty($dayErr)){
+            $FormHTML = alert_builder($dayErr);
+            $FormHTML .= form_hidden_input_generator('dw_grenztage', $_POST['dw_grenztage']);
+            $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_department_dw_grenztag_action_action', 'btn btn-danger', true, 'Abbrechen', 'abort_department_event_action', 'btn btn-primary');
+        } else {
+            $FormHTML = form_hidden_input_generator('dw_grenztage', $_POST['dw_grenztage']);
+            $FormHTML .= form_group_continue_return_buttons(true, 'Löschen', 'delete_department_dw_grenztag_action_action', 'btn btn-danger', true, 'Abbrechen', 'abort_department_event_action', 'btn btn-primary');
+        }
+
+        // Gap it
+        $FormHTML = grid_gap_generator($FormHTML);
+        $FORM = form_builder($FormHTML, 'self', 'POST');
+
+        if(!empty($_POST['dw_grenztage'])){
+            $Promt = "Dienstwunsch-Grenztag am ".date('d.m.Y', strtotime($_POST['dw_grenztage']))." löschen";
+        } else {
+            $Promt = "";
+        }
+
+        return card_builder('Dienstwunsch-Grenztag löschen',$Promt, $FORM);
+    }
+
 }

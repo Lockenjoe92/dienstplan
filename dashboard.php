@@ -12,7 +12,6 @@ $mysqli = connect_db();
 $userID = get_current_user_id();
 
 $HTML = "<h1 class='align-content-center'>Dashboard</h1>";
-$HTML .= "Der aktuelle OAuth2-Token ist gültig bis: ".date("d.m.Y G:i:s", $_SESSION["accessTokenOauth"]->getExpires());
 
 if(!in_array('no_dashboard_aerzte', $UserRoles)){
     $HTML .= '<div class="row row-cols-1 row-cols-md-2 g-4">';
