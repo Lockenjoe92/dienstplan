@@ -16,13 +16,13 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
           <ul class="dropdown-menu">';
 
         if(in_array('ausfaelle_1', $UserRoles)){
-        $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php?org_ue=1">Urlaubsplanung Anästhesie</a></li>
-            <li><a class="dropdown-item" href="abwesenheiten_management.php?org_ue=1">Abwesenheiten Anästhesie</a></li>
+        $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php?org_ue=1">Urlaubsplanung Übersicht Anästhesie</a></li>
+            <li><a class="dropdown-item" href="abwesenheiten_management.php?org_ue=1">Abwesenheitsanträge Anästhesie</a></li>
             <li><hr class="dropdown-divider"></li>';}
 
         if(in_array('ausfaelle_2', $UserRoles)){
-            $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php?org_ue=2">Urlaubsplanung Intensiv</a></li>
-            <li><a class="dropdown-item" href="abwesenheiten_management.php?org_ue=2">Abwesenheiten Intensiv</a></li>
+            $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="urlaubsplan.php?org_ue=2">Urlaubsplanung Übersicht Intensiv</a></li>
+            <li><a class="dropdown-item" href="abwesenheiten_management.php?org_ue=2">Abwesenheitsanträge Intensiv</a></li>
             <li><hr class="dropdown-divider"></li>';}
 
         $AbwesenheitenLinks .= '<li><a class="dropdown-item" href="abwesenheiten_user.php">Meine Abwesenheiten</a></li>
@@ -51,9 +51,9 @@ function nav_bar($LoggedIn=False, $UserRoles=''){
             $DienstplanLinks .= '<li><hr class="dropdown-divider"></li>';
         }
 
-        $DienstplanLinks .= '<li><a class="dropdown-item" href="bereitschaftsdienstplan_anaesthesie_user.php">Bereitschaftsdienstplan</a></li>';
+        $DienstplanLinks .= '<li><a class="dropdown-item" href="bereitschaftsdienstplan_anaesthesie_user.php">Monatspläne Bereitschaftsdienst</a></li>';
         $DienstplanLinks .= '
-            <li><a class="dropdown-item" href="dienstplan_user.php">Mein Dienstplan</a></li>
+            <li><a class="dropdown-item" href="dienstplan_user.php">Mein Bereitschaftsdienstplan</a></li>
           </ul>
         </li>';
 

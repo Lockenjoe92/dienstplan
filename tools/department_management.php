@@ -93,26 +93,34 @@ function get_num_wishes_user_in_selected_month($UserID,$Date,$AllWuensche){
 
 function get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths, $DateWunsch){
 
-    //First check if there is a special last entry date in concerned Month
+    // First check if there is a special last entry date in concerned Month
     $AllSpecialEntryDateLimits = explode(',', LISTEGESONDERTEREINGABEFRISTENBDPLAN);
     $Catch = false;
     $LastDayOfLimit = "";
-    foreach ($AllSpecialEntryDateLimits as $SpecialLimit){
-        $LastDayOfLimit = $SpecialLimit;
-        $FirstDayOfLimit = substr($SpecialLimit,0,-2).'01';
-        if(($DateWunsch >= $FirstDayOfLimit) && ($DateWunsch <= $LastDayOfLimit)){
-            $Catch = true;
+
+    if(!empty(LISTEGESONDERTEREINGABEFRISTENBDPLAN)){
+        foreach ($AllSpecialEntryDateLimits as $SpecialLimit){
+
+            // Unpack Limit ( CONCERNEDYEAR-CONCERNEDMONTH:LASTENTRYDATE(Y-m-d)
+            $SpecialLimitunpacked = explode(':', $SpecialLimit);
+            if(date('Y-m', strtotime($DateWunsch))==$SpecialLimitunpacked[0]){
+                $Catch = true;
+                $LastDayOfLimit = $SpecialLimitunpacked[1];
+            }
+
         }
     }
 
     if($Catch){
         return $LastDayOfLimit;
     } else {
+        // Get First Day of month in x months time
         $FirstDayThisMonth = date('Y-m-01');
-        $CommandMonths = $DepartmentLastWishMonths+1;
-        $Command = "+".$CommandMonths." months";
-        $WarpUpxMonths = date('Y-m-d', strtotime($Command, strtotime($FirstDayThisMonth)));
-        return date('Y-m-d', strtotime('-1 day', strtotime($WarpUpxMonths)));
+        $CommandMonths = $DepartmentLastWishMonths;
+        $Command = "+".($CommandMonths+1)." months";
+        $newTime = strtotime($Command, strtotime($FirstDayThisMonth));
+        $lastDate = date('Y-m-d', strtotime('-1 day',$newTime));
+        return $lastDate;
     }
 }
 
