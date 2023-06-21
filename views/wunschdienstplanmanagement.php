@@ -407,9 +407,32 @@ function add_dienstwunsch_user($mysqli){
 
     //Initialize date input at earliest possible date according to current assignment
     $UE = get_user_assigned_department_at_date($mysqli, $UserInfos, date('Y-m-d'));
-    $Department = get_department_infos($mysqli, $UE);
-    $entryDatePlaceholder = date('Y-m-d');
-    $DatePlaceholder = date('Y-m-d', strtotime('+1 day', strtotime(get_last_date_for_dienstwunsch_submission($Department['accept_user_dienst_wishes_until_months'], date('Y-m-d')))));
+    $entryDatePlaceholder = $today = date('Y-m-d');
+
+    $DatePlaceholder = "";
+    $Catch = false;
+    if(!empty(LISTEGESONDERTEREINGABEFRISTENBDPLAN)){
+        $SpecialEntryDateLimits = explode(',', LISTEGESONDERTEREINGABEFRISTENBDPLAN);
+
+        for($a=0;$a<12;$a++){
+            if(!$Catch){
+                $CurrentMonth = date('Y-m', strtotime('+'.$a.' months', strtotime($today)));
+                foreach ($SpecialEntryDateLimits as $limit){
+                    $limitUnpacked = explode(':', $limit);
+                    if($limitUnpacked[0]==$CurrentMonth){
+                        //search for first month where entry limit has not passed
+                        if(strtotime($limitUnpacked[1])>strtotime($today)){
+                            $Catch = true;
+                            $DatePlaceholder = $CurrentMonth.'-01';
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        $DatePlaceholder = date('Y-m-d', strtotime('+4 months -1 day', strtotime(date('Y-m-01'))));
+    }
+
     $ReturnMessage = $typePlaceholder = $commentPlaceholder = "";
     $DateErr = $TypeErr = "";
 
@@ -472,14 +495,14 @@ function add_dienstwunsch_user($mysqli){
 
         // Don't permit users to submit wishes x Months in advance
         $DateLastPossibleEntry = get_last_date_for_dienstwunsch_submission($DepartmentLastWishMonths, $DatePlaceholder);
-        if($DateLastPossibleEntry>$DatePlaceholder){
+        if(strtotime($DateLastPossibleEntry)<strtotime($DatePlaceholder)){
             $DAUcheck++;
             // Make Pretty Month Name
             $GetTime = strtotime($DatePlaceholder);
             $format = new IntlDateFormatter('de_DE', IntlDateFormatter::NONE,
                 IntlDateFormatter::NONE, NULL, NULL, "MMM");
             $monthName = datefmt_format($format, mktime(0, 0, 0, date("m", $GetTime)));
-            $DateErr .= "Die Dienst- und Urlaubswunscheingabe für den ".$monthName." ".date("Y", $GetTime)." ist bereits geschlossen!";
+            $DateErr .= "Die Dienstwunscheingabe für den ".$monthName." ".date("Y", $GetTime)." ist bereits geschlossen!";
         }
 
         if($DAUcheck==0){
