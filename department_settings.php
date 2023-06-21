@@ -25,7 +25,7 @@ $FeiertageFormHTML = form_builder($FeiertageFormHTML, 'self', 'POST');
 $DefaultHTML = card_builder('Feiertage', '', $FeiertageFormHTML, true, 'h-100');
 
 //Besondere Dienstwunschgrenztage
-$GrenztageFormHTML = form_group_dropdown_gesetzte_dw_grenztage('Bislang erfasste Dienstwunsch-Grenztage', 'dw_grenztage', '', false);
+$GrenztageFormHTML = form_group_dropdown_gesetzte_dw_grenztage('Bislang erfasste Dienstwunsch-Grenztage (Info: MitarbeiterInnen können bis <b>einschließlich</b> dieses Datums Dienstwünsche eingeben!', 'dw_grenztage', '', false);
 $GrenztageFormHTML .= form_group_continue_return_buttons(true, 'Hinzufügen', 'add_grenztag', 'btn btn-primary', true, 'Löschen', 'delete_grenztag', 'btn btn-danger', false);
 $GrenztageFormHTML = grid_gap_generator($GrenztageFormHTML);
 $GrenztageFormHTML = form_builder($GrenztageFormHTML, 'self', 'POST');

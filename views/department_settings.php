@@ -545,17 +545,33 @@ function add_department_dw_grenztag_management(){
                 }
             }
 
-            if(strtotime($dayPlaceholder)<time()){
-                $DAUcount++;
-                $dayErr = "Es können keine Dienstwunsch-Grenztage in der Vergangenheit angelegt werden!";
-            }
-
         }
 
         if($DAUcount==0){
             # Add entry to xml after sorting
             $Tage[] = $SearchMonth.":".$dayPlaceholder;
-            update_xml_einstellung('defined_last_dienstwunsch_dates', implode(',', $Tage));
+
+            // Sort the Tage Array
+            //Create temporary multidim Array for sorting (i know this can be done better - quickfix here)
+            $tempArray = array();
+            foreach($Tage as $tag){
+                $tagExploded = explode(':', $tag);
+                $item['time'] = strtotime($tagExploded[0].'-01');
+                $item['monat'] = $tagExploded[0];
+                $item['grenze'] = $tagExploded[1];
+                $tempArray[] = $item;
+            }
+            // sort it
+            $columns = array_column($tempArray, 'time');
+            array_multisort($columns, SORT_DESC, $tempArray);
+
+            // Rebuild XML String
+            $TageNew = array();
+            foreach ($tempArray as $value){
+                $TageNew[] = $value['monat'].':'.$value['grenze'];
+            }
+
+            update_xml_einstellung('defined_last_dienstwunsch_dates', implode(',', $TageNew));
 
             $ShowReturn = true;
             $ReturnMessage = "Dienstwunsch-Grenztag erfolgreich angelegt!";
@@ -734,7 +750,8 @@ function delete_department_dw_grenztag_management(){
         $FORM = form_builder($FormHTML, 'self', 'POST');
 
         if(!empty($_POST['dw_grenztage'])){
-            $Promt = "Dienstwunsch-Grenztag am ".date('d.m.Y', strtotime($_POST['dw_grenztage']))." löschen";
+            $Deconstruct = explode(':', $_POST['dw_grenztage']);
+            $Promt = "Dienstwunsch-Grenztag für ".$Deconstruct[0]." löschen";
         } else {
             $Promt = "";
         }
