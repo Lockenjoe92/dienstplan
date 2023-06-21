@@ -509,20 +509,40 @@ function add_department_dw_grenztag_management(){
     $DAUcount = 0;
     $ShowReturn = false;
     $ReturnMessage = '';
-    $dayPlaceholder = $dayErr = "";
+    $InFourMonths = strtotime('+4 months', strtotime(date('Y-m-01')));
+    $monthPlaceholder = date('m', $InFourMonths);
+    $yearPlaceholder = date('Y', $InFourMonths);
+    $dayPlaceholder = date('Y-m-d', strtotime('-1 day -3 months', $InFourMonths));
+    $SearchMonth = $dayErr = "";
 
     # Populate Placeholders if action is clicked
     if(isset($_POST['add_department_dw_grenztag_action_action'])){
+
+        $yearPlaceholder = htmlspecialchars($_POST['year']);
+        $monthPlaceholder = htmlspecialchars($_POST['month']);
         $dayPlaceholder = htmlspecialchars($_POST['date']);
 
         # Do some checks
         if(empty($dayPlaceholder)){
             $DAUcount++;
-            $dayErr .= "Bitte ein Datum auswählen!";
+            $dayErr .= "Bitte ein Grenzdatum auswählen!<br>";
+        } elseif (empty($yearPlaceholder)){
+            $DAUcount++;
+            $dayErr .= "Bitte ein Jahr auswählen!<br>";
+        } elseif (empty($monthPlaceholder)){
+            $DAUcount++;
+            $dayErr .= "Bitte einen Monat auswählen!<br>";
         } else {
-            if(in_array($dayPlaceholder, $Tage)){
-                $DAUcount++;
-                $dayErr .= "Es ist bereits ein Dienstwunsch-Grenztag an diesem Datum erfasst!";
+
+            //Only allow one entry per month
+            $SearchMonth = $yearPlaceholder."-".$monthPlaceholder;
+            foreach($Tage as $tag){
+
+                $tagExploded = explode(':', $tag);
+                if($tagExploded[0]==$SearchMonth){
+                    $DAUcount++;
+                    $dayErr .= "Es ist bereits ein Dienstwunsch-Grenztag für diesen Monat erfasst!";
+                }
             }
 
             if(strtotime($dayPlaceholder)<time()){
@@ -530,20 +550,11 @@ function add_department_dw_grenztag_management(){
                 $dayErr = "Es können keine Dienstwunsch-Grenztage in der Vergangenheit angelegt werden!";
             }
 
-            //Only allow one entry per month
-            $MOnthComparator = date('Y-m', strtotime($dayPlaceholder));
-            foreach($Tage as $tag){
-                if(date('Y-m', strtotime($tag))==$MOnthComparator){
-                    $DAUcount++;
-                    $dayErr = "Es kann pro Monat nur ein Dienstwunsch-Grenztag angelegt werden!";
-                }
-            }
         }
 
         if($DAUcount==0){
             # Add entry to xml after sorting
-            $Tage[] = $dayPlaceholder;
-            usort($Tage, "compareByTimeStamp");
+            $Tage[] = $SearchMonth.":".$dayPlaceholder;
             update_xml_einstellung('defined_last_dienstwunsch_dates', implode(',', $Tage));
 
             $ShowReturn = true;
@@ -558,7 +569,8 @@ function add_department_dw_grenztag_management(){
         return card_builder('Dienstwunsch-Grenztag angelegen',$ReturnMessage, $FORM);
     }else{
         #Build the form
-        $FormHTML = form_group_input_date('Datum', 'date', $dayPlaceholder, true, $dayErr, false);
+        $FormHTML = form_dropdown_months('month', $monthPlaceholder).form_dropdown_years('year', $yearPlaceholder);
+        $FormHTML .= form_group_input_date('Grenzdatum', 'date', $dayPlaceholder, true, $dayErr, false);
         $FormHTML .= form_group_continue_return_buttons(true, 'Anlegen', 'add_department_dw_grenztag_action_action', 'btn-primary', true, 'Abbrechen', 'abort_department_event_action', 'btn-danger');
 
         // Gap it
@@ -680,7 +692,7 @@ function delete_department_dw_grenztag_management(){
         } else {
             if(!in_array($dayPlaceholder, $Tage)){
                 $DAUcount++;
-                $dayErr .= "Das ausgewählte Datum scheint nicht mehr in der Liste zu sein!";
+                $dayErr .= "Das ausgewählte Grenzdatum scheint nicht mehr in der Liste zu sein!";
             }
         }
 

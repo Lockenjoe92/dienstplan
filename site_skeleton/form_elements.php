@@ -686,8 +686,8 @@ function form_group_dropdown_gesetzte_dw_grenztage($Label, $name, $Values='',$Ha
         $OptionsHTML .= '<option value="">Bislang keine Grenztage erfasst!</option>';
     } else {
         foreach ($Tage as $tag) {
-
-            $OptionsHTML .= '<option value="'.$tag.'">'.date('d.m.Y', strtotime($tag)).'</option>';
+            $tagExploded = explode(':', $tag);
+            $OptionsHTML .= '<option value="'.$tag.'">'.$tagExploded[0].' &rarr; '.date('d.m.Y', strtotime($tagExploded[1])).'</option>';
 
         }
     }
