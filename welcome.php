@@ -10,6 +10,9 @@ if(isset($_GET['mode'])){
         if(isset($_GET['oidc'])){
             $Message .= "<br>OIDC-Fehlermeldung: ".$_GET['oidc'];
         }
+        if(isset($_GET['details'])){
+            $Message .= "<br>Details zur Fehlermeldung: ".$_GET['details'];
+        }
     } elseif ($_GET['mode']=='unidentified'){
         $Message .= "Fehler mit der Sitzung! Bitte melden Sie sich erneut an!";
     } elseif ($_GET['mode']=='unvalidated'){

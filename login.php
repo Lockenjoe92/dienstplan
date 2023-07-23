@@ -42,7 +42,7 @@ if(LOGINMODE=='OIDC'){
             }
 
         // Redirect the user to the Welcome Page with Error-Info.
-        header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err');
+        header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err&details=OAUTH2 Err');
         exit;
 
     } else {
@@ -126,7 +126,7 @@ if(LOGINMODE=='OIDC'){
 
                                 } else {
                                     // Password is not valid, display a generic error message
-                                    $login_err = "Nutzername oder Passwort falsch.";
+                                    $login_err = "Nutzer ist nicht mehr im System aktiviert!";
                                 }
                             }
                         } else {
@@ -138,7 +138,7 @@ if(LOGINMODE=='OIDC'){
                     }
 
                     if (!empty($login_err)) {
-                        header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err');
+                        header('Location: ' . 'https://dienstplan.marcsprojects.de/welcome.php?mode=sess_err&details='.$login_err);
                         exit;
                     }
                 }
